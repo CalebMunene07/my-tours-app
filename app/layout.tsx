@@ -34,6 +34,8 @@ export default function RootLayout({
         
         {/* Toaster allows your booking success messages to pop up */}
         <Toaster position="top-center" expand={false} richColors />
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
       </body>
     </html>
   );
