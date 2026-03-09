@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
@@ -14,15 +14,19 @@ const API = process.env.NEXT_PUBLIC_API_URL;
 
 type Package = "Standard" | "Premium" | "Luxury";
 
+interface Tour {
+  id: string;
+  title: string;
+  duration: string;
+  standard_price: string;
+  premium_price: string;
+  luxury_price: string;
+}
+
 interface BookingFormProps {
   tourTitle?: string;
   pricingTiers?: string[];
 }
-
-const PACKAGE_PRICES: Record<Package, number> = { Standard: 890, Premium: 1450, Luxury: 2800 };
-const PACKAGE_LABELS: Record<Package, string>  = { Standard: "$890", Premium: "$1,450", Luxury: "$2,800" };
-const DEPOSIT_LABELS: Record<Package, string>  = { Standard: "$267", Premium: "$435",   Luxury: "$840" };
-const DEPOSIT_AMOUNTS: Record<Package, number> = { Standard: 267,   Premium: 435,       Luxury: 840 };
 
 const PACKAGE_ICONS: Record<Package, React.ReactNode> = {
   Standard: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
@@ -31,12 +35,14 @@ const PACKAGE_ICONS: Record<Package, React.ReactNode> = {
 };
 
 /* ── PDF helper ── */
-function downloadBookingPDF(p: { reference:string; name:string; email:string; phone:string; tourTitle:string; date:string; guests:string; pkg:Package }) {
-  const total   = PACKAGE_PRICES[p.pkg];
-  const deposit = DEPOSIT_AMOUNTS[p.pkg];
-  const balance = total - deposit;
-  const tDate   = p.date ? new Date(p.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}) : "—";
-  const today   = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+function downloadBookingPDF(p: {
+  reference:string; name:string; email:string; phone:string;
+  tourTitle:string; date:string; guests:string; pkg:Package;
+  days:string; pricePerPerson:number; totalPrice:number; depositAmount:number;
+}) {
+  const balance = p.totalPrice - p.depositAmount;
+  const tDate = p.date ? new Date(p.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}) : "—";
+  const today = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Wikima Booking ${p.reference}</title>
 <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Georgia,serif;color:#2d3a10;padding:48px;font-size:14px;}
 .hdr{display:flex;justify-content:space-between;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #e8e0d0;}
@@ -52,8 +58,14 @@ function downloadBookingPDF(p: { reference:string; name:string; email:string; ph
 <div class="hdr"><div class="brand"><h1>WIKIMA SAFARI</h1><p>Expeditions · East Africa</p></div><div class="ref"><div class="lbl">Booking Reference</div><div class="val">${p.reference}</div></div></div>
 <div class="badge">✓ Booking <strong>Confirmed</strong> — Thank you, ${p.name}. We look forward to hosting you.</div>
 <div class="sec"><div class="sec-t">Guest Details</div><div class="grid"><div class="fld"><label>Full Name</label><p>${p.name}</p></div><div class="fld"><label>Email</label><p>${p.email}</p></div>${p.phone?`<div class="fld"><label>Phone</label><p>${p.phone}</p></div>`:""}</div></div>
-<div class="sec"><div class="sec-t">Safari Details</div><div class="grid"><div class="fld"><label>Tour</label><p>${p.tourTitle}</p></div><div class="fld"><label>Package</label><p>${p.pkg}</p></div><div class="fld"><label>Travel Date</label><p>${tDate}</p></div><div class="fld"><label>Group Size</label><p>${p.guests} guest${Number(p.guests)>1?"s":""}</p></div></div></div>
-<div class="sec"><div class="sec-t">Payment Summary</div><div class="pay"><div class="row"><span class="lbl">Tour Total</span><span class="amt">$${total.toLocaleString()}</span></div><div class="row"><span class="lbl">Deposit Paid (30%)</span><span class="amt">$${deposit.toLocaleString()}</span></div><div class="row"><span class="lbl">Remaining Balance</span><span class="amt">$${balance.toLocaleString()}</span></div><div class="row"><span class="lbl">Total</span><span class="amt">$${total.toLocaleString()}</span></div></div></div>
+<div class="sec"><div class="sec-t">Safari Details</div><div class="grid"><div class="fld"><label>Tour</label><p>${p.tourTitle}</p></div><div class="fld"><label>Package</label><p>${p.pkg}</p></div><div class="fld"><label>Travel Date</label><p>${tDate}</p></div><div class="fld"><label>Duration</label><p>${p.days} days</p></div><div class="fld"><label>Group Size</label><p>${p.guests} guest${Number(p.guests)>1?"s":""}</p></div><div class="fld"><label>Price Per Person</label><p>$${p.pricePerPerson.toLocaleString()}</p></div></div></div>
+<div class="sec"><div class="sec-t">Payment Summary</div><div class="pay">
+<div class="row"><span class="lbl">Price per person</span><span class="amt">$${p.pricePerPerson.toLocaleString()}</span></div>
+<div class="row"><span class="lbl">× ${p.guests} guest${Number(p.guests)>1?"s":""}</span><span class="amt">$${p.totalPrice.toLocaleString()}</span></div>
+<div class="row"><span class="lbl">Deposit Paid (30%)</span><span class="amt">$${p.depositAmount.toLocaleString()}</span></div>
+<div class="row"><span class="lbl">Balance on Arrival</span><span class="amt">$${balance.toLocaleString()}</span></div>
+<div class="row"><span class="lbl">Total</span><span class="amt">$${p.totalPrice.toLocaleString()}</span></div>
+</div></div>
 <div class="ftr"><div>Wikima Safari Expeditions<br/>info@wikimasafari.com<br/>wikimasafari.com</div><div style="text-align:right">Generated ${today}<br/>Official booking confirmation.</div></div>
 </body></html>`;
   const win = window.open("","_blank","width=820,height=950");
@@ -80,7 +92,7 @@ const StripeCheckout: React.FC<{ bookingRef:string; amount:string; onSuccess:()=
     <div className="bf-step">
       <div style={S.stripeHeader}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5320" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        <span style={S.stripeHeaderText}>Secure Card Payment · <strong>{amount}</strong> deposit</span>
+        <span style={S.stripeHeaderText}>Secure Card Payment · <strong>{amount}</strong> total</span>
       </div>
       <p style={S.stripeRef}>Booking ref: <strong style={{ color:"#4B5320" }}>{bookingRef}</strong></p>
       <form onSubmit={handlePay}>
@@ -109,19 +121,72 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const [currentBooking, setCurrentBooking] = useState<{ id:string; reference:string; deposit_amount:number }|null>(null);
   const [mpesaStatus, setMpesaStatus]       = useState<"idle"|"waiting"|"success"|"failed">("idle");
 
+  // ── Tour dropdown state ──
+  const [tours, setTours]               = useState<Tour[]>([]);
+  const [tourSearch, setTourSearch]     = useState(propTourTitle);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedTour, setSelectedTour] = useState<Tour|null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const [form, setForm] = useState({
-    tourTitle:     propTourTitle,
+    tourTitle: propTourTitle,
     name: "", email: "", phone: "", mpesaNumber: "",
-    date: "", guests: "1", package: "Standard" as Package,
+    date: "", guests: "1", days: "1", package: "Standard" as Package,
     paymentMethod: "", message: "",
   });
+
+  // ── Fetch all tours for dropdown ──
+  useEffect(() => {
+    fetch(`${API}/api/tours`)
+      .then(r => r.json())
+      .then(data => setTours(data.tours || []))
+      .catch(() => {});
+  }, []);
+
+  // ── Close dropdown on outside click ──
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+        setShowDropdown(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filteredTours = tours.filter(t =>
+    t.title.toLowerCase().includes(tourSearch.toLowerCase())
+  );
+
+  const handleTourSelect = (tour: Tour) => {
+    setSelectedTour(tour);
+    setTourSearch(tour.title);
+    setForm(f => ({ ...f, tourTitle: tour.title }));
+    setShowDropdown(false);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const packages: Package[] = pricingTiers.length
-    ? (pricingTiers.filter(t => t in PACKAGE_PRICES) as Package[])
+    ? (pricingTiers.filter(t => ["Standard","Premium","Luxury"].includes(t)) as Package[])
     : ["Standard", "Premium", "Luxury"];
+
+  // ── Dynamic pricing from selected tour ──
+  const getPricePerPerson = (pkg: Package): number => {
+    if (selectedTour) {
+      if (pkg === "Standard") return parseFloat(selectedTour.standard_price);
+      if (pkg === "Premium")  return parseFloat(selectedTour.premium_price);
+      if (pkg === "Luxury")   return parseFloat(selectedTour.luxury_price);
+    }
+    return { Standard: 890, Premium: 1450, Luxury: 2800 }[pkg];
+  };
+
+  const pricePerPerson = getPricePerPerson(form.package);
+  const guests         = Number(form.guests) || 1;
+  const totalPrice     = pricePerPerson * guests;
+  const depositAmount  = Math.ceil(totalPrice * 0.3);
+  const balanceAmount  = totalPrice - depositAmount;
+  const fmt            = (n: number) => `$${n.toLocaleString()}`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,7 +195,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     try {
       const bookingRes = await fetch(`${API}/api/bookings`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tourTitle: form.tourTitle, guestName: form.name, guestEmail: form.email, guestPhone: form.phone, travelDate: form.date, guests: Number(form.guests), package: form.package, specialRequests: form.message }),
+        body: JSON.stringify({
+          tourTitle: form.tourTitle, guestName: form.name, guestEmail: form.email,
+          guestPhone: form.phone, travelDate: form.date, guests,
+          package: form.package, specialRequests: form.message,
+          days: Number(form.days), totalAmount: totalPrice, depositAmount,
+        }),
       });
       if (!bookingRes.ok) { const err = await bookingRes.json(); throw new Error(err.error || "Failed to create booking"); }
       const { booking } = await bookingRes.json();
@@ -141,7 +211,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         if (!phone.startsWith("254") || phone.length !== 12) throw new Error("Phone must be 2547XXXXXXXX (12 digits)");
         const mpesaRes = await fetch(`${API}/api/payments/mpesa/stk-push`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone, amount: booking.deposit_amount, bookingRef: booking.reference, bookingId: booking.id }),
+          body: JSON.stringify({ phone, amount: depositAmount, bookingRef: booking.reference, bookingId: booking.id }),
         });
         if (!mpesaRes.ok) throw new Error("Failed to initiate M-Pesa payment");
         const { checkoutRequestId } = await mpesaRes.json();
@@ -159,7 +229,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       } else if (form.paymentMethod === "card") {
         const stripeRes = await fetch(`${API}/api/payments/stripe/create-intent`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: booking.deposit_amount, bookingId: booking.id, bookingRef: booking.reference, customerEmail: form.email }),
+          body: JSON.stringify({ amount: depositAmount, bookingId: booking.id, bookingRef: booking.reference, customerEmail: form.email }),
         });
         if (!stripeRes.ok) throw new Error("Failed to create payment intent");
         const { clientSecret: secret } = await stripeRes.json();
@@ -172,8 +242,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   };
 
   const resetForm = () => {
-    setSubmitted(false); setStep(1); setClientSecret(null); setCurrentBooking(null); setMpesaStatus("idle"); setApiError("");
-    setForm({ tourTitle: propTourTitle, name: "", email: "", phone: "", mpesaNumber: "", date: "", guests: "1", package: "Standard", paymentMethod: "", message: "" });
+    setSubmitted(false); setStep(1); setClientSecret(null); setCurrentBooking(null);
+    setMpesaStatus("idle"); setApiError(""); setSelectedTour(null); setTourSearch(propTourTitle);
+    setForm({ tourTitle: propTourTitle, name: "", email: "", phone: "", mpesaNumber: "", date: "", guests: "1", days: "1", package: "Standard", paymentMethod: "", message: "" });
   };
 
   /* ── CONFIRMED ── */
@@ -190,8 +261,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           A confirmation has been sent to <strong style={{ color:"#4B5320" }}>{form.email}</strong>.<br/>Our team will contact you within 24 hours.
         </p>
         {currentBooking && <div style={S.refBadge}>Booking Ref: <strong style={{ color:"#4B5320" }}>{currentBooking.reference}</strong></div>}
-        <button onClick={() => downloadBookingPDF({ reference: currentBooking?.reference||"—", name: form.name, email: form.email, phone: form.phone, tourTitle: form.tourTitle, date: form.date, guests: form.guests, pkg: form.package })}
-          style={S.pdfBtn} className="bf-pdf-btn">
+        <button onClick={() => downloadBookingPDF({
+          reference: currentBooking?.reference||"—", name: form.name, email: form.email,
+          phone: form.phone, tourTitle: form.tourTitle, date: form.date, guests: form.guests,
+          pkg: form.package, days: form.days, pricePerPerson, totalPrice, depositAmount,
+        })} style={S.pdfBtn} className="bf-pdf-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ flexShrink:0 }}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download PDF Invoice
         </button>
@@ -244,7 +318,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       </div>
       <p style={S.stepLabel}>Card Payment</p>
       <Elements stripe={stripePromise} options={{ clientSecret }}>
-        <StripeCheckout bookingRef={currentBooking.reference} amount={DEPOSIT_LABELS[form.package]} onSuccess={() => setSubmitted(true)} onBack={() => setStep(3)}/>
+        <StripeCheckout bookingRef={currentBooking.reference} amount={fmt(depositAmount)} onSuccess={() => setSubmitted(true)} onBack={() => setStep(3)}/>
       </Elements>
     </>);
   }
@@ -272,20 +346,40 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
 
     <form onSubmit={handleSubmit} style={S.form}>
 
-      {/* STEP 1 */}
+      {/* ════ STEP 1 ════ */}
       {step === 1 && (
         <div className="bf-step">
-          <Field label="Tour">
-            {/* ✅ FIX: always editable — only pre-fill value, never readOnly */}
-            <input
-              name="tourTitle"
-              value={form.tourTitle}
-              onChange={handleChange}
-              placeholder="e.g. Masai Mara Safari"
-              style={S.input}
-              required
-            />
-          </Field>
+
+          {/* Tour dropdown */}
+          <div style={{ marginBottom:"16px", position:"relative" }} ref={dropdownRef}>
+            <label style={S.label}>Tour</label>
+            <div style={{ position:"relative" }}>
+              <input
+                value={tourSearch}
+                onChange={e => { setTourSearch(e.target.value); setForm(f=>({...f,tourTitle:e.target.value})); setShowDropdown(true); }}
+                onFocus={() => setShowDropdown(true)}
+                placeholder="Search or select a tour…"
+                style={S.input}
+                required
+                autoComplete="off"
+              />
+              <span style={S.ddChevron}>
+                <svg width="11" height="6" viewBox="0 0 11 6"><path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/></svg>
+              </span>
+            </div>
+            {showDropdown && filteredTours.length > 0 && (
+              <div style={S.dropdown}>
+                {filteredTours.map(t => (
+                  <div key={t.id} style={S.dropdownItem} className="bf-dd-item"
+                    onMouseDown={() => handleTourSelect(t)}>
+                    <span style={S.ddTitle}>{t.title}</span>
+                    <span style={S.ddMeta}>{t.duration} · from ${parseFloat(t.standard_price).toLocaleString()}/person</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div style={S.row}>
             <Field label="Full Name"><input name="name" value={form.name} onChange={handleChange} placeholder="Jane Doe" style={S.input} required/></Field>
             <Field label="Email"><input name="email" type="email" value={form.email} onChange={handleChange} placeholder="jane@email.com" style={S.input} required/></Field>
@@ -298,20 +392,29 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               </select>
             </Field>
           </div>
-          <Field label="Preferred Date"><input name="date" type="date" value={form.date} onChange={handleChange} style={S.input} required/></Field>
+          <div style={S.row}>
+            <Field label="Travel Date"><input name="date" type="date" value={form.date} onChange={handleChange} style={S.input} required/></Field>
+            <Field label="Number of Days">
+              <select name="days" value={form.days} onChange={handleChange} style={S.select} className="bf-select">
+                {[1,2,3,4,5,6,7,8,9,10,14,21].map(n => <option key={n} value={n}>{n} {n===1?"Day":"Days"}</option>)}
+              </select>
+            </Field>
+          </div>
           <Field label="Special Requests" optional>
             <textarea name="message" value={form.message} onChange={handleChange} placeholder="Dietary needs, celebrations, accessibility…" style={S.textarea} rows={3}/>
           </Field>
         </div>
       )}
 
-      {/* STEP 2 — ✅ FIX: all card styles use only `border` shorthand, no borderColor mixing */}
+      {/* ════ STEP 2 ════ */}
       {step === 2 && (
         <div className="bf-step">
           <p style={S.secLabel}>Select Package</p>
           <div style={S.pkgGrid}>
             {packages.map(pkg => {
               const isActive = form.package === pkg;
+              const pkgPrice = getPricePerPerson(pkg);
+              const pkgTotal = pkgPrice * guests;
               return (
                 <button key={pkg} type="button"
                   onClick={() => setForm({ ...form, package: pkg })}
@@ -320,7 +423,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
                     display:"flex", flexDirection:"column", alignItems:"center", gap:"5px",
                     padding:"12px 8px", borderRadius:"10px", cursor:"pointer",
                     outline:"none", transition:"all 0.2s",
-                    // ✅ Single border property — no mixing
                     border: isActive ? "1.5px solid #4B5320" : "1.5px solid #e5e0d8",
                     background: isActive ? "#f0f4ea" : "#faf9f7",
                     boxShadow: isActive ? "0 0 0 3px rgba(75,83,32,0.1)" : "none",
@@ -329,10 +431,43 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
                     {PACKAGE_ICONS[pkg]}
                   </span>
                   <span style={S.pkgName}>{pkg}</span>
-                  <span style={{ ...S.pkgPrice, color: isActive?"#4B5320":"#9a9590" }}>{PACKAGE_LABELS[pkg]}</span>
+                  <span style={{ fontSize:"11px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif" }}>${pkgPrice.toLocaleString()}/person</span>
+                  <span style={{ fontSize:"12px", fontWeight:700, color: isActive?"#4B5320":"#b0aa9e", fontFamily:"'DM Sans',sans-serif" }}>
+                    {fmt(pkgTotal)}
+                  </span>
                 </button>
               );
             })}
+          </div>
+
+          {/* ── Live price breakdown ── */}
+          <div style={S.priceBreakdown}>
+            <div style={S.priceRowHdr}>Price Breakdown</div>
+            <div style={S.priceRow}>
+              <span style={S.priceLabel}>{form.package} package</span>
+              <span style={S.priceVal}>{fmt(pricePerPerson)}/person</span>
+            </div>
+            <div style={S.priceRow}>
+              <span style={S.priceLabel}>× {guests} guest{guests>1?"s":""}</span>
+              <span style={S.priceVal}>{fmt(totalPrice)}</span>
+            </div>
+            <div style={S.priceRow}>
+              <span style={S.priceLabel}>Duration</span>
+              <span style={S.priceVal}>{form.days} day{Number(form.days)>1?"s":""}</span>
+            </div>
+            <div style={S.priceDivider}/>
+            <div style={S.priceRow}>
+              <span style={{ ...S.priceLabel, fontWeight:700, color:"#2a2520", fontSize:"13px" }}>Total Amount</span>
+              <span style={{ ...S.priceVal, fontWeight:700, color:"#4B5320", fontSize:"16px" }}>{fmt(totalPrice)}</span>
+            </div>
+            <div style={S.priceRow}>
+              <span style={{ ...S.priceLabel, color:"#7a8550" }}>Deposit now (30%)</span>
+              <span style={{ ...S.priceVal, color:"#7a8550", fontWeight:600 }}>{fmt(depositAmount)}</span>
+            </div>
+            <div style={S.priceRow}>
+              <span style={{ ...S.priceLabel, color:"#b0aa9e" }}>Balance on arrival</span>
+              <span style={{ ...S.priceVal, color:"#b0aa9e" }}>{fmt(balanceAmount)}</span>
+            </div>
           </div>
 
           <p style={S.secLabel}>Payment Method</p>
@@ -350,7 +485,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
                     display:"flex", alignItems:"center", gap:"10px",
                     padding:"12px 14px", borderRadius:"10px", cursor:"pointer",
                     outline:"none", transition:"all 0.2s", textAlign:"left",
-                    // ✅ Single border property — no mixing
                     border: isActive ? "1.5px solid #4B5320" : "1.5px solid #e5e0d8",
                     background: isActive ? "#f0f4ea" : "#faf9f7",
                     boxShadow: isActive ? "0 0 0 3px rgba(75,83,32,0.1)" : "none",
@@ -378,36 +512,32 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         </div>
       )}
 
-      {/* STEP 3 */}
+      {/* ════ STEP 3 ════ */}
       {step === 3 && (
         <div className="bf-step">
           <div style={S.reviewBox}>
             {[
-              { label:"Tour",    val: form.tourTitle || "—" },
-              { label:"Guest",   val: form.name },
-              { label:"Email",   val: form.email },
-              { label:"Phone",   val: form.phone },
-              { label:"Date",    val: form.date ? new Date(form.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "—" },
-              { label:"Guests",  val: `${form.guests} ${Number(form.guests)===1?"person":"people"}` },
-              { label:"Package", val: `${form.package} · ${PACKAGE_LABELS[form.package]}` },
-              { label:"Deposit", val: DEPOSIT_LABELS[form.package] },
-              { label:"Payment", val: form.paymentMethod==="mpesa"?`M-Pesa (${form.mpesaNumber})`:form.paymentMethod==="card"?"Credit / Debit Card":"—" },
-            ].map(({ label, val }, i, arr) => (
+              { label:"Tour",         val: form.tourTitle || "—" },
+              { label:"Guest",        val: form.name },
+              { label:"Email",        val: form.email },
+              { label:"Phone",        val: form.phone },
+              { label:"Date",         val: form.date ? new Date(form.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "—" },
+              { label:"Days",         val: `${form.days} day${Number(form.days)>1?"s":""}` },
+              { label:"Guests",       val: `${form.guests} ${Number(form.guests)===1?"person":"people"}` },
+              { label:"Package",      val: form.package },
+              { label:"Per Person",   val: fmt(pricePerPerson) },
+              { label:"Total Amount", val: fmt(totalPrice), bold: true },
+              { label:"Deposit (30%)",val: fmt(depositAmount), highlight: true },
+              { label:"Balance",      val: fmt(balanceAmount) },
+              { label:"Payment",      val: form.paymentMethod==="mpesa"?`M-Pesa (${form.mpesaNumber})`:form.paymentMethod==="card"?"Credit / Debit Card":"—" },
+            ].map(({ label, val, bold, highlight }, i, arr) => (
               <div key={label} style={{ ...S.reviewRow, ...(i===arr.length-1?{ borderBottom:"none", paddingBottom:0 }:{}) }}>
                 <span style={S.reviewLabel}>{label}</span>
-                <span style={S.reviewVal}>{val}</span>
+                <span style={{ ...S.reviewVal, ...(bold?{ fontWeight:700, color:"#2a2520" }:{}), ...(highlight?{ fontWeight:700, color:"#4B5320" }:{}) }}>{val}</span>
               </div>
             ))}
           </div>
-          <div style={S.pdfNotice}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5320" strokeWidth="2" style={{ flexShrink:0, marginTop:1 }}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <p style={S.pdfNoticeText}>
-              A PDF invoice can be downloaded after confirmation.
-              {form.paymentMethod==="mpesa" && <> M-Pesa push to <strong>{form.mpesaNumber}</strong>.</>}
-              {form.paymentMethod==="card"  && <> You&apos;ll proceed to secure card payment.</>}
-            </p>
-          </div>
-          <p style={S.terms}>By confirming you agree to Wikima Safari&apos;s booking terms. A 30% deposit of <strong>{DEPOSIT_LABELS[form.package]}</strong> is charged upon confirmation.</p>
+          <p style={S.terms}>By confirming you agree to Wikima Safari&apos;s booking terms. A 30% deposit of <strong>{fmt(depositAmount)}</strong> is charged upon confirmation. Balance of <strong>{fmt(balanceAmount)}</strong> is due on arrival.</p>
         </div>
       )}
 
@@ -418,8 +548,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           {loading
             ? <span style={S.spinWrap}><span className="bf-spinner"/>{step===3?"Creating booking…":"Processing…"}</span>
             : step<3 ? "Continue →"
-            : form.paymentMethod==="mpesa" ? `Send M-Pesa Push · ${DEPOSIT_LABELS[form.package]}`
-            : `Pay by Card · ${DEPOSIT_LABELS[form.package]}`}
+            : form.paymentMethod==="mpesa" ? `Send M-Pesa Push · ${fmt(depositAmount)}`
+            : `Pay by Card · ${fmt(depositAmount)}`}
         </button>
       </div>
     </form>
@@ -440,59 +570,69 @@ const CheckIcon = () => (
 );
 
 const S: Record<string, React.CSSProperties> = {
-  form:      { display:"flex", flexDirection:"column", gap:0 },
-  progress:  { display:"flex", alignItems:"center", gap:0, marginBottom:"6px" },
-  dot:       { width:26, height:26, borderRadius:"50%", background:"#f0ede8", border:"2px solid #e5e0d8", display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.3s", flexShrink:0 },
-  dotActive: { background:"#4B5320", border:"2px solid #4B5320" },
-  dotDone:   { background:"#4B5320", border:"2px solid #4B5320" },
-  line:      { flex:1, height:2, background:"#e5e0d8", transition:"background 0.4s" },
-  lineDone:  { background:"#4B5320" },
-  stepLabel: { fontSize:"11px", fontFamily:"'DM Sans',sans-serif", color:"#9a9590", letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:"20px", marginTop:"4px" },
-  label:     { display:"block", fontSize:"11px", fontWeight:600, color:"#6b6560", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:"6px", fontFamily:"'DM Sans',sans-serif" },
-  optTag:    { fontWeight:400, color:"#b0aa9e", textTransform:"none", letterSpacing:0 },
-  input:     { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#2a2520", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", transition:"border-color 0.2s, box-shadow 0.2s", boxSizing:"border-box" },
-  select:    { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#2a2520", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", cursor:"pointer", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='6'%3E%3Cpath d='M.5.5l5 5 5-5' stroke='%234B5320' stroke-width='1.4' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center", boxSizing:"border-box" },
-  textarea:  { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#2a2520", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", resize:"none", boxSizing:"border-box" },
-  row:       { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" },
-  secLabel:  { fontSize:"10px", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px", marginTop:"4px" },
-  pkgGrid:   { display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"8px", marginBottom:"20px" },
-  pkgName:   { fontSize:"11px", fontWeight:700, color:"#4a4540", fontFamily:"'DM Sans',sans-serif", letterSpacing:"0.04em" },
-  pkgPrice:  { fontSize:"13px", fontWeight:700, fontFamily:"'DM Sans',sans-serif", transition:"color 0.2s" },
-  payGrid:   { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px", marginBottom:"16px" },
-  payLabel:  { display:"block", fontSize:"12px", fontWeight:700, color:"#2a2520", fontFamily:"'DM Sans',sans-serif" },
-  paySub:    { display:"block", fontSize:"10px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginTop:"1px" },
-  mpesaBox:  { background:"#f6f8f0", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"14px 16px", marginBottom:"16px" },
-  mpesaHint: { fontSize:"11px", color:"#7a8550", fontFamily:"'DM Sans',sans-serif", marginTop:"4px", lineHeight:1.5 },
-  reviewBox: { border:"1.5px solid #e6e0d8", borderRadius:"12px", overflow:"hidden", marginBottom:"14px" },
-  reviewRow: { display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"10px 14px", borderBottom:"1px solid #f0ede8", gap:"12px" },
+  form:       { display:"flex", flexDirection:"column", gap:0 },
+  progress:   { display:"flex", alignItems:"center", gap:0, marginBottom:"6px" },
+  dot:        { width:26, height:26, borderRadius:"50%", background:"#f0ede8", border:"2px solid #e5e0d8", display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.3s", flexShrink:0 },
+  dotActive:  { background:"#4B5320", border:"2px solid #4B5320" },
+  dotDone:    { background:"#4B5320", border:"2px solid #4B5320" },
+  line:       { flex:1, height:2, background:"#e5e0d8", transition:"background 0.4s" },
+  lineDone:   { background:"#4B5320" },
+  stepLabel:  { fontSize:"11px", fontFamily:"'DM Sans',sans-serif", color:"#9a9590", letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:"20px", marginTop:"4px" },
+  label:      { display:"block", fontSize:"11px", fontWeight:600, color:"#6b6560", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:"6px", fontFamily:"'DM Sans',sans-serif" },
+  optTag:     { fontWeight:400, color:"#b0aa9e", textTransform:"none", letterSpacing:0 },
+  input:      { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#2a2520", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", transition:"border-color 0.2s, box-shadow 0.2s", boxSizing:"border-box" },
+  select:     { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#2a2520", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", cursor:"pointer", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='6'%3E%3Cpath d='M.5.5l5 5 5-5' stroke='%234B5320' stroke-width='1.4' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center", boxSizing:"border-box" },
+  textarea:   { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#2a2520", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", resize:"none", boxSizing:"border-box" },
+  row:        { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" },
+  secLabel:   { fontSize:"10px", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px", marginTop:"4px" },
+  pkgGrid:    { display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"8px", marginBottom:"16px" },
+  pkgName:    { fontSize:"11px", fontWeight:700, color:"#4a4540", fontFamily:"'DM Sans',sans-serif", letterSpacing:"0.04em" },
+  // Price breakdown
+  priceBreakdown: { background:"#f6f8f0", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"14px 16px", marginBottom:"20px" },
+  priceRowHdr:    { fontSize:"9px", fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", color:"#7a8550", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px" },
+  priceRow:   { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"4px 0" },
+  priceLabel: { fontSize:"12px", color:"#6b6560", fontFamily:"'DM Sans',sans-serif" },
+  priceVal:   { fontSize:"13px", fontWeight:600, color:"#2a2520", fontFamily:"'DM Sans',sans-serif" },
+  priceDivider:{ height:1, background:"#dde8c0", margin:"8px 0" },
+  payGrid:    { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px", marginBottom:"16px" },
+  payLabel:   { display:"block", fontSize:"12px", fontWeight:700, color:"#2a2520", fontFamily:"'DM Sans',sans-serif" },
+  paySub:     { display:"block", fontSize:"10px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginTop:"1px" },
+  mpesaBox:   { background:"#f6f8f0", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"14px 16px", marginBottom:"16px" },
+  mpesaHint:  { fontSize:"11px", color:"#7a8550", fontFamily:"'DM Sans',sans-serif", marginTop:"4px", lineHeight:1.5 },
+  reviewBox:  { border:"1.5px solid #e6e0d8", borderRadius:"12px", overflow:"hidden", marginBottom:"14px" },
+  reviewRow:  { display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"10px 14px", borderBottom:"1px solid #f0ede8", gap:"12px" },
   reviewLabel:{ fontSize:"10px", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", flexShrink:0 },
-  reviewVal: { fontSize:"13px", color:"#2a2520", fontFamily:"'DM Sans',sans-serif", textAlign:"right", wordBreak:"break-word" },
-  pdfNotice: { display:"flex", gap:"10px", alignItems:"flex-start", background:"#f0f4ea", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"12px 14px", marginBottom:"12px" },
-  pdfNoticeText:{ fontSize:"12px", color:"#4a5a28", fontFamily:"'DM Sans',sans-serif", lineHeight:1.55, margin:0 },
-  terms:     { fontSize:"11px", color:"#b0aa9e", fontFamily:"'DM Sans',sans-serif", lineHeight:1.6, marginBottom:"12px" },
-  navRow:    { display:"flex", gap:"8px", marginTop:"8px" },
-  backBtn:   { padding:"11px 16px", border:"1.5px solid #e5e0d8", borderRadius:"8px", background:"#fff", color:"#6b6560", fontSize:"12px", fontFamily:"'DM Sans',sans-serif", cursor:"pointer", fontWeight:600, transition:"all 0.2s", flexShrink:0 },
-  nextBtn:   { flex:1, padding:"12px 20px", background:"#4B5320", color:"#fff", border:"none", borderRadius:"8px", fontSize:"12px", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"background 0.2s, transform 0.15s" },
-  spinWrap:  { display:"flex", alignItems:"center", justifyContent:"center", gap:"8px" },
+  reviewVal:  { fontSize:"13px", color:"#2a2520", fontFamily:"'DM Sans',sans-serif", textAlign:"right", wordBreak:"break-word" },
+  terms:      { fontSize:"11px", color:"#b0aa9e", fontFamily:"'DM Sans',sans-serif", lineHeight:1.6, marginBottom:"12px" },
+  navRow:     { display:"flex", gap:"8px", marginTop:"8px" },
+  backBtn:    { padding:"11px 16px", border:"1.5px solid #e5e0d8", borderRadius:"8px", background:"#fff", color:"#6b6560", fontSize:"12px", fontFamily:"'DM Sans',sans-serif", cursor:"pointer", fontWeight:600, transition:"all 0.2s", flexShrink:0 },
+  nextBtn:    { flex:1, padding:"12px 20px", background:"#4B5320", color:"#fff", border:"none", borderRadius:"8px", fontSize:"12px", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"background 0.2s, transform 0.15s" },
+  spinWrap:   { display:"flex", alignItems:"center", justifyContent:"center", gap:"8px" },
   errorBanner:{ display:"flex", alignItems:"center", gap:"8px", background:"#fef2f2", border:"1.5px solid #fca5a5", borderRadius:"8px", padding:"10px 14px", marginBottom:"14px", fontSize:"12px", color:"#dc2626", fontFamily:"'DM Sans',sans-serif" },
-  confirmedWrap: { textAlign:"center", padding:"28px 16px" },
-  confirmedIcon: { width:52, height:52, borderRadius:"50%", background:"#f0f4ea", border:"2px solid #4B5320", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" },
-  confirmedLabel:{ fontSize:"10px", fontWeight:700, letterSpacing:"0.2em", textTransform:"uppercase", color:"#4B5320", fontFamily:"'DM Sans',sans-serif", marginBottom:"6px" },
-  confirmedTitle:{ fontSize:"22px", fontWeight:700, color:"#2a2520", fontFamily:"'DM Sans',sans-serif", marginBottom:"8px" },
-  confirmedSub:  { fontSize:"14px", color:"#6b6560", fontFamily:"'DM Sans',sans-serif", lineHeight:1.7, marginBottom:"16px" },
-  refBadge:      { display:"inline-block", background:"#f0f4ea", border:"1px solid #c8d09e", borderRadius:"8px", padding:"8px 16px", fontSize:"13px", fontFamily:"'DM Sans',sans-serif", color:"#4a5a28", marginBottom:"16px" },
-  pdfBtn:        { display:"inline-flex", alignItems:"center", justifyContent:"center", gap:"8px", background:"#4B5320", color:"#fff", border:"none", borderRadius:"10px", padding:"12px 24px", fontSize:"13px", fontWeight:700, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", marginBottom:"16px", transition:"background 0.2s, transform 0.15s" },
-  pillRow:   { display:"flex", gap:"8px", justifyContent:"center", marginBottom:"18px", flexWrap:"wrap" },
-  pill:      { display:"inline-flex", alignItems:"center", fontSize:"11px", fontWeight:600, padding:"5px 12px", borderRadius:"20px", fontFamily:"'DM Sans',sans-serif" },
-  pillGreen: { background:"#f0f4ea", color:"#4B5320", border:"1px solid #c8d09e" },
-  resetBtn:      { display:"block", margin:"0 auto", background:"transparent", border:"1.5px solid #e5e0d8", color:"#4B5320", padding:"9px 22px", borderRadius:"8px", fontSize:"12px", fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" },
-  mpesaWaitIcon: { width:52, height:52, borderRadius:"50%", background:"#f0f4ea", border:"2px solid #4B5320", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" },
-  mpesaTimer:    { fontSize:"11px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginTop:"8px" },
-  stripeHeader:     { display:"flex", alignItems:"center", gap:"8px", marginBottom:"6px" },
-  stripeHeaderText: { fontSize:"13px", color:"#4a5a28", fontFamily:"'DM Sans',sans-serif" },
-  stripeRef:        { fontSize:"12px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginBottom:"16px" },
-  stripeElementWrap:{ border:"1.5px solid #e5e0d8", borderRadius:"10px", padding:"16px", background:"#faf9f7", marginBottom:"16px" },
-  stripeError:      { fontSize:"12px", color:"#dc2626", fontFamily:"'DM Sans',sans-serif", marginBottom:"12px", background:"#fef2f2", padding:"8px 12px", borderRadius:"6px", border:"1px solid #fca5a5" },
+  confirmedWrap:  { textAlign:"center", padding:"28px 16px" },
+  confirmedIcon:  { width:52, height:52, borderRadius:"50%", background:"#f0f4ea", border:"2px solid #4B5320", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" },
+  confirmedLabel: { fontSize:"10px", fontWeight:700, letterSpacing:"0.2em", textTransform:"uppercase", color:"#4B5320", fontFamily:"'DM Sans',sans-serif", marginBottom:"6px" },
+  confirmedTitle: { fontSize:"22px", fontWeight:700, color:"#2a2520", fontFamily:"'DM Sans',sans-serif", marginBottom:"8px" },
+  confirmedSub:   { fontSize:"14px", color:"#6b6560", fontFamily:"'DM Sans',sans-serif", lineHeight:1.7, marginBottom:"16px" },
+  refBadge:       { display:"inline-block", background:"#f0f4ea", border:"1px solid #c8d09e", borderRadius:"8px", padding:"8px 16px", fontSize:"13px", fontFamily:"'DM Sans',sans-serif", color:"#4a5a28", marginBottom:"16px" },
+  pdfBtn:         { display:"inline-flex", alignItems:"center", justifyContent:"center", gap:"8px", background:"#4B5320", color:"#fff", border:"none", borderRadius:"10px", padding:"12px 24px", fontSize:"13px", fontWeight:700, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", marginBottom:"16px", transition:"background 0.2s, transform 0.15s" },
+  pillRow:    { display:"flex", gap:"8px", justifyContent:"center", marginBottom:"18px", flexWrap:"wrap" },
+  pill:       { display:"inline-flex", alignItems:"center", fontSize:"11px", fontWeight:600, padding:"5px 12px", borderRadius:"20px", fontFamily:"'DM Sans',sans-serif" },
+  pillGreen:  { background:"#f0f4ea", color:"#4B5320", border:"1px solid #c8d09e" },
+  resetBtn:       { display:"block", margin:"0 auto", background:"transparent", border:"1.5px solid #e5e0d8", color:"#4B5320", padding:"9px 22px", borderRadius:"8px", fontSize:"12px", fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" },
+  mpesaWaitIcon:  { width:52, height:52, borderRadius:"50%", background:"#f0f4ea", border:"2px solid #4B5320", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" },
+  mpesaTimer:     { fontSize:"11px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginTop:"8px" },
+  stripeHeader:      { display:"flex", alignItems:"center", gap:"8px", marginBottom:"6px" },
+  stripeHeaderText:  { fontSize:"13px", color:"#4a5a28", fontFamily:"'DM Sans',sans-serif" },
+  stripeRef:         { fontSize:"12px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginBottom:"16px" },
+  stripeElementWrap: { border:"1.5px solid #e5e0d8", borderRadius:"10px", padding:"16px", background:"#faf9f7", marginBottom:"16px" },
+  stripeError:       { fontSize:"12px", color:"#dc2626", fontFamily:"'DM Sans',sans-serif", marginBottom:"12px", background:"#fef2f2", padding:"8px 12px", borderRadius:"6px", border:"1px solid #fca5a5" },
+  // Tour dropdown
+  ddChevron:  { position:"absolute", right:"12px", top:"50%", transform:"translateY(-50%)", pointerEvents:"none" },
+  dropdown:   { position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 8px 24px rgba(0,0,0,0.10)", zIndex:100, maxHeight:"220px", overflowY:"auto", marginTop:"4px" },
+  dropdownItem:{ padding:"10px 14px", cursor:"pointer", borderBottom:"1px solid #f5f2ee", transition:"background 0.15s" },
+  ddTitle:    { display:"block", fontSize:"13px", fontWeight:600, color:"#2a2520", fontFamily:"'DM Sans',sans-serif" },
+  ddMeta:     { display:"block", fontSize:"11px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginTop:"2px" },
 };
 
 const css = `
@@ -511,6 +651,8 @@ const css = `
   .bf-mpesa{animation:bfFadeUp 0.3s ease both;}
   .bf-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:bfSpin 0.7s linear infinite;}
   .bf-spinner-lg{display:inline-block;width:28px;height:28px;border:3px solid rgba(75,83,32,0.2);border-top-color:#4B5320;border-radius:50%;animation:bfSpinLg 0.9s linear infinite;}
+  .bf-dd-item:hover{background:#f6f8f0!important;}
+  .bf-dd-item:last-child{border-bottom:none!important;}
 `;
 
 export default BookingForm;
