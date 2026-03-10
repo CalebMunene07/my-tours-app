@@ -5,7 +5,6 @@ import Link from "next/link";
 import React from "react";
 import { toursData } from "@/data/tours";
 import { CheckCircle2, Tent, Crown, Gem } from "lucide-react";
-// 1. Import your master BookingForm component
 import BookingForm from "@/components/BookingForm";
 
 export default function ToursListingPage() {
@@ -56,7 +55,7 @@ export default function ToursListingPage() {
                   <p className="text-[#4B5320] font-semibold text-sm mt-1">{tour.location} • {tour.duration}</p>
                   <p className="text-gray-500 mt-3 line-clamp-2 text-sm leading-relaxed">{tour.description}</p>
                   <div className="mt-5 flex items-center justify-between">
-                    <span className="text-2xl font-black text-gray-900">${tour.pricing[0].price}</span>
+                    <span className="text-2xl font-black text-gray-900">{tour.pricing[0].price}</span>
                     <span className="bg-[#4B5320] text-white px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wide">
                       View Details
                     </span>
@@ -68,13 +67,13 @@ export default function ToursListingPage() {
         </div>
       </section>
 
-      {/* ── UNIFIED BOOKING FORM SECTION ── */}
+      {/* ── BOOKING FORM SECTION ── */}
       <section className="mb-24">
         <div className="rounded-4xl overflow-hidden border border-gray-100 shadow-lg"
           style={{ background: "linear-gradient(135deg, #f8f6f1 0%, #f2f5eb 100%)" }}>
           <div className="grid grid-cols-1 lg:grid-cols-2">
 
-            {/* Left Column: Visual Copy */}
+            {/* Left Column */}
             <div className="p-10 lg:p-14 flex flex-col justify-center"
               style={{ background: "linear-gradient(145deg, #1a1208 0%, #2d3a10 100%)" }}>
               <span className="inline-block text-[10px] font-bold tracking-[0.22em] uppercase text-[#c8a96e] border border-[#c8a96e]/40 px-3 py-1 rounded-full mb-6 w-fit">
@@ -86,15 +85,15 @@ export default function ToursListingPage() {
               </h2>
               <div className="w-10 h-0.5 bg-[#c8a96e] mb-5" />
               <p className="text-white/60 text-base leading-relaxed mb-8 max-w-sm">
-                Secure your spot on one of East Africa's most extraordinary safari experiences. 
+                Secure your spot on one of East Africa's most extraordinary safari experiences.
                 Expert guides, exclusive access, and memories for a lifetime.
               </p>
               <div className="flex flex-col gap-3">
                 {[
-                  { text: "Secure Stripe & M-Pesa Payments" },
-                  { text: "Instant booking confirmation via email" },
-                  { text: "24/7 Ground support once you land" },
-                ].map(({ text }) => (
+                  "Secure Stripe & M-Pesa Payments",
+                  "Instant booking confirmation via email",
+                  "24/7 Ground support once you land",
+                ].map((text) => (
                   <div key={text} className="flex items-center gap-3">
                     <CheckCircle2 size={16} className="text-[#D4AF37]" />
                     <span className="text-white/70 text-sm">{text}</span>
@@ -103,15 +102,13 @@ export default function ToursListingPage() {
               </div>
             </div>
 
-            {/* Right Column: The Real Form */}
+            {/* Right Column */}
             <div className="p-10 lg:p-12 bg-white">
               <h3 className="text-xl font-bold text-gray-900 mb-1">Book Your Safari</h3>
               <p className="text-gray-400 text-sm mb-8">Select your package and secure your dates.</p>
-              
-              {/* 2. Using the Shared BookingForm for 100% consistency */}
-              <BookingForm 
-                tourTitle="Safari Adventure" 
-                pricingTiers={["Standard", "Premium", "Luxury"]} 
+              <BookingForm
+                tourTitle="Safari Adventure"
+                pricingTiers={["Standard", "Premium", "Luxury"]}
               />
             </div>
           </div>
@@ -132,8 +129,8 @@ export default function ToursListingPage() {
           {packages.map((pkg, idx) => (
             <div
               key={pkg.name}
-              className="rounded-4xl overflow-hidden shadow-xl flex flex-col hover:-translate-y-2 transition-transform duration-300"
-              style={{ backgroundColor: "#005c0b", border: "3px solid #D4AF37" }}
+              className="rounded-3xl overflow-hidden shadow-xl flex flex-col hover:-translate-y-2 transition-transform duration-300"
+              style={{ backgroundColor: "#4B5320", border: "3px solid #D4AF37" }}
             >
               <div className="px-8 pt-8 pb-6 border-b border-white/10">
                 <div className="mb-4">{pkg.icon}</div>
@@ -144,7 +141,7 @@ export default function ToursListingPage() {
                   <span className="text-white/50 text-xs mb-1 ml-1">/ {pkg.priceNote}</span>
                 </div>
                 {idx === 1 && (
-                  <span className="inline-block mt-3 text-[9px] font-bold tracking-[0.18em] uppercase bg-[#D4AF37] text-[#005c0b] px-3 py-1 rounded-full">
+                  <span className="inline-block mt-3 text-[9px] font-bold tracking-[0.18em] uppercase bg-[#D4AF37] text-[#4B5320] px-3 py-1 rounded-full">
                     Most Popular
                   </span>
                 )}
@@ -160,8 +157,8 @@ export default function ToursListingPage() {
                 </ul>
                 <Link
                   href="/contact"
-                  className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-sm text-center transition-all duration-200 hover:scale-[1.02] block"
-                  style={{ background: "#D4AF37", color: "#005c0b" }}
+                  className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-sm text-center transition-all duration-200 hover:scale-[1.02] hover:opacity-90 block"
+                  style={{ background: "#D4AF37", color: "#4B5320" }}
                 >
                   Inquire Now
                 </Link>

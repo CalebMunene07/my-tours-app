@@ -854,15 +854,7 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Backend API — port hidden */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                <h3 className="font-bold text-gray-900 mb-1">Backend API</h3>
-                <p className="text-xs text-gray-400 mb-3">Connected data endpoint.</p>
-                <div className="bg-gray-50 rounded-xl px-4 py-3 font-mono text-xs text-[#4B5320] border border-gray-200 break-all">
-                  {(API || "").replace(/:\d+$/, "")}/api
-                </div>
-                <p className="text-[10px] text-gray-300 mt-2">Port information is hidden for security.</p>
-              </div>
+             
 
               {/* Sign out */}
               <div className="bg-white rounded-2xl border border-gray-100 p-6">

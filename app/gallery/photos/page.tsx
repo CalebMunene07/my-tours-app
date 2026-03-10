@@ -14,12 +14,12 @@ import { X, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
 //  then uncomment the matching line below.
 // ─────────────────────────────────────────────────────────────────
 const photos = [
-  { src: "/assets/photos/photo1.jpg", alt: "Malindi Beach — MALINDI written in the sand" },
-  { src: "/assets/photos/photo2.jpg", alt: "Mount Kenya reflected in a still alpine lake" },
-  { src: "/assets/photos/photo3.jpg", alt: "Mount Kilimanjaro rising above the Amboseli plains" },
-  { src: "/assets/photos/photo4.jpg", alt: "Nomad Beach Bar & Restaurant, Diani at twilight" },
-  { src: "/assets/photos/photo5.jpg", alt: "Leopard cub peering through acacia thorns" },
-  { src: "/assets/photos/photo6.jpg", alt: "Leopard with prey high in an acacia tree, Masai Mara" },
+  { src: "/assets/photos/beach.jpg", alt: "Malindi Beach — MALINDI written in the sand" },
+  { src: "/assets/photos/mountkenya.jpg", alt: "Mount Kenya reflected in a still alpine lake" },
+  { src: "/assets/photos/mountkilimanjaro.jpg", alt: "Mount Kilimanjaro rising above the Amboseli plains" },
+  { src: "/assets/photos/nomad diani.jpg", alt: "Nomad Beach Bar & Restaurant, Diani at twilight" },
+  { src: "/assets/photos/WhatsApp Image 2026-03-02 at 14.27.16.jpeg", alt: "Leopard cub peering through acacia thorns" },
+  { src: "/assets/photos/WhatsApp Image 2026-03-02 at 14.27.19.jpeg", alt: "Leopard with prey high in an acacia tree, Masai Mara" },
   // { src: "/assets/photos/photo7.jpg",  alt: "Your caption" },
   // { src: "/assets/photos/photo8.jpg",  alt: "Your caption" },
   // { src: "/assets/photos/photo9.jpg",  alt: "Your caption" },

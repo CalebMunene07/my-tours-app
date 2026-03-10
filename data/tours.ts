@@ -75,15 +75,15 @@ export const toursData: TourData[] = [
     ],
   },
   {
-    slug: "diani-beach-escape",
+    slug: "malindi-beach-escape",
     image: "/assets/tour-beach.jpg",
-    title: "Diani Beach Escape",
+    title: "Malindi Beach Escape",
     duration: "7 Days",
     price: "From $950",
     description: "Relax on pristine white sand beaches along the stunning Kenyan coastline.",
     longDescription:
-      "Unwind on the award-winning Diani Beach with 7 days of tropical paradise. Swim in turquoise waters and explore coral reefs.",
-    location: "Diani Beach, Kenya",
+      "Unwind on the award-winning Malindi Beach with 7 days of tropical paradise. Swim in turquoise waters and explore coral reefs.",
+    location: "Malindi Beach, Kenya",
     groupSize: "2–12 people",
     difficulty: "Easy",
     gallery: [
