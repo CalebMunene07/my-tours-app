@@ -28,6 +28,34 @@ interface BookingFormProps {
   pricingTiers?: string[];
 }
 
+// ── Country codes ──
+const COUNTRY_CODES = [
+  { code: "+254", flag: "🇰🇪", name: "Kenya" },
+  { code: "+61",  flag: "🇦🇺", name: "Australia" },
+  { code: "+1",   flag: "🇺🇸", name: "USA / Canada" },
+  { code: "+44",  flag: "🇬🇧", name: "UK" },
+  { code: "+49",  flag: "🇩🇪", name: "Germany" },
+  { code: "+33",  flag: "🇫🇷", name: "France" },
+  { code: "+39",  flag: "🇮🇹", name: "Italy" },
+  { code: "+34",  flag: "🇪🇸", name: "Spain" },
+  { code: "+31",  flag: "🇳🇱", name: "Netherlands" },
+  { code: "+46",  flag: "🇸🇪", name: "Sweden" },
+  { code: "+47",  flag: "🇳🇴", name: "Norway" },
+  { code: "+41",  flag: "🇨🇭", name: "Switzerland" },
+  { code: "+27",  flag: "🇿🇦", name: "South Africa" },
+  { code: "+255", flag: "🇹🇿", name: "Tanzania" },
+  { code: "+256", flag: "🇺🇬", name: "Uganda" },
+  { code: "+250", flag: "🇷🇼", name: "Rwanda" },
+  { code: "+251", flag: "🇪🇹", name: "Ethiopia" },
+  { code: "+971", flag: "🇦🇪", name: "UAE" },
+  { code: "+91",  flag: "🇮🇳", name: "India" },
+  { code: "+86",  flag: "🇨🇳", name: "China" },
+  { code: "+81",  flag: "🇯🇵", name: "Japan" },
+  { code: "+82",  flag: "🇰🇷", name: "South Korea" },
+  { code: "+55",  flag: "🇧🇷", name: "Brazil" },
+  { code: "+52",  flag: "🇲🇽", name: "Mexico" },
+];
+
 const PACKAGE_ICONS: Record<Package, React.ReactNode> = {
   Standard: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
   Premium:  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
@@ -41,6 +69,7 @@ function downloadBookingPDF(p: {
   days:string; pricePerPerson:number; totalPrice:number; depositAmount:number;
 }) {
   const balance = p.totalPrice - p.depositAmount;
+  const depositPct = Math.round((p.depositAmount / p.totalPrice) * 100);
   const tDate = p.date ? new Date(p.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}) : "—";
   const today = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Wikima Booking ${p.reference}</title>
@@ -62,11 +91,11 @@ function downloadBookingPDF(p: {
 <div class="sec"><div class="sec-t">Payment Summary</div><div class="pay">
 <div class="row"><span class="lbl">Price per person</span><span class="amt">$${p.pricePerPerson.toLocaleString()}</span></div>
 <div class="row"><span class="lbl">× ${p.guests} guest${Number(p.guests)>1?"s":""}</span><span class="amt">$${p.totalPrice.toLocaleString()}</span></div>
-<div class="row"><span class="lbl">Deposit Paid (30%)</span><span class="amt">$${p.depositAmount.toLocaleString()}</span></div>
+<div class="row"><span class="lbl">Deposit Paid (${depositPct}%)</span><span class="amt">$${p.depositAmount.toLocaleString()}</span></div>
 <div class="row"><span class="lbl">Balance on Arrival</span><span class="amt">$${balance.toLocaleString()}</span></div>
 <div class="row"><span class="lbl">Total</span><span class="amt">$${p.totalPrice.toLocaleString()}</span></div>
 </div></div>
-<div class="ftr"><div>Wikima Safari Expeditions<br/>info@wikimasafari.com<br/>wikimasafari.com</div><div style="text-align:right">Generated ${today}<br/>Official booking confirmation.</div></div>
+<div class="ftr"><div>Wikima Safari Expeditions<br/>info@wikimasafari.com · +254 720 069 550<br/>wikimasafari.com</div><div style="text-align:right">Generated ${today}<br/>Official booking confirmation.</div></div>
 </body></html>`;
   const win = window.open("","_blank","width=820,height=950");
   if (!win) return;
@@ -92,7 +121,7 @@ const StripeCheckout: React.FC<{ bookingRef:string; amount:string; onSuccess:()=
     <div className="bf-step">
       <div style={S.stripeHeader}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5320" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        <span style={S.stripeHeaderText}>Secure Card Payment · <strong>{amount}</strong> total</span>
+        <span style={S.stripeHeaderText}>Secure Card Payment · <strong>{amount}</strong> deposit</span>
       </div>
       <p style={S.stripeRef}>Booking ref: <strong style={{ color:"#4B5320" }}>{bookingRef}</strong></p>
       <form onSubmit={handlePay}>
@@ -109,6 +138,57 @@ const StripeCheckout: React.FC<{ bookingRef:string; amount:string; onSuccess:()=
   );
 };
 
+/* ── Country Code Picker ── */
+const CountryCodePicker: React.FC<{ value: string; onChange: (code: string) => void }> = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  const filtered = COUNTRY_CODES.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) || c.code.includes(search)
+  );
+  const selected = COUNTRY_CODES.find(c => c.code === value) || COUNTRY_CODES[0];
+
+  return (
+    <div style={{ position:"relative" }} ref={ref}>
+      <button type="button" onClick={() => setOpen(!open)} style={S.ccBtn} className="bf-cc-btn">
+        <span>{selected.flag}</span>
+        <span style={{ fontSize:"13px", fontWeight:600, color:"#2a2520" }}>{selected.code}</span>
+        <svg width="9" height="5" viewBox="0 0 11 6" style={{ opacity:0.4 }}><path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/></svg>
+      </button>
+      {open && (
+        <div style={S.ccDropdown}>
+          <div style={{ padding:"8px" }}>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search country…"
+              style={{ ...S.input, fontSize:"12px", padding:"7px 10px" }}
+              autoFocus
+            />
+          </div>
+          <div style={{ maxHeight:"160px", overflowY:"auto" }}>
+            {filtered.map(c => (
+              <div key={c.code} onMouseDown={() => { onChange(c.code); setOpen(false); setSearch(""); }}
+                style={S.ccItem} className="bf-cc-item">
+                <span>{c.flag}</span>
+                <span style={{ fontSize:"12px", color:"#2a2520", flex:1 }}>{c.name}</span>
+                <span style={{ fontSize:"11px", color:"#9a9590", fontWeight:600 }}>{c.code}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 /* ══════════════════════════════════════
    MAIN BOOKING FORM
 ══════════════════════════════════════ */
@@ -121,21 +201,23 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const [currentBooking, setCurrentBooking] = useState<{ id:string; reference:string; deposit_amount:number }|null>(null);
   const [mpesaStatus, setMpesaStatus]       = useState<"idle"|"waiting"|"success"|"failed">("idle");
 
-  // ── Tour dropdown state ──
+  // Tour dropdown
   const [tours, setTours]               = useState<Tour[]>([]);
   const [tourSearch, setTourSearch]     = useState(propTourTitle);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedTour, setSelectedTour] = useState<Tour|null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Country code
+  const [countryCode, setCountryCode] = useState("+254");
+
   const [form, setForm] = useState({
     tourTitle: propTourTitle,
-    name: "", email: "", phone: "", mpesaNumber: "",
+    name: "", email: "", phoneLocal: "", mpesaNumber: "",
     date: "", guests: "1", days: "1", package: "Standard" as Package,
     paymentMethod: "", message: "",
   });
 
-  // ── Fetch all tours for dropdown ──
   useEffect(() => {
     fetch(`${API}/api/tours`)
       .then(r => r.json())
@@ -143,19 +225,13 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       .catch(() => {});
   }, []);
 
-  // ── Close dropdown on outside click ──
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
-        setShowDropdown(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    const h = (e: MouseEvent) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setShowDropdown(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  const filteredTours = tours.filter(t =>
-    t.title.toLowerCase().includes(tourSearch.toLowerCase())
-  );
+  const filteredTours = tours.filter(t => t.title.toLowerCase().includes(tourSearch.toLowerCase()));
 
   const handleTourSelect = (tour: Tour) => {
     setSelectedTour(tour);
@@ -171,7 +247,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     ? (pricingTiers.filter(t => ["Standard","Premium","Luxury"].includes(t)) as Package[])
     : ["Standard", "Premium", "Luxury"];
 
-  // ── Dynamic pricing from selected tour ──
   const getPricePerPerson = (pkg: Package): number => {
     if (selectedTour) {
       if (pkg === "Standard") return parseFloat(selectedTour.standard_price);
@@ -184,9 +259,13 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const pricePerPerson = getPricePerPerson(form.package);
   const guests         = Number(form.guests) || 1;
   const totalPrice     = pricePerPerson * guests;
-  const depositAmount  = Math.ceil(totalPrice * 0.3);
+  // ── 60% deposit ──
+  const depositAmount  = Math.ceil(totalPrice * 0.6);
   const balanceAmount  = totalPrice - depositAmount;
   const fmt            = (n: number) => `$${n.toLocaleString()}`;
+
+  // Full phone number with country code
+  const fullPhone = form.phoneLocal ? `${countryCode} ${form.phoneLocal}` : "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,7 +276,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tourTitle: form.tourTitle, guestName: form.name, guestEmail: form.email,
-          guestPhone: form.phone, travelDate: form.date, guests,
+          guestPhone: fullPhone, travelDate: form.date, guests,
           package: form.package, specialRequests: form.message,
           days: Number(form.days), totalAmount: totalPrice, depositAmount,
         }),
@@ -244,7 +323,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const resetForm = () => {
     setSubmitted(false); setStep(1); setClientSecret(null); setCurrentBooking(null);
     setMpesaStatus("idle"); setApiError(""); setSelectedTour(null); setTourSearch(propTourTitle);
-    setForm({ tourTitle: propTourTitle, name: "", email: "", phone: "", mpesaNumber: "", date: "", guests: "1", days: "1", package: "Standard", paymentMethod: "", message: "" });
+    setCountryCode("+254");
+    setForm({ tourTitle: propTourTitle, name: "", email: "", phoneLocal: "", mpesaNumber: "", date: "", guests: "1", days: "1", package: "Standard", paymentMethod: "", message: "" });
   };
 
   /* ── CONFIRMED ── */
@@ -263,7 +343,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         {currentBooking && <div style={S.refBadge}>Booking Ref: <strong style={{ color:"#4B5320" }}>{currentBooking.reference}</strong></div>}
         <button onClick={() => downloadBookingPDF({
           reference: currentBooking?.reference||"—", name: form.name, email: form.email,
-          phone: form.phone, tourTitle: form.tourTitle, date: form.date, guests: form.guests,
+          phone: fullPhone, tourTitle: form.tourTitle, date: form.date, guests: form.guests,
           pkg: form.package, days: form.days, pricePerPerson, totalPrice, depositAmount,
         })} style={S.pdfBtn} className="bf-pdf-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ flexShrink:0 }}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -370,8 +450,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             {showDropdown && filteredTours.length > 0 && (
               <div style={S.dropdown}>
                 {filteredTours.map(t => (
-                  <div key={t.id} style={S.dropdownItem} className="bf-dd-item"
-                    onMouseDown={() => handleTourSelect(t)}>
+                  <div key={t.id} style={S.dropdownItem} className="bf-dd-item" onMouseDown={() => handleTourSelect(t)}>
                     <span style={S.ddTitle}>{t.title}</span>
                     <span style={S.ddMeta}>{t.duration} · from ${parseFloat(t.standard_price).toLocaleString()}/person</span>
                   </div>
@@ -384,22 +463,37 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             <Field label="Full Name"><input name="name" value={form.name} onChange={handleChange} placeholder="Jane Doe" style={S.input} required/></Field>
             <Field label="Email"><input name="email" type="email" value={form.email} onChange={handleChange} placeholder="jane@email.com" style={S.input} required/></Field>
           </div>
+
+          {/* ── Phone with country code ── */}
+          <Field label="Phone">
+            <div style={{ display:"flex", gap:"8px" }}>
+              <CountryCodePicker value={countryCode} onChange={setCountryCode}/>
+              <input
+                name="phoneLocal"
+                value={form.phoneLocal}
+                onChange={handleChange}
+                placeholder="700 000 000"
+                style={{ ...S.input, flex:1 }}
+                required
+              />
+            </div>
+          </Field>
+
           <div style={S.row}>
-            <Field label="Phone"><input name="phone" value={form.phone} onChange={handleChange} placeholder="+254 700 000 000" style={S.input} required/></Field>
             <Field label="Guests">
               <select name="guests" value={form.guests} onChange={handleChange} style={S.select} className="bf-select">
                 {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n} {n===1?"Guest":"Guests"}</option>)}
               </select>
             </Field>
-          </div>
-          <div style={S.row}>
-            <Field label="Travel Date"><input name="date" type="date" value={form.date} onChange={handleChange} style={S.input} required/></Field>
             <Field label="Number of Days">
               <select name="days" value={form.days} onChange={handleChange} style={S.select} className="bf-select">
                 {[1,2,3,4,5,6,7,8,9,10,14,21].map(n => <option key={n} value={n}>{n} {n===1?"Day":"Days"}</option>)}
               </select>
             </Field>
           </div>
+
+          <Field label="Travel Date"><input name="date" type="date" value={form.date} onChange={handleChange} style={S.input} required/></Field>
+
           <Field label="Special Requests" optional>
             <textarea name="message" value={form.message} onChange={handleChange} placeholder="Dietary needs, celebrations, accessibility…" style={S.textarea} rows={3}/>
           </Field>
@@ -416,31 +510,21 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               const pkgPrice = getPricePerPerson(pkg);
               const pkgTotal = pkgPrice * guests;
               return (
-                <button key={pkg} type="button"
-                  onClick={() => setForm({ ...form, package: pkg })}
-                  className="bf-pkg"
-                  style={{
-                    display:"flex", flexDirection:"column", alignItems:"center", gap:"5px",
-                    padding:"12px 8px", borderRadius:"10px", cursor:"pointer",
-                    outline:"none", transition:"all 0.2s",
-                    border: isActive ? "1.5px solid #4B5320" : "1.5px solid #e5e0d8",
-                    background: isActive ? "#f0f4ea" : "#faf9f7",
-                    boxShadow: isActive ? "0 0 0 3px rgba(75,83,32,0.1)" : "none",
-                  }}>
+                <button key={pkg} type="button" onClick={() => setForm({ ...form, package: pkg })} className="bf-pkg"
+                  style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"5px", padding:"12px 8px", borderRadius:"10px", cursor:"pointer", outline:"none", transition:"all 0.2s",
+                    border: isActive?"1.5px solid #4B5320":"1.5px solid #e5e0d8", background: isActive?"#f0f4ea":"#faf9f7", boxShadow: isActive?"0 0 0 3px rgba(75,83,32,0.1)":"none" }}>
                   <span style={{ width:30, height:30, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.2s", background: isActive?"#4B5320":"#f0ede8", color: isActive?"#fff":"#9a9590" }}>
                     {PACKAGE_ICONS[pkg]}
                   </span>
                   <span style={S.pkgName}>{pkg}</span>
                   <span style={{ fontSize:"11px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif" }}>${pkgPrice.toLocaleString()}/person</span>
-                  <span style={{ fontSize:"12px", fontWeight:700, color: isActive?"#4B5320":"#b0aa9e", fontFamily:"'DM Sans',sans-serif" }}>
-                    {fmt(pkgTotal)}
-                  </span>
+                  <span style={{ fontSize:"12px", fontWeight:700, color: isActive?"#4B5320":"#b0aa9e", fontFamily:"'DM Sans',sans-serif" }}>{fmt(pkgTotal)}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* ── Live price breakdown ── */}
+          {/* Price breakdown — 60% deposit */}
           <div style={S.priceBreakdown}>
             <div style={S.priceRowHdr}>Price Breakdown</div>
             <div style={S.priceRow}>
@@ -461,11 +545,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               <span style={{ ...S.priceVal, fontWeight:700, color:"#4B5320", fontSize:"16px" }}>{fmt(totalPrice)}</span>
             </div>
             <div style={S.priceRow}>
-              <span style={{ ...S.priceLabel, color:"#7a8550" }}>Deposit now (30%)</span>
+              <span style={{ ...S.priceLabel, color:"#7a8550" }}>Deposit now (60%)</span>
               <span style={{ ...S.priceVal, color:"#7a8550", fontWeight:600 }}>{fmt(depositAmount)}</span>
             </div>
             <div style={S.priceRow}>
-              <span style={{ ...S.priceLabel, color:"#b0aa9e" }}>Balance on arrival</span>
+              <span style={{ ...S.priceLabel, color:"#b0aa9e" }}>Balance on arrival (40%)</span>
               <span style={{ ...S.priceVal, color:"#b0aa9e" }}>{fmt(balanceAmount)}</span>
             </div>
           </div>
@@ -478,24 +562,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             ].map(({ id, label, sub, icon }) => {
               const isActive = form.paymentMethod === id;
               return (
-                <button key={id} type="button"
-                  onClick={() => setForm({ ...form, paymentMethod: id })}
-                  className="bf-pay"
-                  style={{
-                    display:"flex", alignItems:"center", gap:"10px",
-                    padding:"12px 14px", borderRadius:"10px", cursor:"pointer",
-                    outline:"none", transition:"all 0.2s", textAlign:"left",
-                    border: isActive ? "1.5px solid #4B5320" : "1.5px solid #e5e0d8",
-                    background: isActive ? "#f0f4ea" : "#faf9f7",
-                    boxShadow: isActive ? "0 0 0 3px rgba(75,83,32,0.1)" : "none",
-                  }}>
-                  <span style={{ width:32, height:32, borderRadius:"8px", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.2s", background: isActive?"#4B5320":"#f0ede8", color: isActive?"#fff":"#9a9590" }}>
-                    {icon}
-                  </span>
-                  <span>
-                    <span style={S.payLabel}>{label}</span>
-                    <span style={S.paySub}>{sub}</span>
-                  </span>
+                <button key={id} type="button" onClick={() => setForm({ ...form, paymentMethod: id })} className="bf-pay"
+                  style={{ display:"flex", alignItems:"center", gap:"10px", padding:"12px 14px", borderRadius:"10px", cursor:"pointer", outline:"none", transition:"all 0.2s", textAlign:"left",
+                    border: isActive?"1.5px solid #4B5320":"1.5px solid #e5e0d8", background: isActive?"#f0f4ea":"#faf9f7", boxShadow: isActive?"0 0 0 3px rgba(75,83,32,0.1)":"none" }}>
+                  <span style={{ width:32, height:32, borderRadius:"8px", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.2s", background: isActive?"#4B5320":"#f0ede8", color: isActive?"#fff":"#9a9590" }}>{icon}</span>
+                  <span><span style={S.payLabel}>{label}</span><span style={S.paySub}>{sub}</span></span>
                 </button>
               );
             })}
@@ -520,15 +591,15 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               { label:"Tour",         val: form.tourTitle || "—" },
               { label:"Guest",        val: form.name },
               { label:"Email",        val: form.email },
-              { label:"Phone",        val: form.phone },
+              { label:"Phone",        val: fullPhone || "—" },
               { label:"Date",         val: form.date ? new Date(form.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "—" },
               { label:"Days",         val: `${form.days} day${Number(form.days)>1?"s":""}` },
               { label:"Guests",       val: `${form.guests} ${Number(form.guests)===1?"person":"people"}` },
               { label:"Package",      val: form.package },
               { label:"Per Person",   val: fmt(pricePerPerson) },
               { label:"Total Amount", val: fmt(totalPrice), bold: true },
-              { label:"Deposit (30%)",val: fmt(depositAmount), highlight: true },
-              { label:"Balance",      val: fmt(balanceAmount) },
+              { label:"Deposit (60%)",val: fmt(depositAmount), highlight: true },
+              { label:"Balance (40%)",val: fmt(balanceAmount) },
               { label:"Payment",      val: form.paymentMethod==="mpesa"?`M-Pesa (${form.mpesaNumber})`:form.paymentMethod==="card"?"Credit / Debit Card":"—" },
             ].map(({ label, val, bold, highlight }, i, arr) => (
               <div key={label} style={{ ...S.reviewRow, ...(i===arr.length-1?{ borderBottom:"none", paddingBottom:0 }:{}) }}>
@@ -537,7 +608,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               </div>
             ))}
           </div>
-          <p style={S.terms}>By confirming you agree to Wikima Safari&apos;s booking terms. A 30% deposit of <strong>{fmt(depositAmount)}</strong> is charged upon confirmation. Balance of <strong>{fmt(balanceAmount)}</strong> is due on arrival.</p>
+          <p style={S.terms}>By confirming you agree to Wikima Safari&apos;s booking terms. A 60% deposit of <strong>{fmt(depositAmount)}</strong> is charged upon confirmation. Balance of <strong>{fmt(balanceAmount)}</strong> is due on arrival.</p>
         </div>
       )}
 
@@ -587,7 +658,6 @@ const S: Record<string, React.CSSProperties> = {
   secLabel:   { fontSize:"10px", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px", marginTop:"4px" },
   pkgGrid:    { display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"8px", marginBottom:"16px" },
   pkgName:    { fontSize:"11px", fontWeight:700, color:"#4a4540", fontFamily:"'DM Sans',sans-serif", letterSpacing:"0.04em" },
-  // Price breakdown
   priceBreakdown: { background:"#f6f8f0", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"14px 16px", marginBottom:"20px" },
   priceRowHdr:    { fontSize:"9px", fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", color:"#7a8550", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px" },
   priceRow:   { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"4px 0" },
@@ -627,12 +697,15 @@ const S: Record<string, React.CSSProperties> = {
   stripeRef:         { fontSize:"12px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginBottom:"16px" },
   stripeElementWrap: { border:"1.5px solid #e5e0d8", borderRadius:"10px", padding:"16px", background:"#faf9f7", marginBottom:"16px" },
   stripeError:       { fontSize:"12px", color:"#dc2626", fontFamily:"'DM Sans',sans-serif", marginBottom:"12px", background:"#fef2f2", padding:"8px 12px", borderRadius:"6px", border:"1px solid #fca5a5" },
-  // Tour dropdown
   ddChevron:  { position:"absolute", right:"12px", top:"50%", transform:"translateY(-50%)", pointerEvents:"none" },
   dropdown:   { position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 8px 24px rgba(0,0,0,0.10)", zIndex:100, maxHeight:"220px", overflowY:"auto", marginTop:"4px" },
   dropdownItem:{ padding:"10px 14px", cursor:"pointer", borderBottom:"1px solid #f5f2ee", transition:"background 0.15s" },
   ddTitle:    { display:"block", fontSize:"13px", fontWeight:600, color:"#2a2520", fontFamily:"'DM Sans',sans-serif" },
   ddMeta:     { display:"block", fontSize:"11px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginTop:"2px" },
+  // Country code picker
+  ccBtn:      { display:"flex", alignItems:"center", gap:"6px", padding:"9px 10px", border:"1.5px solid #e5e0d8", borderRadius:"8px", background:"#faf9f7", cursor:"pointer", whiteSpace:"nowrap", flexShrink:0, outline:"none", transition:"border-color 0.2s" },
+  ccDropdown: { position:"absolute", top:"100%", left:0, width:"220px", background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:200, marginTop:"4px" },
+  ccItem:     { display:"flex", alignItems:"center", gap:"8px", padding:"8px 12px", cursor:"pointer", transition:"background 0.15s", borderBottom:"1px solid #f5f2ee" },
 };
 
 const css = `
@@ -653,6 +726,9 @@ const css = `
   .bf-spinner-lg{display:inline-block;width:28px;height:28px;border:3px solid rgba(75,83,32,0.2);border-top-color:#4B5320;border-radius:50%;animation:bfSpinLg 0.9s linear infinite;}
   .bf-dd-item:hover{background:#f6f8f0!important;}
   .bf-dd-item:last-child{border-bottom:none!important;}
+  .bf-cc-btn:hover{border-color:#4B5320!important;}
+  .bf-cc-item:hover{background:#f6f8f0!important;}
+  .bf-cc-item:last-child{border-bottom:none!important;}
 `;
 
 export default BookingForm;
