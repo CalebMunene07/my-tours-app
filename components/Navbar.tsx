@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Menu, X, ChevronDown, Image as ImageIcon, Video, Map as MapIcon } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import logo from "@/assets/logo.png";
+
 
 const Navbar = () => {
   const [open, setOpen]               = useState(false);
@@ -29,7 +29,7 @@ const Navbar = () => {
         {/* Brand */}
         <Link href="/" className="flex items-center gap-4 group">
           <Image
-            src={logo}
+            src="/assets/logo.png"
             alt="Wikima Safari Logo"
             height={72}
             className="w-auto h-16 object-contain transition-transform duration-300 group-hover:scale-105"
