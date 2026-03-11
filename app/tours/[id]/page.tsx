@@ -22,7 +22,7 @@ export default function TourDetailPage({ params }: { params: Promise<{ id: strin
   const pricingTiers = tour.pricing.map(p => p.tier);
 
   const highlights = [
-    { title: "The Great Migration", desc: "Witness thousands of wildebeest cross the Mara River.", img: tour.image },
+    { title: "The Great Migration", desc: "Witness thousands of wildebeest cross the Mara River.", img:  "/thegreatmigration.jpg"},
     { title: "Luxury Camping", desc: "Experience the wild without sacrificing comfort.", img: "/gallery-lodge.jpg" },
     { title: "Sundowner Views", desc: "Golden hour drinks overlooking the vast savannah.", img: "/hero-safari.jpg" },
   ];

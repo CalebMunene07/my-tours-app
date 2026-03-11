@@ -29,7 +29,7 @@ const videos: VideoItem[] = [
   {
     type: "local",
     src: "/assets/videos/video1.mp4",
-    poster: "/assets/photos/photo6.jpg",
+    poster: "/assets/photos/photo6.jpeg",
     title: "Leopard in the Mara",
     description: "A leopard secures prey high in an acacia tree, Masai Mara.",
     duration: "0:45",
@@ -37,7 +37,7 @@ const videos: VideoItem[] = [
   {
     type: "local",
     src: "/assets/videos/video2.mp4",
-    poster: "/assets/photos/photo5.jpg",
+    poster: "/assets/photos/photo5.jpeg",
     title: "Leopard Cub Sighting",
     description: "Rare close-up of a leopard cub hiding in the bush.",
     duration: "0:32",
@@ -45,7 +45,7 @@ const videos: VideoItem[] = [
   {
     type: "local",
     src: "/assets/videos/video3.mp4",
-    poster: "/assets/photos/photo3.jpg",
+    poster: "/assets/photos/mountkilimanjaro.jpg",
     title: "Amboseli & Kilimanjaro",
     description: "Game drive with Mount Kilimanjaro on the horizon.",
     duration: "1:20",
@@ -61,15 +61,15 @@ const videos: VideoItem[] = [
   {
     type: "local",
     src: "/assets/videos/video5.mp4",
-    poster: "/assets/photos/photo2.jpg",
-    title: "Mount Kenya Trekking",
-    description: "Trekking through the alpine moorlands of Mount Kenya.",
+    poster: "/assets/photos/gallery-maasai.jpg",
+    title: "Maasai Warriors Trek",
+    description: "Trekking through the alpine moorlands of Masaai.",
     duration: "2:10",
   },
   {
     type: "local",
     src: "/assets/videos/video6.mp4",
-    poster: "/assets/photos/photo1.jpg",
+    poster: "/assets/photos/beach.jpg",
     title: "Malindi Coastline",
     description: "Crystal-clear waters and white sand beaches of Malindi.",
     duration: "1:05",
