@@ -53,7 +53,7 @@ const videos: VideoItem[] = [
   {
     type: "local",
     src: "/assets/videos/video4.mp4",
-    poster: "/assets/photos/photo4.jpg",
+    poster: "/assets/photos/diani.jpg",
     title: "Diani Beach Sunset",
     description: "An evening at Nomad Beach Bar with the Indian Ocean as backdrop.",
     duration: "0:55",
