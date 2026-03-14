@@ -6,10 +6,8 @@ import React from "react";
 import { toursData } from "@/data/tours";
 import { CheckCircle2, Tent, Crown, Gem } from "lucide-react";
 import BookingForm from "@/components/BookingForm";
-
 import SafariDropdown from "@/components/SafariDropdown";
 import DestinationCrawler from "@/components/DestinationCrawler";
-
 
 export default function ToursListingPage() {
   const packages = [
@@ -72,98 +70,45 @@ export default function ToursListingPage() {
       </section>
 
       {/* ── EAST AFRICA EXPERIENCE SECTION ── */}
-<section className="mb-24 grid grid-cols-1 lg:grid-cols-2 gap-16">
+      <section className="mb-24 grid grid-cols-1 lg:grid-cols-2 gap-16">
+        {/* LEFT: SAFARI STYLES */}
+        <div>
+          <h2 className="text-3xl font-black text-[#4B5320] mb-8">Explore Safari Styles</h2>
+          <div className="space-y-6">
+            <SafariDropdown
+              title="🌿 Bush Safaris"
+              items={[
+                "Maasai Mara", "Amboseli", "Samburu", "Tsavo East", "Tsavo West",
+                "Serengeti", "Ngorongoro Crater", "Ruaha", "Selous / Nyerere", "Queen Elizabeth NP",
+              ]}
+            />
+            <SafariDropdown
+              title="🌊 Beach Escapes"
+              items={["Diani", "Watamu", "Malindi", "Kilifi", "Mombasa", "Zanzibar", "Pemba Island", "Mafia Island", "Lamu"]}
+            />
+            <SafariDropdown
+              title="⛰ Trek & Hike Adventures"
+              items={["Mt Kenya", "Mt Kilimanjaro", "Mt Longonot", "Ngong Hills", "Mount Meru", "Rwenzori Mountains", "Mount Elgon", "Simien Mountains"]}
+            />
+            <SafariDropdown
+              title="🏛 Cultural & Heritage Tours"
+              items={["Maasai Village Experience", "Hadzabe Tribe Visit", "Stone Town Zanzibar", "Lalibela Rock Churches", "Ethiopian Highlands"]}
+            />
+            <SafariDropdown
+              title="🦍 Adventure & Wildlife Experiences"
+              items={["Gorilla Trekking", "Chimpanzee Tracking", "Hot Air Balloon Safari", "Great Migration Safari", "Night Game Drives"]}
+            />
+          </div>
+        </div>
 
-  {/* LEFT: SAFARI STYLES */}
-  <div>
-    <h2 className="text-3xl font-black text-[#4B5320] mb-8">
-      Explore Safari Styles
-    </h2>
+        {/* RIGHT: DESTINATION CRAWLER */}
+        <div>
+          <h2 className="text-3xl font-black text-[#4B5320] mb-8">Our Esteemed Destinations</h2>
+          <DestinationCrawler />
+        </div>
+      </section>
 
-    <div className="space-y-6">
-
-      <SafariDropdown
-        title="🌿 Bush Safaris"
-        items={[
-          "Maasai Mara",
-          "Amboseli",
-          "Samburu",
-          "Tsavo East",
-          "Tsavo West",
-          "Serengeti",
-          "Ngorongoro Crater",
-          "Ruaha",
-          "Selous / Nyerere",
-          "Queen Elizabeth NP",
-        ]}
-      />
-
-      <SafariDropdown
-        title="🌊 Beach Escapes"
-        items={[
-          "Diani",
-          "Watamu",
-          "Malindi",
-          "Kilifi",
-          "Mombasa",
-          "Zanzibar",
-          "Pemba Island",
-          "Mafia Island",
-          "Lamu",
-        ]}
-      />
-
-      <SafariDropdown
-        title="⛰ Trek & Hike Adventures"
-        items={[
-          "Mt Kenya",
-          "Mt Kilimanjaro",
-          "Mt Longonot",
-          "Ngong Hills",
-          "Mount Meru",
-          "Rwenzori Mountains",
-          "Mount Elgon",
-          "Simien Mountains",
-        ]}
-      />
-
-      <SafariDropdown
-        title="🏛 Cultural & Heritage Tours"
-        items={[
-          "Maasai Village Experience",
-          "Hadzabe Tribe Visit",
-          "Stone Town Zanzibar",
-          "Lalibela Rock Churches",
-          "Ethiopian Highlands",
-        ]}
-      />
-
-      <SafariDropdown
-        title="🦍 Adventure & Wildlife Experiences"
-        items={[
-          "Gorilla Trekking",
-          "Chimpanzee Tracking",
-          "Hot Air Balloon Safari",
-          "Great Migration Safari",
-          "Night Game Drives",
-        ]}
-      />
-
-    </div>
-  </div>
-
-  {/* RIGHT: DESTINATION CRAWLER */}
-  <div>
-    <h2 className="text-3xl font-black text-[#4B5320] mb-8">
-      Our Esteemed Destinations
-    </h2>
-
-    <DestinationCrawler />
-  </div>
-
-</section>
-
-           {/* ── BOOKING FORM SECTION ── */}
+      {/* ── BOOKING FORM SECTION ── */}
       <section className="mb-24">
         <div className="rounded-4xl overflow-hidden border border-gray-100 shadow-lg"
           style={{ background: "linear-gradient(135deg, #f8f6f1 0%, #f2f5eb 100%)" }}>
@@ -202,6 +147,7 @@ export default function ToursListingPage() {
             <div className="p-10 lg:p-12 bg-white">
               <h3 className="text-xl font-bold text-gray-900 mb-1">Book Your Safari</h3>
               <p className="text-gray-400 text-sm mb-8">Select your package and secure your dates.</p>
+              {/* ✅ This is a demo form - update is optional but recommended for consistency */}
               <BookingForm
                 tourTitle="Safari Adventure"
                 pricingTiers={["Standard", "Premium", "Luxury"]}
