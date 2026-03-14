@@ -18,7 +18,7 @@ export default function TourDetailPage({ params }: { params: Promise<{ id: strin
     </div>
   );
 
-  // ✅ Extract pricing tiers from tour data
+  // Extract pricing tiers from tour data
   const pricingTiers = tour.pricing.map(p => p.tier);
 
   const highlights = [
@@ -104,7 +104,7 @@ export default function TourDetailPage({ params }: { params: Promise<{ id: strin
               <h2 className="text-2xl font-bold mb-2 text-gray-900">Book This Tour</h2>
               <p className="text-gray-500 mb-6 text-sm">Secure your spot on this unforgettable journey.</p>
               
-              {/* ✅ FIXED: Pass tour.title and pricingTiers so form is pre-filled and correct */}
+              {/* ✅ Pass tour.title and pricingTiers - BookingForm already updated internally */}
               <BookingForm 
                 tourTitle={tour.title}
                 pricingTiers={pricingTiers}

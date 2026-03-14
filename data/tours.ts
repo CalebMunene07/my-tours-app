@@ -1,17 +1,7 @@
-// ─────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
 //  All images now reference public/assets/ as plain URL strings.
 //  Move your image files to:  my-tours-app/public/assets/
-//
-//  Required files:
-//    public/assets/tour-safari.jpg
-//    public/assets/tour-beach.jpg
-//    public/assets/tour-mountain.jpg
-//    public/assets/gallery-lodge.jpg
-//    public/assets/gallery-zebras.jpg
-//    public/assets/gallery-sunset.jpg
-//    public/assets/gallery-maasai.jpg
-//    public/assets/hero-safari.jpg
-// ─────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
 
 export interface TourItineraryDay {
   day: number;
@@ -39,91 +29,420 @@ export interface TourData {
   gallery: string[];
   itinerary: TourItineraryDay[];
   pricing: TourPricing[];
+  category: string;
 }
 
 export const toursData: TourData[] = [
+
+  // ── BUSH SAFARIS ──────────────────────────────────────────────────────────
   {
     slug: "masai-mara-safari",
+    category: "bush-safari",
     image: "/assets/tour-safari.jpg",
     title: "Masai Mara Safari",
     duration: "5 Days",
     price: "From $1,200",
     description: "Witness the Great Migration and encounter the Big Five in Kenya's most iconic wildlife reserve.",
-    longDescription:
-      "Embark on an unforgettable 5-day journey through the Masai Mara, home to the world-famous Great Migration. Experience close encounters with lions, elephants, leopards, buffalo, and rhinos while staying in luxury tented camps under the African stars.",
+    longDescription: "Embark on an unforgettable 5-day journey through the Masai Mara, home to the world-famous Great Migration.",
     location: "Masai Mara, Kenya",
     groupSize: "2–8 people",
     difficulty: "Easy",
-    gallery: [
-      "/assets/tour-safari.jpg",
-      "/assets/gallery-zebras.jpg",
-      "/assets/gallery-sunset.jpg",
-      "/assets/gallery-lodge.jpg",
-      "/assets/gallery-maasai.jpg",
-      "/assets/hero-safari.jpg",
-    ],
+    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-zebras.jpg", "/assets/gallery-sunset.jpg", "/assets/gallery-lodge.jpg"],
     itinerary: [
-      { day: 1, title: "Arrival & Transfer",               description: "Arrive in Nairobi. Meet your guide and transfer to the Masai Mara." },
-      { day: 2, title: "Morning & Afternoon Game Drives",  description: "Full day of game drives exploring the Mara Triangle." },
-      { day: 3, title: "Great Migration & Mara River",     description: "Witness the dramatic Mara River crossing (seasonal)." },
-      { day: 4, title: "Balloon Safari & Night Drive",     description: "Optional hot air balloon safari at dawn." },
-      { day: 5, title: "Final Game Drive & Departure",     description: "Early morning game drive for last wildlife sightings." },
+      { day: 1, title: "Arrival & Transfer", description: "Arrive in Nairobi. Meet your guide and transfer to the Masai Mara." },
+      { day: 2, title: "Morning & Afternoon Game Drives", description: "Full day of game drives exploring the Mara Triangle." },
+      { day: 3, title: "Great Migration & Mara River", description: "Witness the dramatic Mara River crossing (seasonal)." },
+      { day: 4, title: "Balloon Safari & Night Drive", description: "Optional hot air balloon safari at dawn." },
+      { day: 5, title: "Final Game Drive & Departure", description: "Early morning game drive for last wildlife sightings." },
     ],
     pricing: [
       { tier: "Standard", price: "$1,200", includes: ["Shared game drives", "Standard tented camp"] },
-      { tier: "Luxury",   price: "$2,400", includes: ["Private game drives", "Luxury lodge"] },
+      { tier: "Luxury", price: "$2,400", includes: ["Private game drives", "Luxury lodge"] },
     ],
   },
   {
+    slug: "amboseli-bush-safari",
+    category: "bush-safari",
+    image: "/assets/tour-safari.jpg",
+    title: "Amboseli Bush Safari",
+    duration: "3 Days",
+    price: "From $750",
+    description: "Watch elephants roam against the backdrop of Mount Kilimanjaro in Amboseli National Park.",
+    longDescription: "A 3-day safari in Amboseli offering unrivalled views of Kilimanjaro and large elephant herds.",
+    location: "Amboseli, Kenya",
+    groupSize: "2–8 people",
+    difficulty: "Easy",
+    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-zebras.jpg", "/assets/gallery-sunset.jpg"],
+    itinerary: [
+      { day: 1, title: "Drive to Amboseli", description: "Depart Nairobi early and arrive in time for an afternoon game drive." },
+      { day: 2, title: "Full Day Game Drive", description: "Spend the full day exploring elephant-rich plains." },
+      { day: 3, title: "Morning Drive & Return", description: "Final game drive then transfer back to Nairobi." },
+    ],
+    pricing: [
+      { tier: "Standard", price: "$750", includes: ["Park fees", "Accommodation", "Meals"] },
+    ],
+  },
+  {
+    slug: "tsavo-wilderness-safari",
+    category: "bush-safari",
+    image: "/assets/tour-safari.jpg",
+    title: "Tsavo Wilderness Safari",
+    duration: "4 Days",
+    price: "From $900",
+    description: "Explore Kenya's largest national park, home to red elephants, lions, and vast open savannah.",
+    longDescription: "A raw and wild 4-day adventure across Tsavo East and West — Kenya's biggest wildlife ecosystem.",
+    location: "Tsavo, Kenya",
+    groupSize: "2–10 people",
+    difficulty: "Easy",
+    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg", "/assets/gallery-lodge.jpg"],
+    itinerary: [
+      { day: 1, title: "Arrival Tsavo West", description: "Drive to Tsavo West, afternoon game drive." },
+      { day: 2, title: "Mzima Springs", description: "Visit Mzima Springs and hippo pools." },
+      { day: 3, title: "Tsavo East", description: "Transfer to Tsavo East, game drives on red-dust plains." },
+      { day: 4, title: "Departure", description: "Morning drive then return to Nairobi or Mombasa." },
+    ],
+    pricing: [
+      { tier: "Standard", price: "$900", includes: ["Game drives", "Accommodation", "Meals"] },
+    ],
+  },
+
+  // ── BEACH ESCAPES ─────────────────────────────────────────────────────────
+  {
     slug: "malindi-beach-escape",
+    category: "beach-escape",
     image: "/assets/tour-beach.jpg",
     title: "Malindi Beach Escape",
     duration: "7 Days",
     price: "From $950",
     description: "Relax on pristine white sand beaches along the stunning Kenyan coastline.",
-    longDescription:
-      "Unwind on the award-winning Malindi Beach with 7 days of tropical paradise. Swim in turquoise waters and explore coral reefs.",
-    location: "Malindi Beach, Kenya",
+    longDescription: "Unwind on the award-winning Malindi Beach with 7 days of tropical paradise.",
+    location: "Malindi, Kenya",
     groupSize: "2–12 people",
     difficulty: "Easy",
-    gallery: [
-      "/assets/tour-beach.jpg",
-      "/assets/gallery-sunset.jpg",
-      "/assets/gallery-lodge.jpg",
-      "/assets/hero-safari.jpg",
-    ],
+    gallery: ["/assets/tour-beach.jpg", "/assets/gallery-sunset.jpg", "/assets/gallery-lodge.jpg"],
     itinerary: [
-      { day: 1, title: "Arrival",      description: "Transfer to Diani Beach resort." },
-      { day: 2, title: "Snorkelling",  description: "Afternoon snorkelling trip to the coral reef." },
+      { day: 1, title: "Arrival", description: "Transfer to beach resort and check-in." },
+      { day: 2, title: "Snorkelling", description: "Afternoon snorkelling trip to the coral reef." },
     ],
     pricing: [
       { tier: "Standard", price: "$950", includes: ["Beach resort stay", "Breakfast"] },
     ],
   },
   {
+    slug: "diani-beach-retreat",
+    category: "beach-escape",
+    image: "/assets/tour-beach.jpg",
+    title: "Diani Beach Retreat",
+    duration: "5 Days",
+    price: "From $850",
+    description: "White coral sands, turquoise waters, and vibrant marine life on Kenya's south coast.",
+    longDescription: "5 days of pure coastal bliss on Diani Beach — one of Africa's top-rated beaches.",
+    location: "Diani, Kenya",
+    groupSize: "2–10 people",
+    difficulty: "Easy",
+    gallery: ["/assets/tour-beach.jpg", "/assets/gallery-sunset.jpg"],
+    itinerary: [
+      { day: 1, title: "Arrival Diani", description: "Fly or drive to Diani, settle into resort." },
+      { day: 2, title: "Water Sports Day", description: "Kite surfing, snorkelling, and dolphin cruise." },
+      { day: 3, title: "Shimba Hills Day Trip", description: "Visit nearby Shimba Hills reserve." },
+      { day: 4, title: "Leisure Day", description: "Relax or explore local Swahili markets." },
+      { day: 5, title: "Departure", description: "Checkout and transfer to Mombasa airport." },
+    ],
+    pricing: [
+      { tier: "Standard", price: "$850", includes: ["Resort stay", "Breakfast", "Day trip"] },
+    ],
+  },
+  {
+    slug: "lamu-island-escape",
+    category: "beach-escape",
+    image: "/assets/tour-beach.jpg",
+    title: "Lamu Island Escape",
+    duration: "4 Days",
+    price: "From $1,100",
+    description: "Step back in time on Lamu's ancient Swahili island — no cars, just dhows and cobblestone streets.",
+    longDescription: "A UNESCO World Heritage island with centuries-old architecture, pristine beaches, and authentic culture.",
+    location: "Lamu, Kenya",
+    groupSize: "2–8 people",
+    difficulty: "Easy",
+    gallery: ["/assets/tour-beach.jpg", "/assets/gallery-sunset.jpg", "/assets/gallery-lodge.jpg"],
+    itinerary: [
+      { day: 1, title: "Fly to Lamu", description: "Morning flight from Nairobi, dhow transfer to island." },
+      { day: 2, title: "Lamu Town Walk", description: "Explore the old town, Fort and museums." },
+      { day: 3, title: "Shela Beach & Dhow Cruise", description: "Full day on Shela beach, sunset dhow." },
+      { day: 4, title: "Departure", description: "Morning at leisure then fly back." },
+    ],
+    pricing: [
+      { tier: "Standard", price: "$1,100", includes: ["Flights", "Boutique stay", "Guided town walk"] },
+    ],
+  },
+
+  // ── MOUNTAIN JOURNEYS & ALPINE HIKING ────────────────────────────────────
+  {
     slug: "mount-kenya-trek",
+    category: "mountain-journey",
     image: "/assets/tour-mountain.jpg",
     title: "Mount Kenya Trek",
     duration: "4 Days",
     price: "From $800",
     description: "Conquer Africa's second-highest peak through lush alpine meadows.",
-    longDescription:
-      "Challenge yourself with a 4-day trek to Point Lenana on Mount Kenya (4,985m).",
+    longDescription: "Challenge yourself with a 4-day trek to Point Lenana on Mount Kenya (4,985m).",
     location: "Mount Kenya National Park",
     groupSize: "4–10 people",
     difficulty: "Moderate to Challenging",
-    gallery: [
-      "/assets/tour-mountain.jpg",
-      "/assets/gallery-sunset.jpg",
-      "/assets/gallery-lodge.jpg",
-      "/assets/hero-safari.jpg",
-    ],
+    gallery: ["/assets/tour-mountain.jpg", "/assets/gallery-sunset.jpg", "/assets/gallery-lodge.jpg"],
     itinerary: [
-      { day: 1, title: "Trailhead",       description: "Drive to Sirimon Gate (2,650m)." },
-      { day: 2, title: "Shipton's Camp",  description: "Trek through moorland to 4,200m." },
+      { day: 1, title: "Trailhead", description: "Drive to Sirimon Gate (2,650m)." },
+      { day: 2, title: "Shipton's Camp", description: "Trek through moorland to 4,200m." },
+      { day: 3, title: "Point Lenana Summit", description: "Pre-dawn summit push to 4,985m." },
+      { day: 4, title: "Descent & Departure", description: "Descend via Chogoria route." },
     ],
     pricing: [
-      { tier: "Standard", price: "$800", includes: ["Mountain guide", "Park fees"] },
+      { tier: "Standard", price: "$800", includes: ["Mountain guide", "Park fees", "Camping"] },
+    ],
+  },
+  {
+    slug: "aberdare-highland-hike",
+    category: "mountain-journey",
+    image: "/assets/tour-mountain.jpg",
+    title: "Aberdare Highland Hike",
+    duration: "3 Days",
+    price: "From $620",
+    description: "Trek through misty moorlands, bamboo forests, and dramatic waterfalls in the Aberdare Range.",
+    longDescription: "A scenic 3-day hike through the Aberdares — Kenya's most underrated highland wilderness.",
+    location: "Aberdare National Park, Kenya",
+    groupSize: "4–10 people",
+    difficulty: "Moderate",
+    gallery: ["/assets/tour-mountain.jpg", "/assets/gallery-sunset.jpg"],
+    itinerary: [
+      { day: 1, title: "Karura Gate Entry", description: "Enter the park and hike to the moorland." },
+      { day: 2, title: "Waterfalls & Ridges", description: "Full-day hike past Karura Falls and high ridges." },
+      { day: 3, title: "Descent & Exit", description: "Morning hike back to gate, return to Nairobi." },
+    ],
+    pricing: [
+      { tier: "Standard", price: "$620", includes: ["Guide", "Park fees", "Camping gear"] },
+    ],
+  },
+  {
+    slug: "kilimanjaro-expedition",
+    category: "mountain-journey",
+    image: "/assets/tour-mountain.jpg",
+    title: "Kilimanjaro Expedition",
+    duration: "7 Days",
+    price: "From $2,200",
+    description: "Summit Africa's highest peak via the scenic Lemosho route with expert guides.",
+    longDescription: "A 7-day guided climb of Kilimanjaro (5,895m) — the roof of Africa — via the Lemosho route.",
+    location: "Kilimanjaro, Tanzania",
+    groupSize: "4–12 people",
+    difficulty: "Challenging",
+    gallery: ["/assets/tour-mountain.jpg", "/assets/gallery-sunset.jpg", "/assets/gallery-lodge.jpg"],
+    itinerary: [
+      { day: 1, title: "Arrive Moshi", description: "Briefing and equipment check." },
+      { day: 2, title: "Londorossi Gate", description: "Enter Lemosho route, hike to Big Tree Camp." },
+      { day: 3, title: "Shira Plateau", description: "Cross spectacular Shira plateau." },
+      { day: 4, title: "Lava Tower", description: "Acclimatisation hike to Lava Tower (4,630m)." },
+      { day: 5, title: "Barranco Wall", description: "Iconic Barranco Wall scramble." },
+      { day: 6, title: "Barafu Camp", description: "Rest day at high camp before summit." },
+      { day: 7, title: "Summit & Descent", description: "Midnight summit push, descend to gate." },
+    ],
+    pricing: [
+      { tier: "Standard", price: "$2,200", includes: ["Guide", "Porters", "Park fees", "Accommodation"] },
+    ],
+  },
+
+  // ── ADVENTURE & WILDLIFE ──────────────────────────────────────────────────
+  {
+    slug: "samburu-wildlife-adventure",
+    category: "adventure-wildlife",
+    image: "/assets/tour-safari.jpg",
+    title: "Samburu Wildlife Adventure",
+    duration: "3 Days",
+    price: "From $780",
+    description: "Discover rare northern species — reticulated giraffe, Grevy's zebra and Beisa oryx.",
+    longDescription: "A 3-day adventure in Samburu Reserve, home to Kenya's unique northern wildlife species.",
+    location: "Samburu, Kenya",
+    groupSize: "2–8 people",
+    difficulty: "Easy",
+    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg"],
+    itinerary: [
+      { day: 1, title: "Fly to Samburu", description: "Morning flight, afternoon game drive." },
+      { day: 2, title: "Full Day Exploration", description: "Game drives along Ewaso Nyiro River." },
+      { day: 3, title: "Morning Drive & Return", description: "Final game drive, fly back to Nairobi." },
+    ],
+    pricing: [
+      { tier: "Standard", price: "$780", includes: ["Flights", "Lodge", "Game drives"] },
+    ],
+  },
+  {
+    slug: "ol-pejeta-rhino-trek",
+    category: "adventure-wildlife",
+    image: "/assets/tour-safari.jpg",
+    title: "Ol Pejeta Rhino Trek",
+    duration: "2 Days",
+    price: "From $550",
+    description: "Walk among the world's last northern white rhinos at the famous Ol Pejeta Conservancy.",
+    longDescription: "A unique 2-day walking experience at Ol Pejeta — Africa's best rhino sanctuary.",
+    location: "Ol Pejeta, Kenya",
+    groupSize: "2–6 people",
+    difficulty: "Easy",
+    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-zebras.jpg"],
+    itinerary: [
+      { day: 1, title: "Arrive Ol Pejeta", description: "Afternoon game drive focusing on rhinos and lions." },
+      { day: 2, title: "Walking Safari", description: "Guided walking safari, chimpanzee sanctuary visit." },
+    ],
+    pricing: [
+      { tier: "Standard", price: "$550", includes: ["Conservation fees", "Lodge", "Guide"] },
+    ],
+  },
+  {
+    slug: "lake-nakuru-flamingo-safari",
+    category: "adventure-wildlife",
+    image: "/assets/tour-safari.jpg",
+    title: "Lake Nakuru Flamingo Safari",
+    duration: "2 Days",
+    price: "From $480",
+    description: "Witness millions of flamingos turning Lake Nakuru pink in this iconic Rift Valley spectacle.",
+    longDescription: "A 2-day safari to Lake Nakuru, famous for its flamingos, white rhinos, and Rift Valley scenery.",
+    location: "Lake Nakuru, Kenya",
+    groupSize: "2–10 people",
+    difficulty: "Easy",
+    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg"],
+    itinerary: [
+      { day: 1, title: "Drive to Nakuru", description: "Arrive and explore the lake shores." },
+      { day: 2, title: "Full Park Game Drive", description: "Full circuit game drive, return to Nairobi." },
+    ],
+    pricing: [
+      { tier: "Standard", price: "$480", includes: ["Park fees", "Hotel", "Game drive"] },
+    ],
+  },
+
+  // ── CITY SAFARI / GAME & PARK ─────────────────────────────────────────────
+  {
+    slug: "nairobi-national-park-day",
+    category: "city-safari",
+    image: "/assets/tour-safari.jpg",
+    title: "Nairobi National Park Day Trip",
+    duration: "1 Day",
+    price: "From $150",
+    description: "Safari within city limits — spot lions and giraffes with Nairobi's skyline in the background.",
+    longDescription: "The world's only national park inside a capital city. A half or full day game drive just minutes from the CBD.",
+    location: "Nairobi, Kenya",
+    groupSize: "2–6 people",
+    difficulty: "Easy",
+    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-zebras.jpg"],
+    itinerary: [
+      { day: 1, title: "Full Day Game Drive", description: "Depart hotel, spend full day in the park, return by evening." },
+    ],
+    pricing: [
+      { tier: "Standard", price: "$150", includes: ["Park fees", "Guide", "Vehicle"] },
+    ],
+  },
+  {
+    slug: "giraffe-centre-elephant-orphanage",
+    category: "city-safari",
+    image: "/assets/tour-safari.jpg",
+    title: "Giraffe Centre & Elephant Orphanage",
+    duration: "1 Day",
+    price: "From $120",
+    description: "Hand-feed Rothschild giraffes and watch baby elephants play at the David Sheldrick sanctuary.",
+    longDescription: "A family-favourite Nairobi day combining the Giraffe Centre and DSWT Elephant Orphanage.",
+    location: "Nairobi, Kenya",
+    groupSize: "2–15 people",
+    difficulty: "Easy",
+    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-maasai.jpg"],
+    itinerary: [
+      { day: 1, title: "City Wildlife Experience", description: "Morning at Giraffe Centre, afternoon at Elephant Orphanage." },
+    ],
+    pricing: [
+      { tier: "Standard", price: "$120", includes: ["Entry fees", "Transport", "Guide"] },
+    ],
+  },
+  {
+    slug: "hell-s-gate-cycling-safari",
+    category: "city-safari",
+    image: "/assets/tour-safari.jpg",
+    title: "Hell's Gate Cycling Safari",
+    duration: "1 Day",
+    price: "From $180",
+    description: "Cycle through dramatic gorges alongside zebras and buffalo at Hell's Gate National Park.",
+    longDescription: "A unique cycling safari at Hell's Gate — one of Kenya's only parks where you cycle freely among wildlife.",
+    location: "Hell's Gate, Naivasha, Kenya",
+    groupSize: "2–12 people",
+    difficulty: "Moderate",
+    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg"],
+    itinerary: [
+      { day: 1, title: "Drive & Cycle", description: "Drive from Nairobi to Naivasha, cycle through the park, gorge walk." },
+    ],
+    pricing: [
+      { tier: "Standard", price: "$180", includes: ["Bike hire", "Park fees", "Guide"] },
+    ],
+  },
+
+  // ── LODGE SAFARI & SIGNATURE FOOD ─────────────────────────────────────────
+  {
+    slug: "mara-luxury-lodge-safari",
+    category: "lodge-safari",
+    image: "/assets/gallery-lodge.jpg",
+    title: "Mara Luxury Lodge Safari",
+    duration: "4 Days",
+    price: "From $2,800",
+    description: "Stay in award-winning lodges inside the Mara reserve with gourmet bush dining experiences.",
+    longDescription: "A 4-day ultra-luxury Mara experience with private game drives, spa treatments, and signature cuisine.",
+    location: "Masai Mara, Kenya",
+    groupSize: "2–6 people",
+    difficulty: "Easy",
+    gallery: ["/assets/gallery-lodge.jpg", "/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg"],
+    itinerary: [
+      { day: 1, title: "Fly-in to Mara", description: "Charter flight, champagne welcome, sunset drive." },
+      { day: 2, title: "Private Game Drives", description: "Full day private vehicle with expert guide." },
+      { day: 3, title: "Bush Dinner & Spa", description: "Sundowner, bush dinner under the stars, spa afternoon." },
+      { day: 4, title: "Morning Drive & Departure", description: "Last game drive, fly back to Nairobi." },
+    ],
+    pricing: [
+      { tier: "Luxury", price: "$2,800", includes: ["Charter flights", "Luxury lodge", "All meals", "Spa"] },
+    ],
+  },
+  {
+    slug: "laikipia-ranch-gourmet-safari",
+    category: "lodge-safari",
+    image: "/assets/gallery-lodge.jpg",
+    title: "Laikipia Ranch Gourmet Safari",
+    duration: "3 Days",
+    price: "From $1,900",
+    description: "Exclusive ranch safari with farm-to-table meals, night game drives, and conservation walks.",
+    longDescription: "Discover Laikipia's private conservancies with world-class food, night drives, and walking safaris.",
+    location: "Laikipia, Kenya",
+    groupSize: "2–8 people",
+    difficulty: "Easy",
+    gallery: ["/assets/gallery-lodge.jpg", "/assets/tour-safari.jpg"],
+    itinerary: [
+      { day: 1, title: "Arrive Laikipia", description: "Fly-in, welcome dinner at the ranch." },
+      { day: 2, title: "Walking & Night Drive", description: "Morning walking safari, afternoon rest, night game drive." },
+      { day: 3, title: "Gourmet Breakfast & Departure", description: "Bush breakfast, fly back to Nairobi." },
+    ],
+    pricing: [
+      { tier: "Luxury", price: "$1,900", includes: ["Flights", "Full board", "Night drives", "Conservation fees"] },
+    ],
+  },
+  {
+    slug: "amboseli-lodge-kilimanjaro-views",
+    category: "lodge-safari",
+    image: "/assets/gallery-lodge.jpg",
+    title: "Amboseli Lodge & Kilimanjaro Views",
+    duration: "3 Days",
+    price: "From $1,400",
+    description: "Dine with views of Kilimanjaro while elephants roam outside your lodge at sunset.",
+    longDescription: "A 3-day luxury lodge stay in Amboseli combining superb wildlife, Maasai cultural dinners, and mountain vistas.",
+    location: "Amboseli, Kenya",
+    groupSize: "2–8 people",
+    difficulty: "Easy",
+    gallery: ["/assets/gallery-lodge.jpg", "/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg"],
+    itinerary: [
+      { day: 1, title: "Arrive Amboseli", description: "Drive or fly in, afternoon game drive." },
+      { day: 2, title: "Full Day Safari & Cultural Dinner", description: "Game drives, Maasai village visit, signature dinner." },
+      { day: 3, title: "Morning Drive & Departure", description: "Final dawn game drive, depart after brunch." },
+    ],
+    pricing: [
+      { tier: "Luxury", price: "$1,400", includes: ["Lodge", "All meals", "Game drives", "Cultural visit"] },
     ],
   },
 ];
