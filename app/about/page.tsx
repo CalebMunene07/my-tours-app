@@ -8,7 +8,38 @@ const STATS = [
   { value: "4.9★", label: "Average Rating" },
   { value: "38+", label: "Countries Represented" },
 ];
-
+const TEAM = [
+  {
+    role: "Directors",
+    members: [
+      { name: "David Mwangi", title: "Managing Director", img: "/team/director1.jpg" },
+      { name: "Grace Njeri", title: "Operations Director", img: "/team/director2.jpg" },
+    ],
+  },
+  {
+    role: "Tour Experts",
+    members: [
+      { name: "Samuel Otieno", title: "Senior Safari Planner", img: "/team/expert1.jpg" },
+      { name: "Lydia Wanjiku", title: "Luxury Travel Specialist", img: "/team/expert2.jpg" },
+    ],
+  },
+  {
+    role: "Consultants",
+    members: [
+      { name: "Peter Kariuki", title: "Travel Consultant", img: "/team/consult1.jpg" },
+      { name: "Emily Achieng", title: "Destination Consultant", img: "/team/consult2.jpg" },
+      { name: "Joseph Mutua", title: "Safari Consultant", img: "/team/consult3.jpg" },
+    ],
+  },
+  {
+    role: "Guides",
+    members: [
+      { name: "Daniel Lemayian", title: "Senior Safari Guide", img: "/team/guide1.jpg" },
+      { name: "James Ole Nkai", title: "Wildlife Tracker", img: "/team/guide2.jpg" },
+      { name: "Paul Kiprono", title: "Bush Guide", img: "/team/guide3.jpg" },
+    ],
+  },
+];
 const VALUES = [
   {
     icon: (
@@ -114,6 +145,99 @@ export default function AboutPage() {
         .team-tagline strong { color:#D4AF37; font-style:normal; font-weight:600; }
         .team-sub { font-family:'DM Sans',sans-serif; font-size:14px; color:rgba(245,240,232,0.5); max-width:480px; margin:0 auto; line-height:1.75; }
 
+        .team-section {
+          padding: 100px 6vw;
+          max-width: 1400px;
+          margin: 0 auto;
+        }
+
+        .team-row {
+          margin-top: 60px;
+        }
+
+        .team-role-title {
+          font-size: 26px;
+          font-weight: 300;
+          margin-bottom: 24px;
+          color: #D4AF37;
+        }
+
+        .team-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 40px 30px;
+          justify-items: center;
+        }
+
+        .team-card {
+          width: 100%;
+          max-width: 220px;
+          text-align: center;
+        }
+
+        .team-photo-wrap {
+          position: relative;
+          width: 160px;
+          height: 160px;
+          margin: 0 auto 14px;
+        }
+
+        .team-photo {
+          width: 160px;
+          height: 160px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid rgba(212, 175, 55, 0.4);
+          transition: transform .35s ease, box-shadow .35s ease;
+        }
+
+        .team-photo-wrap::after {
+          content: "";
+          position: absolute;
+          inset: -6px;
+          border-radius: 50%;
+          border: 1px solid rgba(212, 175, 55, 0.25);
+        }
+
+        .team-card:hover .team-photo {
+          transform: scale(1.05);
+          box-shadow: 0 10px 30px rgba(212, 175, 55, 0.25);
+        }
+
+        .team-name {
+          font-size: 16px;
+          color: #f5f0e8;
+          margin: 8px 0 4px;
+        }
+
+        .team-title {
+          font-family: 'DM Sans', sans-serif;
+          font-size: 12px;
+          color: rgba(245, 240, 232, 0.55);
+          margin: 0;
+        }
+
+        @media (max-width: 640px) {
+          .team-grid {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 30px 15px;
+          }
+          
+          .team-photo-wrap {
+            width: 120px;
+            height: 120px;
+          }
+          
+          .team-photo {
+            width: 120px;
+            height: 120px;
+          }
+          
+          .team-name {
+            font-size: 14px;
+          }
+        }
+
         .cta-section { padding:100px 6vw; text-align:center; }
         .cta-inner { background:linear-gradient(135deg, rgba(75,83,32,0.28) 0%, rgba(13,26,14,0.6) 100%); border:1px solid rgba(212,175,55,0.25); border-radius:28px; padding:64px 48px; max-width:760px; margin:0 auto; position:relative; overflow:hidden; }
         .cta-inner::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 80% 80% at 50% 0%, rgba(212,175,55,0.08) 0%, transparent 65%); pointer-events:none; }
@@ -204,6 +328,40 @@ export default function AboutPage() {
           They don't just know the bush — they're part of it.
         </p>
       </div>
+
+      {/* ── MEET THE TEAM ── */}
+      <section className="team-section">
+        <p className="section-label">Our People</p>
+        <h2 className="section-title">
+          Meet the <em>Team</em>
+        </h2>
+
+        {TEAM.map(group => (
+          <div key={group.role} className="team-row">
+            <h3 className="team-role-title">{group.role}</h3>
+            
+            <div className="team-grid">
+              {group.members.map(member => (
+                <div key={member.name} className="team-card">
+                  <div className="team-photo-wrap">
+                    <img 
+                      src={member.img} 
+                      alt={member.name} 
+                      className="team-photo"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://via.placeholder.com/160x160?text=Team+Member';
+                      }}
+                    />
+                  </div>
+                  <h4 className="team-name">{member.name}</h4>
+                  <p className="team-title">{member.title}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </section>
 
       {/* ── CTA ── */}
       <section className="cta-section">

@@ -55,6 +55,9 @@ const photos = [
   { src: "/assets/photos/photo39.jpeg", alt: "" },
   { src: "/assets/photos/photo40.jpeg", alt: "" },
   { src: "/assets/photos/photo41.jpeg", alt: "" },
+  { src: "/assets/photos/logo.png", alt: "" },
+  
+
 
   ];
 

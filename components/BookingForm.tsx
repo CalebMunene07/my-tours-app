@@ -28,6 +28,49 @@ interface BookingFormProps {
   pricingTiers?: string[];
 }
 
+// Safari groups data
+const safariGroups = [
+  {
+    group: "Bush Safaris",
+    tours: [
+      "Maasai Mara",
+      "Amboseli",
+      "Samburu",
+      "Tsavo East",
+      "Tsavo West",
+      "Serengeti",
+      "Ngorongoro Crater"
+    ]
+  },
+  {
+    group: "Beach Escapes",
+    tours: [
+      "Diani",
+      "Watamu",
+      "Malindi",
+      "Zanzibar",
+      "Lamu"
+    ]
+  },
+  {
+    group: "Trek & Hike Adventures",
+    tours: [
+      "Mt Kenya",
+      "Mt Kilimanjaro",
+      "Ngong Hills",
+      "Mount Meru"
+    ]
+  },
+  {
+    group: "Cultural & Heritage",
+    tours: [
+      "Maasai Village Experience",
+      "Hadzabe Tribe Visit",
+      "Stone Town Zanzibar"
+    ]
+  }
+];
+
 // ── Country codes ──
 const COUNTRY_CODES = [
   { code: "+254", flag: "🇰🇪", name: "Kenya" },
@@ -65,13 +108,17 @@ const PACKAGE_ICONS: Record<Package, React.ReactNode> = {
 /* ── PDF helper ── */
 function downloadBookingPDF(p: {
   reference:string; name:string; email:string; phone:string;
-  tourTitle:string; date:string; guests:string; pkg:Package;
+  tourTitle:string; date:string; adults:string; children:string; pkg:Package;
   days:string; pricePerPerson:number; totalPrice:number; depositAmount:number;
 }) {
   const balance = p.totalPrice - p.depositAmount;
   const depositPct = Math.round((p.depositAmount / p.totalPrice) * 100);
   const tDate = p.date ? new Date(p.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}) : "—";
   const today = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+  const childrenInfo = p.children && p.children !== "0" ? `<div class="fld"><label>Children (under 12)</label><p>${p.children}</p></div>` : "";
+  const childrenPrice = Number(p.children) > 0 ? p.pricePerPerson * 0.5 * Number(p.children) : 0;
+  const adultsPrice = p.pricePerPerson * Number(p.adults);
+  
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Wikima Booking ${p.reference}</title>
 <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Georgia,serif;color:#2d3a10;padding:48px;font-size:14px;}
 .hdr{display:flex;justify-content:space-between;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #e8e0d0;}
@@ -86,14 +133,15 @@ function downloadBookingPDF(p: {
 <body>
 <div class="hdr"><div class="brand"><h1>WIKIMA SAFARI</h1><p>Expeditions · East Africa</p></div><div class="ref"><div class="lbl">Booking Reference</div><div class="val">${p.reference}</div></div></div>
 <div class="badge">✓ Booking <strong>Confirmed</strong> — Thank you, ${p.name}. We look forward to hosting you.</div>
-<div class="sec"><div class="sec-t">Guest Details</div><div class="grid"><div class="fld"><label>Full Name</label><p>${p.name}</p></div><div class="fld"><label>Email</label><p>${p.email}</p></div>${p.phone?`<div class="fld"><label>Phone</label><p>${p.phone}</p></div>`:""}</div></div>
-<div class="sec"><div class="sec-t">Safari Details</div><div class="grid"><div class="fld"><label>Tour</label><p>${p.tourTitle}</p></div><div class="fld"><label>Package</label><p>${p.pkg}</p></div><div class="fld"><label>Travel Date</label><p>${tDate}</p></div><div class="fld"><label>Duration</label><p>${p.days} days</p></div><div class="fld"><label>Group Size</label><p>${p.guests} guest${Number(p.guests)>1?"s":""}</p></div><div class="fld"><label>Price Per Person</label><p>$${p.pricePerPerson.toLocaleString()}</p></div></div></div>
+<div class="sec"><div class="sec-t">Guest Details</div><div class="grid"><div class="fld"><label>Full Name</label><p>${p.name}</p></div><div class="fld"><label>Email</label><p>${p.email}</p></div>${p.phone?`<div class="fld"><label>Phone</label><p>${p.phone}</p></div>`:""}${childrenInfo}</div></div>
+<div class="sec"><div class="sec-t">Safari Details</div><div class="grid"><div class="fld"><label>Tour</label><p>${p.tourTitle}</p></div><div class="fld"><label>Package</label><p>${p.pkg}</p></div><div class="fld"><label>Travel Date</label><p>${tDate}</p></div><div class="fld"><label>Duration</label><p>${p.days} days</p></div><div class="fld"><label>Adults</label><p>${p.adults}</p></div><div class="fld"><label>Price Per Adult</label><p>$${p.pricePerPerson.toLocaleString()}</p></div></div></div>
 <div class="sec"><div class="sec-t">Payment Summary</div><div class="pay">
-<div class="row"><span class="lbl">Price per person</span><span class="amt">$${p.pricePerPerson.toLocaleString()}</span></div>
-<div class="row"><span class="lbl">× ${p.guests} guest${Number(p.guests)>1?"s":""}</span><span class="amt">$${p.totalPrice.toLocaleString()}</span></div>
+<div class="row"><span class="lbl">Price per adult</span><span class="amt">$${p.pricePerPerson.toLocaleString()}</span></div>
+<div class="row"><span class="lbl">× ${p.adults} adult${Number(p.adults)>1?"s":""}</span><span class="amt">$${adultsPrice.toLocaleString()}</span></div>
+${Number(p.children) > 0 ? `<div class="row"><span class="lbl">Children (50% discount)</span><span class="amt">$${childrenPrice.toLocaleString()}</span></div>` : ""}
+<div class="row"><span class="lbl">Total Amount</span><span class="amt">$${p.totalPrice.toLocaleString()}</span></div>
 <div class="row"><span class="lbl">Deposit Paid (${depositPct}%)</span><span class="amt">$${p.depositAmount.toLocaleString()}</span></div>
 <div class="row"><span class="lbl">Balance on Arrival</span><span class="amt">$${balance.toLocaleString()}</span></div>
-<div class="row"><span class="lbl">Total</span><span class="amt">$${p.totalPrice.toLocaleString()}</span></div>
 </div></div>
 <div class="ftr"><div>Wikima Safari Expeditions<br/>info@wikimasafari.com · +254 720 069 550<br/>wikimasafari.com</div><div style="text-align:right">Generated ${today}<br/>Official booking confirmation.</div></div>
 </body></html>`;
@@ -189,6 +237,85 @@ const CountryCodePicker: React.FC<{ value: string; onChange: (code: string) => v
   );
 };
 
+/* ── Safari Group Dropdown ── */
+const SafariGroupDropdown: React.FC<{ value: string; onChange: (tour: string) => void }> = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  return (
+    <div style={{ position:"relative", marginBottom:"16px" }} ref={ref}>
+      <label style={S.label}>Tour</label>
+      <div style={{ position:"relative" }}>
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setOpen(true)}
+          placeholder="Select a tour..."
+          style={S.input}
+          required
+          autoComplete="off"
+          readOnly
+        />
+        <span style={S.ddChevron}>
+          <svg width="11" height="6" viewBox="0 0 11 6"><path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/></svg>
+        </span>
+      </div>
+      
+      {open && (
+        <div style={S.groupDropdown}>
+          {safariGroups.map((group) => (
+            <div key={group.group}>
+              <div 
+                style={S.groupHeader}
+                onClick={() => setSelectedGroup(selectedGroup === group.group ? null : group.group)}
+              >
+                <span style={S.groupTitle}>{group.group}</span>
+                <svg 
+                  width="10" 
+                  height="6" 
+                  viewBox="0 0 10 6"
+                  style={{ 
+                    transform: selectedGroup === group.group ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 0.2s'
+                  }}
+                >
+                  <path d="M1 1L5 5L9 1" stroke="#4B5320" strokeWidth="1.5" fill="none"/>
+                </svg>
+              </div>
+              
+              {selectedGroup === group.group && (
+                <div style={S.groupTours}>
+                  {group.tours.map((tour) => (
+                    <div
+                      key={tour}
+                      style={S.groupTourItem}
+                      className="bf-dd-item"
+                      onMouseDown={() => {
+                        onChange(tour);
+                        setOpen(false);
+                        setSelectedGroup(null);
+                      }}
+                    >
+                      {tour}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 /* ══════════════════════════════════════
    MAIN BOOKING FORM
 ══════════════════════════════════════ */
@@ -201,12 +328,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const [currentBooking, setCurrentBooking] = useState<{ id:string; reference:string; deposit_amount:number }|null>(null);
   const [mpesaStatus, setMpesaStatus]       = useState<"idle"|"waiting"|"success"|"failed">("idle");
 
-  // Tour dropdown
-  const [tours, setTours]               = useState<Tour[]>([]);
-  const [tourSearch, setTourSearch]     = useState(propTourTitle);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedTour, setSelectedTour] = useState<Tour|null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  // Tours from API (optional fallback for pricing)
+  const [tours, setTours] = useState<Tour[]>([]);
 
   // Country code
   const [countryCode, setCountryCode] = useState("+254");
@@ -214,31 +337,17 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const [form, setForm] = useState({
     tourTitle: propTourTitle,
     name: "", email: "", phoneLocal: "", mpesaNumber: "",
-    date: "", guests: "1", days: "1", package: "Standard" as Package,
+    date: "", adults: "1", children: "0", days: "1", package: "Standard" as Package,
     paymentMethod: "", message: "",
   });
 
+  // Fetch tours from API as fallback for pricing
   useEffect(() => {
     fetch(`${API}/api/tours`)
       .then(r => r.json())
       .then(data => setTours(data.tours || []))
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setShowDropdown(false); };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, []);
-
-  const filteredTours = tours.filter(t => t.title.toLowerCase().includes(tourSearch.toLowerCase()));
-
-  const handleTourSelect = (tour: Tour) => {
-    setSelectedTour(tour);
-    setTourSearch(tour.title);
-    setForm(f => ({ ...f, tourTitle: tour.title }));
-    setShowDropdown(false);
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -248,17 +357,24 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     : ["Standard", "Premium", "Luxury"];
 
   const getPricePerPerson = (pkg: Package): number => {
-    if (selectedTour) {
-      if (pkg === "Standard") return parseFloat(selectedTour.standard_price);
-      if (pkg === "Premium")  return parseFloat(selectedTour.premium_price);
-      if (pkg === "Luxury")   return parseFloat(selectedTour.luxury_price);
+    // Try to find price from API tours first
+    const matchedTour = tours.find(t => t.title === form.tourTitle);
+    if (matchedTour) {
+      if (pkg === "Standard") return parseFloat(matchedTour.standard_price);
+      if (pkg === "Premium")  return parseFloat(matchedTour.premium_price);
+      if (pkg === "Luxury")   return parseFloat(matchedTour.luxury_price);
     }
+    // Fallback prices
     return { Standard: 890, Premium: 1450, Luxury: 2800 }[pkg];
   };
 
   const pricePerPerson = getPricePerPerson(form.package);
-  const guests         = Number(form.guests) || 1;
-  const totalPrice     = pricePerPerson * guests;
+  const adults         = Number(form.adults) || 1;
+  const children       = Number(form.children) || 0;
+  
+  // Children under 12 get 50% discount
+  const childrenPrice = pricePerPerson * 0.5 * children;
+  const totalPrice    = (pricePerPerson * adults) + childrenPrice;
   // ── 60% deposit ──
   const depositAmount  = Math.ceil(totalPrice * 0.6);
   const balanceAmount  = totalPrice - depositAmount;
@@ -276,8 +392,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tourTitle: form.tourTitle, guestName: form.name, guestEmail: form.email,
-          guestPhone: fullPhone, travelDate: form.date, guests,
-          package: form.package, specialRequests: form.message,
+          guestPhone: fullPhone, travelDate: form.date, adults,
+          children, package: form.package, specialRequests: form.message,
           days: Number(form.days), totalAmount: totalPrice, depositAmount,
         }),
       });
@@ -322,9 +438,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
 
   const resetForm = () => {
     setSubmitted(false); setStep(1); setClientSecret(null); setCurrentBooking(null);
-    setMpesaStatus("idle"); setApiError(""); setSelectedTour(null); setTourSearch(propTourTitle);
-    setCountryCode("+254");
-    setForm({ tourTitle: propTourTitle, name: "", email: "", phoneLocal: "", mpesaNumber: "", date: "", guests: "1", days: "1", package: "Standard", paymentMethod: "", message: "" });
+    setMpesaStatus("idle"); setApiError(""); setCountryCode("+254");
+    setForm({ tourTitle: propTourTitle, name: "", email: "", phoneLocal: "", mpesaNumber: "", date: "", adults: "1", children: "0", days: "1", package: "Standard", paymentMethod: "", message: "" });
   };
 
   /* ── CONFIRMED ── */
@@ -343,7 +458,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         {currentBooking && <div style={S.refBadge}>Booking Ref: <strong style={{ color:"#4B5320" }}>{currentBooking.reference}</strong></div>}
         <button onClick={() => downloadBookingPDF({
           reference: currentBooking?.reference||"—", name: form.name, email: form.email,
-          phone: fullPhone, tourTitle: form.tourTitle, date: form.date, guests: form.guests,
+          phone: fullPhone, tourTitle: form.tourTitle, date: form.date, 
+          adults: form.adults, children: form.children,
           pkg: form.package, days: form.days, pricePerPerson, totalPrice, depositAmount,
         })} style={S.pdfBtn} className="bf-pdf-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ flexShrink:0 }}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -430,34 +546,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       {step === 1 && (
         <div className="bf-step">
 
-          {/* Tour dropdown */}
-          <div style={{ marginBottom:"16px", position:"relative" }} ref={dropdownRef}>
-            <label style={S.label}>Tour</label>
-            <div style={{ position:"relative" }}>
-              <input
-                value={tourSearch}
-                onChange={e => { setTourSearch(e.target.value); setForm(f=>({...f,tourTitle:e.target.value})); setShowDropdown(true); }}
-                onFocus={() => setShowDropdown(true)}
-                placeholder="Search or select a tour…"
-                style={S.input}
-                required
-                autoComplete="off"
-              />
-              <span style={S.ddChevron}>
-                <svg width="11" height="6" viewBox="0 0 11 6"><path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/></svg>
-              </span>
-            </div>
-            {showDropdown && filteredTours.length > 0 && (
-              <div style={S.dropdown}>
-                {filteredTours.map(t => (
-                  <div key={t.id} style={S.dropdownItem} className="bf-dd-item" onMouseDown={() => handleTourSelect(t)}>
-                    <span style={S.ddTitle}>{t.title}</span>
-                    <span style={S.ddMeta}>{t.duration} · from ${parseFloat(t.standard_price).toLocaleString()}/person</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Safari Group Dropdown */}
+          <SafariGroupDropdown 
+            value={form.tourTitle} 
+            onChange={(tour) => setForm({ ...form, tourTitle: tour })}
+          />
 
           <div style={S.row}>
             <Field label="Full Name"><input name="name" value={form.name} onChange={handleChange} placeholder="Jane Doe" style={S.input} required/></Field>
@@ -480,19 +573,26 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           </Field>
 
           <div style={S.row}>
-            <Field label="Guests">
-              <select name="guests" value={form.guests} onChange={handleChange} style={S.select} className="bf-select">
-                {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n} {n===1?"Guest":"Guests"}</option>)}
+            <Field label="Adults">
+              <select name="adults" value={form.adults} onChange={handleChange} style={S.select} className="bf-select">
+                {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n} {n===1?"Adult":"Adults"}</option>)}
               </select>
             </Field>
+            <Field label="Children (under 12)">
+              <select name="children" value={form.children} onChange={handleChange} style={S.select} className="bf-select">
+                {[0,1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} {n===1?"Child":"Children"}</option>)}
+              </select>
+            </Field>
+          </div>
+
+          <div style={S.row}>
             <Field label="Number of Days">
               <select name="days" value={form.days} onChange={handleChange} style={S.select} className="bf-select">
                 {[1,2,3,4,5,6,7,8,9,10,14,21].map(n => <option key={n} value={n}>{n} {n===1?"Day":"Days"}</option>)}
               </select>
             </Field>
+            <Field label="Travel Date"><input name="date" type="date" value={form.date} onChange={handleChange} style={S.input} required/></Field>
           </div>
-
-          <Field label="Travel Date"><input name="date" type="date" value={form.date} onChange={handleChange} style={S.input} required/></Field>
 
           <Field label="Special Requests" optional>
             <textarea name="message" value={form.message} onChange={handleChange} placeholder="Dietary needs, celebrations, accessibility…" style={S.textarea} rows={3}/>
@@ -508,7 +608,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             {packages.map(pkg => {
               const isActive = form.package === pkg;
               const pkgPrice = getPricePerPerson(pkg);
-              const pkgTotal = pkgPrice * guests;
+              const adultsTotal = pkgPrice * adults;
+              const childrenTotal = pkgPrice * 0.5 * children;
+              const pkgTotal = adultsTotal + childrenTotal;
               return (
                 <button key={pkg} type="button" onClick={() => setForm({ ...form, package: pkg })} className="bf-pkg"
                   style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"5px", padding:"12px 8px", borderRadius:"10px", cursor:"pointer", outline:"none", transition:"all 0.2s",
@@ -517,7 +619,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
                     {PACKAGE_ICONS[pkg]}
                   </span>
                   <span style={S.pkgName}>{pkg}</span>
-                  <span style={{ fontSize:"11px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif" }}>${pkgPrice.toLocaleString()}/person</span>
+                  <span style={{ fontSize:"11px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif" }}>${pkgPrice.toLocaleString()}/adult</span>
+                  <span style={{ fontSize:"11px", color:"#7a8550", fontFamily:"'DM Sans',sans-serif" }}>${(pkgPrice * 0.5).toLocaleString()}/child</span>
                   <span style={{ fontSize:"12px", fontWeight:700, color: isActive?"#4B5320":"#b0aa9e", fontFamily:"'DM Sans',sans-serif" }}>{fmt(pkgTotal)}</span>
                 </button>
               );
@@ -528,13 +631,25 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           <div style={S.priceBreakdown}>
             <div style={S.priceRowHdr}>Price Breakdown</div>
             <div style={S.priceRow}>
-              <span style={S.priceLabel}>{form.package} package</span>
-              <span style={S.priceVal}>{fmt(pricePerPerson)}/person</span>
+              <span style={S.priceLabel}>{form.package} package (adults)</span>
+              <span style={S.priceVal}>{fmt(pricePerPerson)}/adult</span>
             </div>
             <div style={S.priceRow}>
-              <span style={S.priceLabel}>× {guests} guest{guests>1?"s":""}</span>
-              <span style={S.priceVal}>{fmt(totalPrice)}</span>
+              <span style={S.priceLabel}>× {adults} adult{adults>1?"s":""}</span>
+              <span style={S.priceVal}>{fmt(pricePerPerson * adults)}</span>
             </div>
+            {children > 0 && (
+              <>
+                <div style={S.priceRow}>
+                  <span style={S.priceLabel}>Children (50% discount)</span>
+                  <span style={S.priceVal}>{fmt(pricePerPerson * 0.5)}/child</span>
+                </div>
+                <div style={S.priceRow}>
+                  <span style={S.priceLabel}>× {children} child{children>1?"ren":""}</span>
+                  <span style={S.priceVal}>{fmt(pricePerPerson * 0.5 * children)}</span>
+                </div>
+              </>
+            )}
             <div style={S.priceRow}>
               <span style={S.priceLabel}>Duration</span>
               <span style={S.priceVal}>{form.days} day{Number(form.days)>1?"s":""}</span>
@@ -594,9 +709,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               { label:"Phone",        val: fullPhone || "—" },
               { label:"Date",         val: form.date ? new Date(form.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "—" },
               { label:"Days",         val: `${form.days} day${Number(form.days)>1?"s":""}` },
-              { label:"Guests",       val: `${form.guests} ${Number(form.guests)===1?"person":"people"}` },
+              { label:"Adults",       val: `${form.adults} ${Number(form.adults)===1?"adult":"adults"}` },
+              { label:"Children",     val: `${form.children} ${Number(form.children)===1?"child":"children"}` },
               { label:"Package",      val: form.package },
-              { label:"Per Person",   val: fmt(pricePerPerson) },
+              { label:"Per Adult",    val: fmt(pricePerPerson) },
               { label:"Total Amount", val: fmt(totalPrice), bold: true },
               { label:"Deposit (60%)",val: fmt(depositAmount), highlight: true },
               { label:"Balance (40%)",val: fmt(balanceAmount) },
@@ -706,6 +822,12 @@ const S: Record<string, React.CSSProperties> = {
   ccBtn:      { display:"flex", alignItems:"center", gap:"6px", padding:"9px 10px", border:"1.5px solid #e5e0d8", borderRadius:"8px", background:"#faf9f7", cursor:"pointer", whiteSpace:"nowrap", flexShrink:0, outline:"none", transition:"border-color 0.2s" },
   ccDropdown: { position:"absolute", top:"100%", left:0, width:"220px", background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:200, marginTop:"4px" },
   ccItem:     { display:"flex", alignItems:"center", gap:"8px", padding:"8px 12px", cursor:"pointer", transition:"background 0.15s", borderBottom:"1px solid #f5f2ee" },
+  // Safari group dropdown styles
+  groupDropdown: { position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 8px 24px rgba(0,0,0,0.10)", zIndex:100, maxHeight:"300px", overflowY:"auto", marginTop:"4px" },
+  groupHeader: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 16px", background:"#f6f8f0", borderBottom:"1px solid #e5e0d8", cursor:"pointer", fontWeight:600, fontSize:"13px", color:"#4B5320", fontFamily:"'DM Sans',sans-serif" },
+  groupTitle: { fontSize:"12px", fontWeight:700, letterSpacing:"0.05em", textTransform:"uppercase" },
+  groupTours: { background:"#fff" },
+  groupTourItem: { padding:"10px 16px 10px 28px", cursor:"pointer", borderBottom:"1px solid #f5f2ee", fontSize:"13px", color:"#2a2520", fontFamily:"'DM Sans',sans-serif", transition:"background 0.15s" },
 };
 
 const css = `
@@ -729,6 +851,7 @@ const css = `
   .bf-cc-btn:hover{border-color:#4B5320!important;}
   .bf-cc-item:hover{background:#f6f8f0!important;}
   .bf-cc-item:last-child{border-bottom:none!important;}
+  .bf-group-tour-item:hover{background:#f6f8f0!important;}
 `;
 
 export default BookingForm;
