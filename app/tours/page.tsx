@@ -4,7 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { toursData } from "@/data/tours";
+<<<<<<< HEAD
 import { CheckCircle2, Tent, Crown, Gem, Heart } from "lucide-react";
+=======
+import { CheckCircle2, Tent, Crown, Gem } from "lucide-react";
+import BookingForm from "@/components/BookingForm";
+>>>>>>> f7033b8fe33a6e241197badc1d572276307946a7
 import SafariDropdown from "@/components/SafariDropdown";
 import DestinationCrawler from "@/components/DestinationCrawler";
 
@@ -127,20 +132,29 @@ export default function ToursListingPage() {
       <section className="mb-24 grid grid-cols-1 lg:grid-cols-2 gap-16">
         {/* LEFT: SAFARI STYLES */}
         <div>
+<<<<<<< HEAD
           <h2 className="text-3xl font-black text-[#4B5320] mb-8">
             Explore Safari Styles
           </h2>
+=======
+          <h2 className="text-3xl font-black text-[#4B5320] mb-8">Explore Safari Styles</h2>
+>>>>>>> f7033b8fe33a6e241197badc1d572276307946a7
           <div className="space-y-6">
             <SafariDropdown
               title="🌿 Bush Safaris"
               items={[
                 "Maasai Mara", "Amboseli", "Samburu", "Tsavo East", "Tsavo West",
+<<<<<<< HEAD
                 "Serengeti", "Ngorongoro Crater", "Ruaha", "Selous / Nyerere",
                 "Queen Elizabeth NP",
+=======
+                "Serengeti", "Ngorongoro Crater", "Ruaha", "Selous / Nyerere", "Queen Elizabeth NP",
+>>>>>>> f7033b8fe33a6e241197badc1d572276307946a7
               ]}
             />
             <SafariDropdown
               title="🌊 Beach Escapes"
+<<<<<<< HEAD
               items={[
                 "Diani", "Watamu", "Malindi", "Kilifi", "Mombasa", "Zanzibar",
                 "Pemba Island", "Mafia Island", "Lamu",
@@ -168,20 +182,43 @@ export default function ToursListingPage() {
                 "Hot Air Balloon Safari", "Great Migration Safari",
                 "Night Game Drives",
               ]}
+=======
+              items={["Diani", "Watamu", "Malindi", "Kilifi", "Mombasa", "Zanzibar", "Pemba Island", "Mafia Island", "Lamu"]}
+            />
+            <SafariDropdown
+              title="⛰ Trek & Hike Adventures"
+              items={["Mt Kenya", "Mt Kilimanjaro", "Mt Longonot", "Ngong Hills", "Mount Meru", "Rwenzori Mountains", "Mount Elgon", "Simien Mountains"]}
+            />
+            <SafariDropdown
+              title="🏛 Cultural & Heritage Tours"
+              items={["Maasai Village Experience", "Hadzabe Tribe Visit", "Stone Town Zanzibar", "Lalibela Rock Churches", "Ethiopian Highlands"]}
+            />
+            <SafariDropdown
+              title="🦍 Adventure & Wildlife Experiences"
+              items={["Gorilla Trekking", "Chimpanzee Tracking", "Hot Air Balloon Safari", "Great Migration Safari", "Night Game Drives"]}
+>>>>>>> f7033b8fe33a6e241197badc1d572276307946a7
             />
           </div>
         </div>
 
         {/* RIGHT: DESTINATION CRAWLER */}
         <div>
+<<<<<<< HEAD
           <h2 className="text-3xl font-black text-[#4B5320] mb-8">
             Our Esteemed Destinations
           </h2>
+=======
+          <h2 className="text-3xl font-black text-[#4B5320] mb-8">Our Esteemed Destinations</h2>
+>>>>>>> f7033b8fe33a6e241197badc1d572276307946a7
           <DestinationCrawler />
         </div>
       </section>
 
+<<<<<<< HEAD
       {/* ── BEYOND AFRICA SECTION ── */}
+=======
+      {/* ── BOOKING FORM SECTION ── */}
+>>>>>>> f7033b8fe33a6e241197badc1d572276307946a7
       <section className="mb-24">
         <div className="text-center mb-14">
           <p className="text-[#4B5320] font-medium tracking-[0.3em] uppercase text-xs mb-3">
@@ -399,6 +436,7 @@ export default function ToursListingPage() {
               </div>
             </div>
 
+<<<<<<< HEAD
             {/* Right: Book Now CTA */}
             <div className="flex flex-col items-center gap-4 shrink-0">
               <Link
@@ -411,6 +449,17 @@ export default function ToursListingPage() {
               <p className="text-white/40 text-xs tracking-wide text-center">
                 No commitment · Free consultation
               </p>
+=======
+            {/* Right Column */}
+            <div className="p-10 lg:p-12 bg-white">
+              <h3 className="text-xl font-bold text-gray-900 mb-1">Book Your Safari</h3>
+              <p className="text-gray-400 text-sm mb-8">Select your package and secure your dates.</p>
+              {/* ✅ This is a demo form - update is optional but recommended for consistency */}
+              <BookingForm
+                tourTitle="Safari Adventure"
+                pricingTiers={["Standard", "Premium", "Luxury"]}
+              />
+>>>>>>> f7033b8fe33a6e241197badc1d572276307946a7
             </div>
           </div>
         </div>
