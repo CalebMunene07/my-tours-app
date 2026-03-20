@@ -55,6 +55,9 @@ const HeroSection = () => {
     "/hero-safari.jpg",
     "/hero-safari1.jpeg",
     "/hero-safari2.jpeg",
+    "/abardare.jpg",
+    "/lakipia.jpg",
+    "/olepajeta.png",
   ];
   const [currentIndex, setCurrentIndex] = useState(0);
 
