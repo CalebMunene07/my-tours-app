@@ -63,7 +63,7 @@ export const toursData: TourData[] = [
   {
     slug: "amboseli-bush-safari",
     category: "bush-safari",
-    image: "/assets/tour-safari.jpg",
+    image: "/assets/amboseeli.jpg",
     title: "Amboseli Bush Safari",
     duration: "3 Days",
     price: "From $750",
@@ -72,7 +72,7 @@ export const toursData: TourData[] = [
     location: "Amboseli, Kenya",
     groupSize: "2–8 people",
     difficulty: "Easy",
-    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-zebras.jpg", "/assets/gallery-sunset.jpg"],
+    gallery: ["/assets/amboseeli.jpg", "/assets/gallery-zebras.jpg", "/assets/gallery-sunset.jpg"],
     itinerary: [
       { day: 1, title: "Drive to Amboseli", description: "Depart Nairobi early and arrive in time for an afternoon game drive." },
       { day: 2, title: "Full Day Game Drive", description: "Spend the full day exploring elephant-rich plains." },
@@ -85,7 +85,7 @@ export const toursData: TourData[] = [
   {
     slug: "tsavo-wilderness-safari",
     category: "bush-safari",
-    image: "/assets/tour-safari.jpg",
+    image: "/assets/Tsavo.jpg",
     title: "Tsavo Wilderness Safari",
     duration: "4 Days",
     price: "From $900",
@@ -94,7 +94,7 @@ export const toursData: TourData[] = [
     location: "Tsavo, Kenya",
     groupSize: "2–10 people",
     difficulty: "Easy",
-    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg", "/assets/gallery-lodge.jpg"],
+    gallery: ["/assets/Tsavo.jpg", "/assets/gallery-sunset.jpg", "/assets/gallery-lodge.jpg"],
     itinerary: [
       { day: 1, title: "Arrival Tsavo West", description: "Drive to Tsavo West, afternoon game drive." },
       { day: 2, title: "Mzima Springs", description: "Visit Mzima Springs and hippo pools." },
@@ -131,7 +131,7 @@ export const toursData: TourData[] = [
   {
     slug: "diani-beach-retreat",
     category: "beach-escape",
-    image: "/assets/tour-beach.jpg",
+    image: "/assets/diani.jpg",
     title: "Diani Beach Retreat",
     duration: "5 Days",
     price: "From $850",
@@ -140,7 +140,7 @@ export const toursData: TourData[] = [
     location: "Diani, Kenya",
     groupSize: "2–10 people",
     difficulty: "Easy",
-    gallery: ["/assets/tour-beach.jpg", "/assets/gallery-sunset.jpg"],
+    gallery: ["/assets/diani.jpg", "/assets/gallery-sunset.jpg"],
     itinerary: [
       { day: 1, title: "Arrival Diani", description: "Fly or drive to Diani, settle into resort." },
       { day: 2, title: "Water Sports Day", description: "Kite surfing, snorkelling, and dolphin cruise." },
@@ -155,7 +155,7 @@ export const toursData: TourData[] = [
   {
     slug: "lamu-island-escape",
     category: "beach-escape",
-    image: "/assets/tour-beach.jpg",
+    image: "/assets/lamu.jpg",
     title: "Lamu Island Escape",
     duration: "4 Days",
     price: "From $1,100",
@@ -164,7 +164,7 @@ export const toursData: TourData[] = [
     location: "Lamu, Kenya",
     groupSize: "2–8 people",
     difficulty: "Easy",
-    gallery: ["/assets/tour-beach.jpg", "/assets/gallery-sunset.jpg", "/assets/gallery-lodge.jpg"],
+    gallery: ["/assets/lamu.jpg", "/assets/gallery-sunset.jpg", "/assets/gallery-lodge.jpg"],
     itinerary: [
       { day: 1, title: "Fly to Lamu", description: "Morning flight from Nairobi, dhow transfer to island." },
       { day: 2, title: "Lamu Town Walk", description: "Explore the old town, Fort and museums." },
@@ -203,7 +203,7 @@ export const toursData: TourData[] = [
   {
     slug: "aberdare-highland-hike",
     category: "mountain-journey",
-    image: "/assets/tour-mountain.jpg",
+    image: "/assets/abardare.jpg",
     title: "Aberdare Highland Hike",
     duration: "3 Days",
     price: "From $620",
@@ -212,7 +212,7 @@ export const toursData: TourData[] = [
     location: "Aberdare National Park, Kenya",
     groupSize: "4–10 people",
     difficulty: "Moderate",
-    gallery: ["/assets/tour-mountain.jpg", "/assets/gallery-sunset.jpg"],
+    gallery: ["/assets/abardare.jpg", "/assets/gallery-sunset.jpg"],
     itinerary: [
       { day: 1, title: "Karura Gate Entry", description: "Enter the park and hike to the moorland." },
       { day: 2, title: "Waterfalls & Ridges", description: "Full-day hike past Karura Falls and high ridges." },
@@ -225,7 +225,7 @@ export const toursData: TourData[] = [
   {
     slug: "kilimanjaro-expedition",
     category: "mountain-journey",
-    image: "/assets/tour-mountain.jpg",
+    image: "/assets/kilimanjaro.jpg",
     title: "Kilimanjaro Expedition",
     duration: "7 Days",
     price: "From $2,200",
@@ -234,7 +234,7 @@ export const toursData: TourData[] = [
     location: "Kilimanjaro, Tanzania",
     groupSize: "4–12 people",
     difficulty: "Challenging",
-    gallery: ["/assets/tour-mountain.jpg", "/assets/gallery-sunset.jpg", "/assets/gallery-lodge.jpg"],
+    gallery: ["/assets/kilimanjaro.jpg", "/assets/gallery-sunset.jpg", "/assets/gallery-lodge.jpg"],
     itinerary: [
       { day: 1, title: "Arrive Moshi", description: "Briefing and equipment check." },
       { day: 2, title: "Londorossi Gate", description: "Enter Lemosho route, hike to Big Tree Camp." },
@@ -253,16 +253,16 @@ export const toursData: TourData[] = [
   {
     slug: "samburu-wildlife-adventure",
     category: "adventure-wildlife",
-    image: "/assets/tour-safari.jpg",
+    image: "/assets/samburu buffalo.jpg",
     title: "Samburu Wildlife Adventure",
     duration: "3 Days",
     price: "From $780",
-    description: "Discover rare northern species — reticulated giraffe, Grevy's zebra and Beisa oryx.",
+    description: "Discover rare northern species,reticulated giraffe, Grevy's zebra and Beisa oryx,buffalo's.",
     longDescription: "A 3-day adventure in Samburu Reserve, home to Kenya's unique northern wildlife species.",
     location: "Samburu, Kenya",
     groupSize: "2–8 people",
     difficulty: "Easy",
-    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg"],
+    gallery: ["/assets/samburu buffalo.jpg", "/assets/gallery-sunset.jpg"],
     itinerary: [
       { day: 1, title: "Fly to Samburu", description: "Morning flight, afternoon game drive." },
       { day: 2, title: "Full Day Exploration", description: "Game drives along Ewaso Nyiro River." },
@@ -275,7 +275,7 @@ export const toursData: TourData[] = [
   {
     slug: "ol-pejeta-rhino-trek",
     category: "adventure-wildlife",
-    image: "/assets/tour-safari.jpg",
+    image: "/assets/olepajeta.png",
     title: "Ol Pejeta Rhino Trek",
     duration: "2 Days",
     price: "From $550",
@@ -284,7 +284,7 @@ export const toursData: TourData[] = [
     location: "Ol Pejeta, Kenya",
     groupSize: "2–6 people",
     difficulty: "Easy",
-    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-zebras.jpg"],
+    gallery: ["/assets/olepajeta.png", "/assets/gallery-zebras.jpg"],
     itinerary: [
       { day: 1, title: "Arrive Ol Pejeta", description: "Afternoon game drive focusing on rhinos and lions." },
       { day: 2, title: "Walking Safari", description: "Guided walking safari, chimpanzee sanctuary visit." },
@@ -296,7 +296,7 @@ export const toursData: TourData[] = [
   {
     slug: "lake-nakuru-flamingo-safari",
     category: "adventure-wildlife",
-    image: "/assets/tour-safari.jpg",
+    image: "/assets/lakenakuru1.jpg",
     title: "Lake Nakuru Flamingo Safari",
     duration: "2 Days",
     price: "From $480",
@@ -305,7 +305,7 @@ export const toursData: TourData[] = [
     location: "Lake Nakuru, Kenya",
     groupSize: "2–10 people",
     difficulty: "Easy",
-    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg"],
+    gallery: ["/assets/lakenakuru1.jpg", "/assets/gallery-sunset.jpg"],
     itinerary: [
       { day: 1, title: "Drive to Nakuru", description: "Arrive and explore the lake shores." },
       { day: 2, title: "Full Park Game Drive", description: "Full circuit game drive, return to Nairobi." },
@@ -319,7 +319,7 @@ export const toursData: TourData[] = [
   {
     slug: "nairobi-national-park-day",
     category: "city-safari",
-    image: "/assets/tour-safari.jpg",
+    image: "/assets/nairobipark.jpg",
     title: "Nairobi National Park Day Trip",
     duration: "1 Day",
     price: "From $150",
@@ -339,7 +339,7 @@ export const toursData: TourData[] = [
   {
     slug: "giraffe-centre-elephant-orphanage",
     category: "city-safari",
-    image: "/assets/tour-safari.jpg",
+    image: "/assets/giraffe.jpg",
     title: "Giraffe Centre & Elephant Orphanage",
     duration: "1 Day",
     price: "From $120",
@@ -348,7 +348,7 @@ export const toursData: TourData[] = [
     location: "Nairobi, Kenya",
     groupSize: "2–15 people",
     difficulty: "Easy",
-    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-maasai.jpg"],
+    gallery: ["/assets/giraffe.jpg", "/assets/gallery-maasai.jpg"],
     itinerary: [
       { day: 1, title: "City Wildlife Experience", description: "Morning at Giraffe Centre, afternoon at Elephant Orphanage." },
     ],
@@ -359,7 +359,7 @@ export const toursData: TourData[] = [
   {
     slug: "hell-s-gate-cycling-safari",
     category: "city-safari",
-    image: "/assets/tour-safari.jpg",
+    image: "/assets/hell'sgate.jpg",
     title: "Hell's Gate Cycling Safari",
     duration: "1 Day",
     price: "From $180",
@@ -368,7 +368,7 @@ export const toursData: TourData[] = [
     location: "Hell's Gate, Naivasha, Kenya",
     groupSize: "2–12 people",
     difficulty: "Moderate",
-    gallery: ["/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg"],
+    gallery: ["/assets/hell'sgate.jpg", "/assets/gallery-sunset.jpg"],
     itinerary: [
       { day: 1, title: "Drive & Cycle", description: "Drive from Nairobi to Naivasha, cycle through the park, gorge walk." },
     ],
@@ -381,7 +381,7 @@ export const toursData: TourData[] = [
   {
     slug: "mara-luxury-lodge-safari",
     category: "lodge-safari",
-    image: "/assets/gallery-lodge.jpg",
+    image: "/assets/lodge1.jpg",
     title: "Mara Luxury Lodge Safari",
     duration: "4 Days",
     price: "From $2,800",
@@ -390,7 +390,7 @@ export const toursData: TourData[] = [
     location: "Masai Mara, Kenya",
     groupSize: "2–6 people",
     difficulty: "Easy",
-    gallery: ["/assets/gallery-lodge.jpg", "/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg"],
+    gallery: ["/assets/lodge1.jpg", "/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg"],
     itinerary: [
       { day: 1, title: "Fly-in to Mara", description: "Charter flight, champagne welcome, sunset drive." },
       { day: 2, title: "Private Game Drives", description: "Full day private vehicle with expert guide." },
@@ -404,7 +404,7 @@ export const toursData: TourData[] = [
   {
     slug: "laikipia-ranch-gourmet-safari",
     category: "lodge-safari",
-    image: "/assets/gallery-lodge.jpg",
+    image: "/assets/lakipia.jpg",
     title: "Laikipia Ranch Gourmet Safari",
     duration: "3 Days",
     price: "From $1,900",
@@ -413,7 +413,7 @@ export const toursData: TourData[] = [
     location: "Laikipia, Kenya",
     groupSize: "2–8 people",
     difficulty: "Easy",
-    gallery: ["/assets/gallery-lodge.jpg", "/assets/tour-safari.jpg"],
+    gallery: ["/assets/lakipia.jpg", "/assets/tour-safari.jpg"],
     itinerary: [
       { day: 1, title: "Arrive Laikipia", description: "Fly-in, welcome dinner at the ranch." },
       { day: 2, title: "Walking & Night Drive", description: "Morning walking safari, afternoon rest, night game drive." },
@@ -426,7 +426,7 @@ export const toursData: TourData[] = [
   {
     slug: "amboseli-lodge-kilimanjaro-views",
     category: "lodge-safari",
-    image: "/assets/gallery-lodge.jpg",
+    image: "/assets/amboselilodge.jpg",
     title: "Amboseli Lodge & Kilimanjaro Views",
     duration: "3 Days",
     price: "From $1,400",
@@ -435,7 +435,7 @@ export const toursData: TourData[] = [
     location: "Amboseli, Kenya",
     groupSize: "2–8 people",
     difficulty: "Easy",
-    gallery: ["/assets/gallery-lodge.jpg", "/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg"],
+    gallery: ["/assets/amboselilodge.jpg", "/assets/tour-safari.jpg", "/assets/gallery-sunset.jpg"],
     itinerary: [
       { day: 1, title: "Arrive Amboseli", description: "Drive or fly in, afternoon game drive." },
       { day: 2, title: "Full Day Safari & Cultural Dinner", description: "Game drives, Maasai village visit, signature dinner." },

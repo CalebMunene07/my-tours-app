@@ -3,8 +3,7 @@ import FeaturedTours from "@/components/FeaturedTours";
 import WhyChooseUs from "@/components/WhyChooseUs";
 import Testimonials from "@/components/Testimonials";
 import Newsletter from "@/components/Newsletter";
-
-// Note: We removed Navbar and Footer because they live in layout.tsx
+import Partners from "../components/Partners";
 export default function Home() {
   return (
     <main className="min-h-screen">
@@ -13,6 +12,7 @@ export default function Home() {
       <WhyChooseUs />
       <Testimonials />
       <Newsletter />
+      <Partners />
     </main>
   );
 }
