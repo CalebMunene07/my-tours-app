@@ -1,8 +1,3 @@
-// ───────────────────────────────────────────────────────────────────────────
-//  All images now reference public/assets/ as plain URL strings.
-//  Move your image files to:  my-tours-app/public/assets/
-// ───────────────────────────────────────────────────────────────────────────
-
 export interface TourItineraryDay {
   day: number;
   title: string;
@@ -11,7 +6,8 @@ export interface TourItineraryDay {
 
 export interface TourPricing {
   tier: string;
-  price: string;
+  priceUSD: string;       // International price in USD
+  priceKES: string;       // Resident price in KES
   includes: string[];
 }
 
@@ -56,8 +52,8 @@ export const toursData: TourData[] = [
       { day: 5, title: "Final Game Drive & Departure", description: "Early morning game drive for last wildlife sightings." },
     ],
     pricing: [
-      { tier: "Standard", price: "$1,200", includes: ["Shared game drives", "Standard tented camp"] },
-      { tier: "Luxury", price: "$2,400", includes: ["Private game drives", "Luxury lodge"] },
+      { tier: "Standard", priceUSD: "$1,200", priceKES: "KSh 155,000", includes: ["Shared game drives", "Standard tented camp", "Full board meals", "Park fees"] },
+      { tier: "Luxury",   priceUSD: "$2,400", priceKES: "KSh 310,000", includes: ["Private game drives", "Luxury lodge", "All meals & drinks", "Charter transfer"] },
     ],
   },
   {
@@ -79,7 +75,7 @@ export const toursData: TourData[] = [
       { day: 3, title: "Morning Drive & Return", description: "Final game drive then transfer back to Nairobi." },
     ],
     pricing: [
-      { tier: "Standard", price: "$750", includes: ["Park fees", "Accommodation", "Meals"] },
+      { tier: "Standard", priceUSD: "$750", priceKES: "KSh 97,000", includes: ["Park fees", "Accommodation", "Meals", "Game drives"] },
     ],
   },
   {
@@ -102,7 +98,7 @@ export const toursData: TourData[] = [
       { day: 4, title: "Departure", description: "Morning drive then return to Nairobi or Mombasa." },
     ],
     pricing: [
-      { tier: "Standard", price: "$900", includes: ["Game drives", "Accommodation", "Meals"] },
+      { tier: "Standard", priceUSD: "$900", priceKES: "KSh 116,000", includes: ["Game drives", "Accommodation", "Meals", "Park fees"] },
     ],
   },
 
@@ -125,7 +121,7 @@ export const toursData: TourData[] = [
       { day: 2, title: "Snorkelling", description: "Afternoon snorkelling trip to the coral reef." },
     ],
     pricing: [
-      { tier: "Standard", price: "$950", includes: ["Beach resort stay", "Breakfast"] },
+      { tier: "Standard", priceUSD: "$950", priceKES: "KSh 123,000", includes: ["Beach resort stay", "Breakfast daily", "Snorkelling trip"] },
     ],
   },
   {
@@ -149,7 +145,7 @@ export const toursData: TourData[] = [
       { day: 5, title: "Departure", description: "Checkout and transfer to Mombasa airport." },
     ],
     pricing: [
-      { tier: "Standard", price: "$850", includes: ["Resort stay", "Breakfast", "Day trip"] },
+      { tier: "Standard", priceUSD: "$850", priceKES: "KSh 110,000", includes: ["Resort stay", "Breakfast", "Day trip", "Water sports"] },
     ],
   },
   {
@@ -172,7 +168,7 @@ export const toursData: TourData[] = [
       { day: 4, title: "Departure", description: "Morning at leisure then fly back." },
     ],
     pricing: [
-      { tier: "Standard", price: "$1,100", includes: ["Flights", "Boutique stay", "Guided town walk"] },
+      { tier: "Standard", priceUSD: "$1,100", priceKES: "KSh 142,000", includes: ["Flights", "Boutique stay", "Guided town walk", "Dhow cruise"] },
     ],
   },
 
@@ -197,7 +193,7 @@ export const toursData: TourData[] = [
       { day: 4, title: "Descent & Departure", description: "Descend via Chogoria route." },
     ],
     pricing: [
-      { tier: "Standard", price: "$800", includes: ["Mountain guide", "Park fees", "Camping"] },
+      { tier: "Standard", priceUSD: "$800", priceKES: "KSh 103,000", includes: ["Mountain guide", "Park fees", "Camping", "Meals on trail"] },
     ],
   },
   {
@@ -219,7 +215,7 @@ export const toursData: TourData[] = [
       { day: 3, title: "Descent & Exit", description: "Morning hike back to gate, return to Nairobi." },
     ],
     pricing: [
-      { tier: "Standard", price: "$620", includes: ["Guide", "Park fees", "Camping gear"] },
+      { tier: "Standard", priceUSD: "$620", priceKES: "KSh 80,000", includes: ["Guide", "Park fees", "Camping gear", "Meals"] },
     ],
   },
   {
@@ -245,7 +241,8 @@ export const toursData: TourData[] = [
       { day: 7, title: "Summit & Descent", description: "Midnight summit push, descend to gate." },
     ],
     pricing: [
-      { tier: "Standard", price: "$2,200", includes: ["Guide", "Porters", "Park fees", "Accommodation"] },
+      { tier: "Standard",  priceUSD: "$2,200", priceKES: "KSh 285,000", includes: ["Guide", "Porters", "Park fees", "Accommodation", "Meals"] },
+      { tier: "Premium",   priceUSD: "$3,100", priceKES: "KSh 400,000", includes: ["Private guide", "Porter team", "Park fees", "Superior camps", "All meals"] },
     ],
   },
 
@@ -257,7 +254,7 @@ export const toursData: TourData[] = [
     title: "Samburu Wildlife Adventure",
     duration: "3 Days",
     price: "From $780",
-    description: "Discover rare northern species,reticulated giraffe, Grevy's zebra and Beisa oryx,buffalo's.",
+    description: "Discover rare northern species — reticulated giraffe, Grevy's zebra, Beisa oryx and buffalo.",
     longDescription: "A 3-day adventure in Samburu Reserve, home to Kenya's unique northern wildlife species.",
     location: "Samburu, Kenya",
     groupSize: "2–8 people",
@@ -269,7 +266,7 @@ export const toursData: TourData[] = [
       { day: 3, title: "Morning Drive & Return", description: "Final game drive, fly back to Nairobi." },
     ],
     pricing: [
-      { tier: "Standard", price: "$780", includes: ["Flights", "Lodge", "Game drives"] },
+      { tier: "Standard", priceUSD: "$780", priceKES: "KSh 101,000", includes: ["Flights", "Lodge", "Game drives", "Full board"] },
     ],
   },
   {
@@ -290,7 +287,7 @@ export const toursData: TourData[] = [
       { day: 2, title: "Walking Safari", description: "Guided walking safari, chimpanzee sanctuary visit." },
     ],
     pricing: [
-      { tier: "Standard", price: "$550", includes: ["Conservation fees", "Lodge", "Guide"] },
+      { tier: "Standard", priceUSD: "$550", priceKES: "KSh 71,000", includes: ["Conservation fees", "Lodge", "Guide", "Meals"] },
     ],
   },
   {
@@ -311,7 +308,7 @@ export const toursData: TourData[] = [
       { day: 2, title: "Full Park Game Drive", description: "Full circuit game drive, return to Nairobi." },
     ],
     pricing: [
-      { tier: "Standard", price: "$480", includes: ["Park fees", "Hotel", "Game drive"] },
+      { tier: "Standard", priceUSD: "$480", priceKES: "KSh 62,000", includes: ["Park fees", "Hotel", "Game drive", "Breakfast"] },
     ],
   },
 
@@ -333,7 +330,7 @@ export const toursData: TourData[] = [
       { day: 1, title: "Full Day Game Drive", description: "Depart hotel, spend full day in the park, return by evening." },
     ],
     pricing: [
-      { tier: "Standard", price: "$150", includes: ["Park fees", "Guide", "Vehicle"] },
+      { tier: "Standard", priceUSD: "$150", priceKES: "KSh 18,000", includes: ["Park fees", "Guide", "Vehicle", "Bottled water"] },
     ],
   },
   {
@@ -353,7 +350,7 @@ export const toursData: TourData[] = [
       { day: 1, title: "City Wildlife Experience", description: "Morning at Giraffe Centre, afternoon at Elephant Orphanage." },
     ],
     pricing: [
-      { tier: "Standard", price: "$120", includes: ["Entry fees", "Transport", "Guide"] },
+      { tier: "Standard", priceUSD: "$120", priceKES: "KSh 15,500", includes: ["Entry fees", "Transport", "Guide", "Bottled water"] },
     ],
   },
   {
@@ -373,7 +370,7 @@ export const toursData: TourData[] = [
       { day: 1, title: "Drive & Cycle", description: "Drive from Nairobi to Naivasha, cycle through the park, gorge walk." },
     ],
     pricing: [
-      { tier: "Standard", price: "$180", includes: ["Bike hire", "Park fees", "Guide"] },
+      { tier: "Standard", priceUSD: "$180", priceKES: "KSh 23,000", includes: ["Bike hire", "Park fees", "Guide", "Gorge walk"] },
     ],
   },
 
@@ -398,7 +395,7 @@ export const toursData: TourData[] = [
       { day: 4, title: "Morning Drive & Departure", description: "Last game drive, fly back to Nairobi." },
     ],
     pricing: [
-      { tier: "Luxury", price: "$2,800", includes: ["Charter flights", "Luxury lodge", "All meals", "Spa"] },
+      { tier: "Luxury", priceUSD: "$2,800", priceKES: "KSh 362,000", includes: ["Charter flights", "Luxury lodge", "All meals & drinks", "Spa treatment", "Private game drives"] },
     ],
   },
   {
@@ -420,7 +417,7 @@ export const toursData: TourData[] = [
       { day: 3, title: "Gourmet Breakfast & Departure", description: "Bush breakfast, fly back to Nairobi." },
     ],
     pricing: [
-      { tier: "Luxury", price: "$1,900", includes: ["Flights", "Full board", "Night drives", "Conservation fees"] },
+      { tier: "Luxury", priceUSD: "$1,900", priceKES: "KSh 245,000", includes: ["Flights", "Full board", "Night drives", "Conservation fees", "Walking safari"] },
     ],
   },
   {
@@ -442,7 +439,7 @@ export const toursData: TourData[] = [
       { day: 3, title: "Morning Drive & Departure", description: "Final dawn game drive, depart after brunch." },
     ],
     pricing: [
-      { tier: "Luxury", price: "$1,400", includes: ["Lodge", "All meals", "Game drives", "Cultural visit"] },
+      { tier: "Luxury", priceUSD: "$1,400", priceKES: "KSh 181,000", includes: ["Lodge", "All meals", "Game drives", "Cultural visit", "Maasai dinner"] },
     ],
   },
 ];
