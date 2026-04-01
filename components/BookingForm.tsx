@@ -8,11 +8,12 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
+import { toursData } from "@/data/tours";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const API = process.env.NEXT_PUBLIC_API_URL;
 
-type Package = "Standard" | "Premium" | "Luxury";
+type Package = "Standard" | "Premium" | "Luxury" | "Romance";
 
 interface Tour {
   id: string;
@@ -28,48 +29,16 @@ interface BookingFormProps {
   pricingTiers?: string[];
 }
 
-// Safari groups data
-const safariGroups = [
-  {
-    group: "Bush Safaris",
-    tours: [
-      "Maasai Mara",
-      "Amboseli",
-      "Samburu",
-      "Tsavo East",
-      "Tsavo West",
-      "Serengeti",
-      "Ngorongoro Crater"
-    ]
-  },
-  {
-    group: "Beach Escapes",
-    tours: [
-      "Diani",
-      "Watamu",
-      "Malindi",
-      "Zanzibar",
-      "Lamu"
-    ]
-  },
-  {
-    group: "Trek & Hike Adventures",
-    tours: [
-      "Mt Kenya",
-      "Mt Kilimanjaro",
-      "Ngong Hills",
-      "Mount Meru"
-    ]
-  },
-  {
-    group: "Cultural & Heritage",
-    tours: [
-      "Maasai Village Experience",
-      "Hadzabe Tribe Visit",
-      "Stone Town Zanzibar"
-    ]
-  }
-];
+// Generate Safari groups from toursData for convenient display
+const generateSafariGroups = () => {
+  // Return all tours as a flat list
+  return [{
+    group: "All Tours",
+    tours: toursData.map(tour => tour.title).sort()
+  }];
+};
+
+const safariGroups = generateSafariGroups();
 
 // ── Country codes ──
 const COUNTRY_CODES = [
@@ -103,6 +72,65 @@ const PACKAGE_ICONS: Record<Package, React.ReactNode> = {
   Standard: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
   Premium:  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
   Luxury:   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>,
+  Romance:  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+};
+
+/* ── Travel Packages Details ── */
+const PACKAGE_DETAILS: Record<Package, { title: string; subtitle: string; price: string; features: string[]; popular?: boolean }> = {
+  Standard: {
+    title: "Standard",
+    subtitle: "Essential safari comfort for the conscious traveler.",
+    price: "$890 / per person",
+    features: [
+      "Shared 4×4 Safari Vehicle",
+      "Mid-range Safari Lodges",
+      "Professional Driver/Guide",
+      "Full Board Meals",
+      "National Park Fees"
+    ]
+  },
+  Premium: {
+    title: "Premium",
+    subtitle: "Enhanced privacy and superior lodge selections.",
+    price: "$1,450 / per person",
+    popular: true,
+    features: [
+      "Private 4×4 Landcruiser",
+      "Luxury Boutique Camps",
+      "Expert Naturalist Guide",
+      "Flying Doctors Cover",
+      "Airport Transfers",
+      "Sundowner Experiences"
+    ]
+  },
+  Luxury: {
+    title: "Luxury",
+    subtitle: "The ultimate bush experience with zero compromises.",
+    price: "$2,800 / per person",
+    features: [
+      "Private Charter Flights",
+      "Ultra-Luxury Lodges",
+      "Private Chef & Butler",
+      "Dedicated Photography Guide",
+      "Premium Drinks Included",
+      "Private Spa Treatments"
+    ]
+  },
+  Romance: {
+    title: "Romantic Escape",
+    subtitle: "Birthdays, anniversaries & honeymoons — crafted to surprise and delight.",
+    price: "From $1,800 / per couple",
+    features: [
+      "💍 Special Occasions",
+      "Personalised Surprise Itinerary",
+      "Romantic Bush Candlelit Dinner",
+      "Rose Petal & Champagne Turndown",
+      "Couples Spa Treatment",
+      "Dedicated Romance Concierge",
+      "Anniversary/Birthday Cake on Arrival",
+      "Private Sundowner at a Secret Spot"
+    ]
+  }
 };
 
 /* ── PDF helper ── */
@@ -237,10 +265,10 @@ const CountryCodePicker: React.FC<{ value: string; onChange: (code: string) => v
   );
 };
 
-/* ── Safari Group Dropdown ── */
-const SafariGroupDropdown: React.FC<{ value: string; onChange: (tour: string) => void }> = ({ value, onChange }) => {
+/* ── Tour Dropdown (All Tours in Single List) ── */
+const TourDropdown: React.FC<{ value: string; onChange: (tour: string) => void }> = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -248,6 +276,14 @@ const SafariGroupDropdown: React.FC<{ value: string; onChange: (tour: string) =>
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  // Get all tours sorted alphabetically
+  const allTours = toursData.map(t => t.title).sort();
+  
+  // Filter tours based on search
+  const filtered = allTours.filter(tour => 
+    tour.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div style={{ position:"relative", marginBottom:"16px" }} ref={ref}>
@@ -257,7 +293,7 @@ const SafariGroupDropdown: React.FC<{ value: string; onChange: (tour: string) =>
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setOpen(true)}
-          placeholder="Select a tour..."
+          placeholder="Search and select a tour..."
           style={S.input}
           required
           autoComplete="off"
@@ -270,50 +306,47 @@ const SafariGroupDropdown: React.FC<{ value: string; onChange: (tour: string) =>
       
       {open && (
         <div style={S.groupDropdown}>
-          {safariGroups.map((group) => (
-            <div key={group.group}>
-              <div 
-                style={S.groupHeader}
-                onClick={() => setSelectedGroup(selectedGroup === group.group ? null : group.group)}
+          <div style={{ padding:"8px", borderBottom:"1px solid #e8e0d0" }}>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search tours..."
+              style={{ ...S.input, fontSize:"12px", padding:"7px 10px" }}
+              autoFocus
+              onMouseDown={(e) => e.stopPropagation()}
+            />
+          </div>
+          <div style={{ maxHeight:"280px", overflowY:"auto" }}>
+            {filtered.map((tour) => (
+              <div
+                key={tour}
+                style={S.groupTourItem}
+                className="bf-dd-item"
+                onMouseDown={() => {
+                  onChange(tour);
+                  setOpen(false);
+                  setSearch("");
+                }}
               >
-                <span style={S.groupTitle}>{group.group}</span>
-                <svg 
-                  width="10" 
-                  height="6" 
-                  viewBox="0 0 10 6"
-                  style={{ 
-                    transform: selectedGroup === group.group ? 'rotate(180deg)' : 'none',
-                    transition: 'transform 0.2s'
-                  }}
-                >
-                  <path d="M1 1L5 5L9 1" stroke="#4B5320" strokeWidth="1.5" fill="none"/>
-                </svg>
+                {tour}
               </div>
-              
-              {selectedGroup === group.group && (
-                <div style={S.groupTours}>
-                  {group.tours.map((tour) => (
-                    <div
-                      key={tour}
-                      style={S.groupTourItem}
-                      className="bf-dd-item"
-                      onMouseDown={() => {
-                        onChange(tour);
-                        setOpen(false);
-                        setSelectedGroup(null);
-                      }}
-                    >
-                      {tour}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+            ))}
+            {filtered.length === 0 && (
+              <div style={{ padding:"12px 16px", color:"#9a9590", fontSize:"13px", textAlign:"center" }}>
+                No tours found
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
   );
+};
+
+/* ── Safari Group Dropdown (Legacy - Now Using TourDropdown) ── */
+const SafariGroupDropdown: React.FC<{ value: string; onChange: (tour: string) => void }> = ({ value, onChange }) => {
+  // Delegate to new TourDropdown component
+  return <TourDropdown value={value} onChange={onChange} />;
 };
 
 /* ══════════════════════════════════════
@@ -353,19 +386,28 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const packages: Package[] = pricingTiers.length
-    ? (pricingTiers.filter(t => ["Standard","Premium","Luxury"].includes(t)) as Package[])
-    : ["Standard", "Premium", "Luxury"];
+    ? (pricingTiers.filter(t => ["Standard","Premium","Luxury","Romance"].includes(t)) as Package[])
+    : ["Standard", "Premium", "Luxury", "Romance"];
 
   const getPricePerPerson = (pkg: Package): number => {
-    // Try to find price from API tours first
-    const matchedTour = tours.find(t => t.title === form.tourTitle);
-    if (matchedTour) {
-      if (pkg === "Standard") return parseFloat(matchedTour.standard_price);
-      if (pkg === "Premium")  return parseFloat(matchedTour.premium_price);
-      if (pkg === "Luxury")   return parseFloat(matchedTour.luxury_price);
+    // Try to find price from toursData first
+    const matchedTour = toursData.find(t => t.title === form.tourTitle);
+    if (matchedTour && matchedTour.pricing) {
+      const pricingTier = matchedTour.pricing.find(p => p.tier === pkg);
+      if (pricingTier) {
+        return parseInt(pricingTier.priceUSD.replace("$", "").replace(",", ""));
+      }
+    }
+    
+    // Try to find price from API tours as fallback
+    const matchedApiTour = tours.find(t => t.title === form.tourTitle);
+    if (matchedApiTour) {
+      if (pkg === "Standard") return parseFloat(matchedApiTour.standard_price);
+      if (pkg === "Premium")  return parseFloat(matchedApiTour.premium_price);
+      if (pkg === "Luxury")   return parseFloat(matchedApiTour.luxury_price);
     }
     // Fallback prices
-    return { Standard: 890, Premium: 1450, Luxury: 2800 }[pkg];
+    return { Standard: 890, Premium: 1450, Luxury: 2800, Romance: 1800 }[pkg];
   };
 
   const pricePerPerson = getPricePerPerson(form.package);
@@ -603,25 +645,39 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       {/* ════ STEP 2 ════ */}
       {step === 2 && (
         <div className="bf-step">
-          <p style={S.secLabel}>Select Package</p>
+          <p style={S.secLabel}>Travel Packages</p>
+          <p style={{ ...S.secHint, marginBottom:"20px" }}>Four distinct tiers of service — from essential comfort to bespoke romantic escapes — ensuring your safari matches your vision perfectly.</p>
           <div style={S.pkgGrid}>
             {packages.map(pkg => {
               const isActive = form.package === pkg;
               const pkgPrice = getPricePerPerson(pkg);
+              const detail = PACKAGE_DETAILS[pkg];
               const adultsTotal = pkgPrice * adults;
               const childrenTotal = pkgPrice * 0.5 * children;
               const pkgTotal = adultsTotal + childrenTotal;
               return (
                 <button key={pkg} type="button" onClick={() => setForm({ ...form, package: pkg })} className="bf-pkg"
-                  style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"5px", padding:"12px 8px", borderRadius:"10px", cursor:"pointer", outline:"none", transition:"all 0.2s",
-                    border: isActive?"1.5px solid #4B5320":"1.5px solid #e5e0d8", background: isActive?"#f0f4ea":"#faf9f7", boxShadow: isActive?"0 0 0 3px rgba(75,83,32,0.1)":"none" }}>
-                  <span style={{ width:30, height:30, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.2s", background: isActive?"#4B5320":"#f0ede8", color: isActive?"#fff":"#9a9590" }}>
-                    {PACKAGE_ICONS[pkg]}
-                  </span>
-                  <span style={S.pkgName}>{pkg}</span>
-                  <span style={{ fontSize:"11px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif" }}>${pkgPrice.toLocaleString()}/adult</span>
-                  <span style={{ fontSize:"11px", color:"#7a8550", fontFamily:"'DM Sans',sans-serif" }}>${(pkgPrice * 0.5).toLocaleString()}/child</span>
-                  <span style={{ fontSize:"12px", fontWeight:700, color: isActive?"#4B5320":"#b0aa9e", fontFamily:"'DM Sans',sans-serif" }}>{fmt(pkgTotal)}</span>
+                  style={{ display:"flex", flexDirection:"column", alignItems:"stretch", gap:"12px", padding:"16px", borderRadius:"12px", cursor:"pointer", outline:"none", transition:"all 0.2s",
+                    border: isActive?"2px solid #4B5320":"2px solid #e5e0d8", background: isActive?"#f0f4ea":"#faf9f7", boxShadow: isActive?"0 0 0 3px rgba(75,83,32,0.1)":"none" }}>
+                  
+                  <div style={{ display:"flex", gap:"10px", alignItems:"flex-start" }}>
+                    <span style={{ width:28, height:28, borderRadius:"6px", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, background: isActive?"#4B5320":"#f0ede8", color: isActive?"#fff":"#9a9590", fontSize:"13px" }}>
+                      {PACKAGE_ICONS[pkg]}
+                    </span>
+                    <div style={{ flex:1, textAlign:"left" }}>
+                      <p style={{ fontSize:"14px", fontWeight:700, color:"#2a2520", margin:"0 0 3px 0" }}>{detail.title}{detail.popular ? " ⭐" : ""}</p>
+                      <p style={{ fontSize:"12px", color:"#7a7560", margin:0 }}>{detail.subtitle}</p>
+                    </div>
+                  </div>
+                  
+                  <div style={{ paddingTop:"8px", borderTop:"1px solid rgba(75,83,32,0.1)", textAlign:"left" }}>
+                    <p style={{ fontSize:"13px", fontWeight:700, color:"#4B5320", margin:"6px 0" }}>{detail.price}</p>
+                    <ul style={{ margin:"8px 0 0 0", paddingLeft:"18px", fontSize:"12px", color:"#5a5040", lineHeight:"1.5" }}>
+                      {detail.features.map((feature, i) => (
+                        <li key={i} style={{ marginBottom:"4px" }}>{feature}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </button>
               );
             })}
@@ -631,7 +687,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           <div style={S.priceBreakdown}>
             <div style={S.priceRowHdr}>Price Breakdown</div>
             <div style={S.priceRow}>
-              <span style={S.priceLabel}>{form.package} package (adults)</span>
+              <span style={S.priceLabel}>{PACKAGE_DETAILS[form.package].title} package (adults)</span>
               <span style={S.priceVal}>{fmt(pricePerPerson)}/adult</span>
             </div>
             <div style={S.priceRow}>
@@ -772,6 +828,7 @@ const S: Record<string, React.CSSProperties> = {
   textarea:   { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#2a2520", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", resize:"none", boxSizing:"border-box" },
   row:        { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" },
   secLabel:   { fontSize:"10px", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px", marginTop:"4px" },
+  secHint:    { fontSize:"13px", color:"#6b6560", fontFamily:"'DM Sans',sans-serif", lineHeight:1.6, marginBottom:"16px" },
   pkgGrid:    { display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"8px", marginBottom:"16px" },
   pkgName:    { fontSize:"11px", fontWeight:700, color:"#4a4540", fontFamily:"'DM Sans',sans-serif", letterSpacing:"0.04em" },
   priceBreakdown: { background:"#f6f8f0", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"14px 16px", marginBottom:"20px" },
