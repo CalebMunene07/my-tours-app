@@ -332,7 +332,7 @@ export default function ToursListingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/contact"
+                <Link href="/enquire"
                   className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-sm text-center transition-all duration-200 hover:scale-[1.02] hover:opacity-90 block"
                   style={{ background: pkg.romantic ? "#c8729a" : "#D4AF37", color: pkg.romantic ? "#fff" : "#4B5320" }}>
                   Inquire Now

@@ -2,15 +2,15 @@
 
 /* Root color variables */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #07301d;
+  --foreground: #f5f0e8;
 }
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #07301d;
+    --foreground: #f5f0e8;
   }
 }
 
@@ -45,7 +45,8 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-/* Team Section Styles - Copy and paste this into your global CSS file or style block */
+
+/* Team Section Styles */
 
 .team-section {
   padding: 100px 6vw;
@@ -125,17 +126,17 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 30px 15px;
   }
-  
+
   .team-photo-wrap {
     width: 120px;
     height: 120px;
   }
-  
+
   .team-photo {
     width: 120px;
     height: 120px;
   }
-  
+
   .team-name {
     font-size: 14px;
   }
