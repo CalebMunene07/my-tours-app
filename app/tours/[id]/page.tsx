@@ -7,6 +7,16 @@ import Image from "next/image";
 import BookingForm from "@/components/BookingForm";
 import { CheckCircle2, MapPin, Clock, Users, BarChart2 } from "lucide-react";
 
+// ── Required for "output: export" static builds ──────────────────────────────
+// Next.js needs to know all possible [id] values at build time.
+// We read them directly from toursData — no API call needed.
+export function generateStaticParams() {
+  return toursData.map((tour) => ({ id: tour.slug }));
+}
+
+export const dynamicParams = false;
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function TourDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -129,7 +139,7 @@ export default function TourDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             )}
 
-            {/* ── PRICING — Expeditions Maasai Safaris style ── */}
+            {/* Pricing */}
             {tour.pricing && tour.pricing.length > 0 && (
               <div>
                 <h3 className="text-2xl font-bold border-b border-gray-100 pb-4 mb-6">Pricing Packages</h3>
@@ -139,7 +149,6 @@ export default function TourDetailPage({ params }: { params: Promise<{ id: strin
                       key={pkg.tier}
                       className="rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
                     >
-                      {/* Package header */}
                       <div className="bg-[#4B5320] px-6 py-4">
                         <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/60 mb-0.5">
                           {pkg.tier} Package
@@ -148,16 +157,13 @@ export default function TourDetailPage({ params }: { params: Promise<{ id: strin
                         <p className="text-white/50 text-xs">{tour.duration}</p>
                       </div>
 
-                      {/* "Starting From" label */}
                       <div className="bg-gray-50 px-6 py-3 border-b border-gray-100">
                         <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400">
                           Starting From
                         </p>
                       </div>
 
-                      {/* Prices — KES + USD side by side */}
                       <div className="px-6 py-5 grid grid-cols-2 gap-4 border-b border-gray-100">
-                        {/* Residents KES */}
                         <div>
                           <div className="flex items-center gap-1.5 mb-1">
                             <span className="text-base">🇰🇪</span>
@@ -167,8 +173,6 @@ export default function TourDetailPage({ params }: { params: Promise<{ id: strin
                           </div>
                           <p className="text-2xl font-black text-[#4B5320]">{pkg.priceKES}</p>
                         </div>
-
-                        {/* International USD */}
                         <div>
                           <div className="flex items-center gap-1.5 mb-1">
                             <span className="text-base">🌍</span>
@@ -180,7 +184,6 @@ export default function TourDetailPage({ params }: { params: Promise<{ id: strin
                         </div>
                       </div>
 
-                      {/* What's included */}
                       <div className="px-6 py-5">
                         <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-3">
                           Includes

@@ -1,9 +1,6 @@
-# wrangler.toml — place this in your Next.js project root
-# This tells Cloudflare Pages how to build and serve your Next.js app
+# wrangler.toml — place in your Next.js project root (same folder as package.json)
+# Cloudflare Pages requires "pages_build_output_dir" not "publish"
 
 name = "wikima"
 compatibility_date = "2024-01-01"
-
-[build]
-command = "npm run build"
-publish = "out"          # Next.js static export goes to /out folder
+pages_build_output_dir = "out"
