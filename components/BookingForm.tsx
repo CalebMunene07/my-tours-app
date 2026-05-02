@@ -8,10 +8,11 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { toursData } from "@/data/tours";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-const API = process.env.NEXT_PUBLIC_API_URL;
+
+// ── API URL — update this if you change ports ──────────────────────────────
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 type Package = "Standard" | "Premium" | "Luxury" | "Romance";
 
@@ -22,6 +23,8 @@ interface Tour {
   standard_price: string;
   premium_price: string;
   luxury_price: string;
+  category?: string;
+  tags?: string[];
 }
 
 interface BookingFormProps {
@@ -29,85 +32,21 @@ interface BookingFormProps {
   pricingTiers?: string[];
 }
 
-// ── Tour Groups ────────────────────────────────────────────────────────────
-// Edit the tours array inside each group to match your actual tour titles
-const TOUR_GROUPS: { group: string; emoji: string; tours: string[] }[] = [
-  {
-    group: "Bush Safari",
-    emoji: "🦁",
-    tours: toursData
-      .filter(t => t.category === "bush" || t.tags?.includes("bush"))
-      .map(t => t.title)
-      .sort(),
-  },
-  {
-    group: "Beach Escape",
-    emoji: "🏖️",
-    tours: toursData
-      .filter(t => t.category === "beach" || t.tags?.includes("beach"))
-      .map(t => t.title)
-      .sort(),
-  },
-  {
-    group: "Mountain & Alpine Hiking",
-    emoji: "🏔️",
-    tours: toursData
-      .filter(t => t.category === "mountain" || t.tags?.includes("mountain") || t.tags?.includes("hiking"))
-      .map(t => t.title)
-      .sort(),
-  },
-  {
-    group: "Adventure & Wildlife",
-    emoji: "🐘",
-    tours: toursData
-      .filter(t => t.category === "adventure" || t.tags?.includes("adventure") || t.tags?.includes("wildlife"))
-      .map(t => t.title)
-      .sort(),
-  },
-  {
-    group: "City Safari & Game Park",
-    emoji: "🏙️",
-    tours: toursData
-      .filter(t => t.category === "city" || t.tags?.includes("city") || t.tags?.includes("game-park"))
-      .map(t => t.title)
-      .sort(),
-  },
-  {
-    group: "Lodge Safari & Signature Food",
-    emoji: "🍽️",
-    tours: toursData
-      .filter(t => t.category === "lodge" || t.tags?.includes("lodge") || t.tags?.includes("food"))
-      .map(t => t.title)
-      .sort(),
-  },
-  {
-    group: "Tours Beyond Africa",
-    emoji: "✈️",
-    tours: toursData
-      .filter(t => t.category === "international" || t.tags?.includes("international") || t.tags?.includes("beyond-africa"))
-      .map(t => t.title)
-      .sort(),
-  },
+// ── 7 Tour Groups — tours are loaded from the API and assigned here ─────────
+// Once your tours are in Supabase, add a `category` column with one of these
+// values: bush | beach | mountain | adventure | city | lodge | international
+// The form will automatically sort them into the correct group.
+const GROUP_CONFIG = [
+  { group: "Bush Safari",                    emoji: "🦁",  category: "bush"          },
+  { group: "Beach Escape",                   emoji: "🏖️",  category: "beach"         },
+  { group: "Mountain & Alpine Hiking",       emoji: "🏔️",  category: "mountain"      },
+  { group: "Adventure & Wildlife",           emoji: "🐘",  category: "adventure"     },
+  { group: "City Safari & Game Park",        emoji: "🏙️",  category: "city"          },
+  { group: "Lodge Safari & Signature Food",  emoji: "🍽️",  category: "lodge"         },
+  { group: "Tours Beyond Africa",            emoji: "🌍",  category: "international" },
 ];
 
-// Fallback: if your toursData doesn't have categories/tags yet,
-// this builds groups from all tours alphabetically under "All Tours"
-const buildSafariGroups = () => {
-  const hasContent = TOUR_GROUPS.some(g => g.tours.length > 0);
-  if (hasContent) return TOUR_GROUPS;
-
-  // Fallback — split all tours alphabetically into the 7 groups
-  const all = toursData.map(t => t.title).sort();
-  const chunkSize = Math.ceil(all.length / 7);
-  return TOUR_GROUPS.map((g, i) => ({
-    ...g,
-    tours: all.slice(i * chunkSize, (i + 1) * chunkSize),
-  }));
-};
-
-const safariGroups = buildSafariGroups();
-
-// ── Country codes ──────────────────────────────────────────────────────────
+// ── Country codes ───────────────────────────────────────────────────────────
 const COUNTRY_CODES = [
   { code: "+254", flag: "🇰🇪", name: "Kenya" },
   { code: "+61",  flag: "🇦🇺", name: "Australia" },
@@ -147,59 +86,30 @@ const PACKAGE_DETAILS: Record<Package, { title: string; subtitle: string; price:
     title: "Standard",
     subtitle: "Essential safari comfort for the conscious traveler.",
     price: "$890 / per person",
-    features: [
-      "Shared 4×4 Safari Vehicle",
-      "Mid-range Safari Lodges",
-      "Professional Driver/Guide",
-      "Full Board Meals",
-      "National Park Fees"
-    ]
+    features: ["Shared 4×4 Safari Vehicle","Mid-range Safari Lodges","Professional Driver/Guide","Full Board Meals","National Park Fees"],
   },
   Premium: {
     title: "Premium",
     subtitle: "Enhanced privacy and superior lodge selections.",
     price: "$1,450 / per person",
     popular: true,
-    features: [
-      "Private 4×4 Landcruiser",
-      "Luxury Boutique Camps",
-      "Expert Naturalist Guide",
-      "Flying Doctors Cover",
-      "Airport Transfers",
-      "Sundowner Experiences"
-    ]
+    features: ["Private 4×4 Landcruiser","Luxury Boutique Camps","Expert Naturalist Guide","Flying Doctors Cover","Airport Transfers","Sundowner Experiences"],
   },
   Luxury: {
     title: "Luxury",
     subtitle: "The ultimate bush experience with zero compromises.",
     price: "$2,800 / per person",
-    features: [
-      "Private Charter Flights",
-      "Ultra-Luxury Lodges",
-      "Private Chef & Butler",
-      "Dedicated Photography Guide",
-      "Premium Drinks Included",
-      "Private Spa Treatments"
-    ]
+    features: ["Private Charter Flights","Ultra-Luxury Lodges","Private Chef & Butler","Dedicated Photography Guide","Premium Drinks Included","Private Spa Treatments"],
   },
   Romance: {
     title: "Romantic Escape",
-    subtitle: "Birthdays, anniversaries & honeymoons — crafted to surprise and delight.",
+    subtitle: "Birthdays, anniversaries & honeymoons — crafted to delight.",
     price: "From $1,800 / per couple",
-    features: [
-      "💍 Special Occasions",
-      "Personalised Surprise Itinerary",
-      "Romantic Bush Candlelit Dinner",
-      "Rose Petal & Champagne Turndown",
-      "Couples Spa Treatment",
-      "Dedicated Romance Concierge",
-      "Anniversary/Birthday Cake on Arrival",
-      "Private Sundowner at a Secret Spot"
-    ]
-  }
+    features: ["💍 Special Occasions","Personalised Surprise Itinerary","Romantic Bush Candlelit Dinner","Rose Petal & Champagne Turndown","Couples Spa Treatment","Dedicated Romance Concierge","Anniversary/Birthday Cake on Arrival","Private Sundowner at a Secret Spot"],
+  },
 };
 
-/* ── PDF helper ── */
+/* ── PDF helper ─────────────────────────────────────────────────────────── */
 function downloadBookingPDF(p: {
   reference:string; name:string; email:string; phone:string;
   tourTitle:string; date:string; adults:string; children:string; pkg:Package;
@@ -212,7 +122,6 @@ function downloadBookingPDF(p: {
   const childrenInfo = p.children && p.children !== "0" ? `<div class="fld"><label>Children (under 12)</label><p>${p.children}</p></div>` : "";
   const childrenPrice = Number(p.children) > 0 ? p.pricePerPerson * 0.5 * Number(p.children) : 0;
   const adultsPrice = p.pricePerPerson * Number(p.adults);
-
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Wikima Booking ${p.reference}</title>
 <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Georgia,serif;color:#2d3a10;padding:48px;font-size:14px;}
 .hdr{display:flex;justify-content:space-between;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #e8e0d0;}
@@ -232,7 +141,7 @@ function downloadBookingPDF(p: {
 <div class="sec"><div class="sec-t">Payment Summary</div><div class="pay">
 <div class="row"><span class="lbl">Price per adult</span><span class="amt">$${p.pricePerPerson.toLocaleString()}</span></div>
 <div class="row"><span class="lbl">× ${p.adults} adult${Number(p.adults)>1?"s":""}</span><span class="amt">$${adultsPrice.toLocaleString()}</span></div>
-${Number(p.children) > 0 ? `<div class="row"><span class="lbl">Children (50% discount)</span><span class="amt">$${childrenPrice.toLocaleString()}</span></div>` : ""}
+${Number(p.children)>0?`<div class="row"><span class="lbl">Children (50% discount)</span><span class="amt">$${childrenPrice.toLocaleString()}</span></div>`:""}
 <div class="row"><span class="lbl">Total Amount</span><span class="amt">$${p.totalPrice.toLocaleString()}</span></div>
 <div class="row"><span class="lbl">Deposit Paid (${depositPct}%)</span><span class="amt">$${p.depositAmount.toLocaleString()}</span></div>
 <div class="row"><span class="lbl">Balance on Arrival</span><span class="amt">$${balance.toLocaleString()}</span></div>
@@ -247,7 +156,7 @@ ${Number(p.children) > 0 ? `<div class="row"><span class="lbl">Children (50% dis
   setTimeout(() => win.print(), 600);
 }
 
-/* ── Stripe checkout ── */
+/* ── Stripe checkout ─────────────────────────────────────────────────────── */
 const StripeCheckout: React.FC<{ bookingRef:string; amount:string; onSuccess:()=>void; onBack:()=>void }> = ({ bookingRef, amount, onSuccess, onBack }) => {
   const stripe = useStripe(), elements = useElements();
   const [paying, setPaying] = useState(false);
@@ -280,48 +189,36 @@ const StripeCheckout: React.FC<{ bookingRef:string; amount:string; onSuccess:()=
   );
 };
 
-/* ── Country Code Picker ── */
+/* ── Country Code Picker ─────────────────────────────────────────────────── */
 const CountryCodePicker: React.FC<{ value: string; onChange: (code: string) => void }> = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
-
-  const filtered = COUNTRY_CODES.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) || c.code.includes(search)
-  );
+  const filtered = COUNTRY_CODES.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.code.includes(search));
   const selected = COUNTRY_CODES.find(c => c.code === value) || COUNTRY_CODES[0];
-
   return (
     <div style={{ position:"relative" }} ref={ref}>
       <button type="button" onClick={() => setOpen(!open)} style={S.ccBtn} className="bf-cc-btn">
         <span>{selected.flag}</span>
-        <span style={{ fontSize:"13px", fontWeight:600, color:"#2a2520" }}>{selected.code}</span>
-        <svg width="9" height="5" viewBox="0 0 11 6" style={{ opacity:0.4 }}><path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/></svg>
+        <span style={{ fontSize:"13px", fontWeight:600, color:"#1a1a1a" }}>{selected.code}</span>
+        <svg width="9" height="5" viewBox="0 0 11 6" style={{ opacity:0.5 }}><path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/></svg>
       </button>
       {open && (
         <div style={S.ccDropdown}>
           <div style={{ padding:"8px" }}>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search country…"
-              style={{ ...S.input, fontSize:"12px", padding:"7px 10px" }}
-              autoFocus
-            />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search country…" style={{ ...S.input, fontSize:"12px", padding:"7px 10px" }} autoFocus/>
           </div>
           <div style={{ maxHeight:"160px", overflowY:"auto" }}>
             {filtered.map(c => (
-              <div key={c.code} onMouseDown={() => { onChange(c.code); setOpen(false); setSearch(""); }}
-                style={S.ccItem} className="bf-cc-item">
+              <div key={c.code} onMouseDown={() => { onChange(c.code); setOpen(false); setSearch(""); }} style={S.ccItem} className="bf-cc-item">
                 <span>{c.flag}</span>
-                <span style={{ fontSize:"12px", color:"#2a2520", flex:1 }}>{c.name}</span>
-                <span style={{ fontSize:"11px", color:"#9a9590", fontWeight:600 }}>{c.code}</span>
+                <span style={{ fontSize:"12px", color:"#1a1a1a", flex:1, fontWeight:500 }}>{c.name}</span>
+                <span style={{ fontSize:"11px", color:"#4B5320", fontWeight:700 }}>{c.code}</span>
               </div>
             ))}
           </div>
@@ -331,8 +228,13 @@ const CountryCodePicker: React.FC<{ value: string; onChange: (code: string) => v
   );
 };
 
-/* ── Grouped Tour Dropdown ── */
-const TourDropdown: React.FC<{ value: string; onChange: (tour: string) => void }> = ({ value, onChange }) => {
+/* ── Grouped Tour Dropdown — loads from API ──────────────────────────────── */
+const TourDropdown: React.FC<{
+  value: string;
+  onChange: (tour: string) => void;
+  tours: Tour[];
+  loading: boolean;
+}> = ({ value, onChange, tours, loading }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -344,26 +246,53 @@ const TourDropdown: React.FC<{ value: string; onChange: (tour: string) => void }
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  // When searching, expand all groups automatically
   const isSearching = search.trim().length > 0;
+
+  // Build all 7 groups — tours without a category go into a visible "Uncategorised" fallback
+  // so nothing disappears. If no category column yet, all tours appear in every group until
+  // you add the category column to Supabase.
+  const builtGroups = GROUP_CONFIG.map(gc => ({
+    ...gc,
+    tours: tours
+      .filter(t => {
+        if (!t.category && !t.tags?.length) return true; // show everywhere until categorised
+        return t.category === gc.category || t.tags?.includes(gc.category);
+      })
+      .map(t => t.title)
+      .sort(),
+  }));
+
+  // Deduplicate: if tours are uncategorised and showing everywhere, keep all 7 groups visible
+  // but only show each tour once (in the first group if uncategorised)
+  const seen = new Set<string>();
+  const grouped = builtGroups.map((g, idx) => ({
+    ...g,
+    tours: g.tours.filter(title => {
+      const allCategorised = tours.every(t => t.category || t.tags?.length);
+      if (allCategorised) return true; // categories set — show normally
+      // Not categorised yet — put each tour in first group only
+      if (idx === 0) { seen.add(title); return true; }
+      return !seen.has(title);
+    }),
+  }));
 
   const toggleGroup = (group: string) => {
     setExpandedGroups(prev => {
       const next = new Set(prev);
-      if (next.has(group)) next.delete(group);
-      else next.add(group);
+      next.has(group) ? next.delete(group) : next.add(group);
       return next;
     });
   };
 
-  const filteredGroups = safariGroups.map(g => ({
+  // Always show all 7 groups. Filter tours within groups when searching.
+  const filteredGroups = grouped.map(g => ({
     ...g,
     tours: isSearching
       ? g.tours.filter(t => t.toLowerCase().includes(search.toLowerCase()))
       : g.tours,
-  })).filter(g => g.tours.length > 0);
+  }));
 
-  const isGroupExpanded = (group: string) => isSearching || expandedGroups.has(group);
+  const isExpanded = (group: string) => isSearching || expandedGroups.has(group);
 
   return (
     <div style={{ position:"relative", marginBottom:"16px" }} ref={ref}>
@@ -373,86 +302,110 @@ const TourDropdown: React.FC<{ value: string; onChange: (tour: string) => void }
           value={value}
           readOnly
           onClick={() => setOpen(true)}
-          placeholder="Select a tour…"
-          style={{ ...S.input, cursor:"pointer" }}
+          placeholder={loading ? "Loading tours…" : "Select a tour…"}
+          style={{ ...S.input, cursor:"pointer", color: value ? "#1a1a1a" : "#9a9590" }}
           required
         />
         <span style={S.ddChevron}>
-          <svg width="11" height="6" viewBox="0 0 11 6"><path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/></svg>
+          {loading
+            ? <span className="bf-spinner-sm"/>
+            : <svg width="11" height="6" viewBox="0 0 11 6"><path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/></svg>
+          }
         </span>
       </div>
 
       {open && (
         <div style={S.groupDropdown}>
-          {/* Search bar */}
-          <div style={{ padding:"8px 10px", borderBottom:"1px solid #e8e0d0" }}>
+          {/* Search */}
+          <div style={{ padding:"8px 10px", borderBottom:"1px solid #e8e0d0", background:"#fafaf8" }}>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search tours…"
-              style={{ ...S.input, fontSize:"12px", padding:"7px 10px" }}
+              placeholder="Search all tours…"
+              style={{ ...S.input, fontSize:"13px", padding:"8px 11px" }}
               autoFocus
               onMouseDown={e => e.stopPropagation()}
             />
           </div>
 
-          <div style={{ maxHeight:"320px", overflowY:"auto" }}>
+          <div style={{ maxHeight:"340px", overflowY:"auto" }}>
             {filteredGroups.map(g => (
               <div key={g.group}>
-                {/* Group header */}
+                {/* Group header — always visible even when empty */}
                 <div
-                  style={S.groupHeader}
-                  onClick={() => !isSearching && toggleGroup(g.group)}
+                  style={{
+                    ...S.groupHeader,
+                    opacity: g.tours.length === 0 ? 0.45 : 1,
+                  }}
+                  onClick={() => g.tours.length > 0 && !isSearching && toggleGroup(g.group)}
                   className="bf-group-header"
                 >
-                  <span style={{ display:"flex", alignItems:"center", gap:"7px" }}>
-                    <span style={{ fontSize:"15px" }}>{g.emoji}</span>
+                  <span style={{ display:"flex", alignItems:"center", gap:"8px" }}>
+                    <span style={{ fontSize:"16px", lineHeight:1 }}>{g.emoji}</span>
                     <span style={S.groupTitle}>{g.group}</span>
-                    <span style={{ fontSize:"10px", color:"#a0986e", fontWeight:500, background:"#f0ede6", borderRadius:"10px", padding:"1px 7px" }}>
+                    <span style={{
+                      fontSize:"10px", fontWeight:600,
+                      background: g.tours.length > 0 ? "#e8f0dc" : "#f0ede8",
+                      color:      g.tours.length > 0 ? "#4B5320"  : "#b0a898",
+                      borderRadius:"10px", padding:"1px 8px",
+                    }}>
                       {g.tours.length}
                     </span>
                   </span>
-                  {!isSearching && (
-                    <svg
-                      width="10" height="6" viewBox="0 0 11 6"
-                      style={{ transition:"transform 0.2s", transform: isGroupExpanded(g.group) ? "rotate(180deg)" : "rotate(0deg)", opacity:0.5 }}
-                    >
+                  {!isSearching && g.tours.length > 0 && (
+                    <svg width="10" height="6" viewBox="0 0 11 6"
+                      style={{ transition:"transform 0.2s", transform: isExpanded(g.group) ? "rotate(180deg)" : "none", opacity:0.6 }}>
                       <path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/>
                     </svg>
                   )}
                 </div>
 
                 {/* Tour items */}
-                {isGroupExpanded(g.group) && (
-                  <div style={{ background:"#fff" }}>
-                    {g.tours.map(tour => (
-                      <div
-                        key={tour}
-                        style={{
-                          ...S.groupTourItem,
-                          background: value === tour ? "#f0f4ea" : undefined,
-                          color: value === tour ? "#4B5320" : undefined,
-                          fontWeight: value === tour ? 600 : undefined,
-                        }}
-                        className="bf-dd-item"
-                        onMouseDown={() => { onChange(tour); setOpen(false); setSearch(""); }}
-                      >
-                        {value === tour && (
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4B5320" strokeWidth="3" style={{ marginRight:"6px", flexShrink:0 }}>
-                            <polyline points="20 6 9 17 4 12"/>
-                          </svg>
-                        )}
-                        {tour}
-                      </div>
-                    ))}
+                {isExpanded(g.group) && g.tours.length > 0 && (
+                  <div>
+                    {g.tours.map(title => {
+                      const isSelected = value === title;
+                      return (
+                        <div
+                          key={title}
+                          style={{
+                            ...S.groupTourItem,
+                            background: isSelected ? "#eef4e4" : "#fff",
+                            color:      "#1a1a1a",
+                            fontWeight: isSelected ? 700 : 500,
+                            borderLeft: isSelected ? "3px solid #4B5320" : "3px solid transparent",
+                          }}
+                          className="bf-dd-item"
+                          onMouseDown={() => { onChange(title); setOpen(false); setSearch(""); }}
+                        >
+                          {isSelected && (
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4B5320" strokeWidth="3" style={{ marginRight:"8px", flexShrink:0 }}>
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                          )}
+                          {title}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Empty state for group */}
+                {isExpanded(g.group) && g.tours.length === 0 && isSearching && (
+                  <div style={{ padding:"10px 24px", fontSize:"12px", color:"#b0a898", fontStyle:"italic" }}>
+                    No results in this category
                   </div>
                 )}
               </div>
             ))}
 
-            {filteredGroups.length === 0 && (
-              <div style={{ padding:"20px", textAlign:"center", color:"#9a9590", fontSize:"13px" }}>
-                No tours found for &quot;{search}&quot;
+            {/* Global empty state */}
+            {filteredGroups.every(g => g.tours.length === 0) && !isSearching && (
+              <div style={{ padding:"24px", textAlign:"center", color:"#9a9590", fontSize:"13px" }}>
+                No tours found. Make sure your backend is running at<br/>
+                <code style={{ fontSize:"11px", color:"#4B5320", background:"#f0f4ea", padding:"2px 6px", borderRadius:"4px", marginTop:"4px", display:"inline-block" }}>
+                  {API}
+                </code>
               </div>
             )}
           </div>
@@ -462,9 +415,9 @@ const TourDropdown: React.FC<{ value: string; onChange: (tour: string) => void }
   );
 };
 
-/* ══════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
    MAIN BOOKING FORM
-══════════════════════════════════════ */
+══════════════════════════════════════════════════════════════ */
 const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = "", pricingTiers = [] }) => {
   const [step, setStep]           = useState(1);
   const [loading, setLoading]     = useState(false);
@@ -473,8 +426,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const [clientSecret, setClientSecret]     = useState<string|null>(null);
   const [currentBooking, setCurrentBooking] = useState<{ id:string; reference:string; deposit_amount:number }|null>(null);
   const [mpesaStatus, setMpesaStatus]       = useState<"idle"|"waiting"|"success"|"failed">("idle");
-  const [tours, setTours] = useState<Tour[]>([]);
-  const [countryCode, setCountryCode] = useState("+254");
+  const [tours, setTours]         = useState<Tour[]>([]);
+  const [toursLoading, setToursLoading] = useState(true);
+  const [countryCode, setCountryCode]   = useState("+254");
 
   const [form, setForm] = useState({
     tourTitle: propTourTitle,
@@ -483,11 +437,13 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     paymentMethod: "", message: "",
   });
 
+  // Fetch tours from backend API
   useEffect(() => {
+    setToursLoading(true);
     fetch(`${API}/api/tours`)
       .then(r => r.json())
-      .then(data => setTours(data.tours || []))
-      .catch(() => {});
+      .then(data => { setTours(data.tours || []); setToursLoading(false); })
+      .catch(() => setToursLoading(false));
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>) =>
@@ -498,16 +454,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     : ["Standard", "Premium", "Luxury", "Romance"];
 
   const getPricePerPerson = (pkg: Package): number => {
-    const matchedTour = toursData.find(t => t.title === form.tourTitle);
-    if (matchedTour && matchedTour.pricing) {
-      const pricingTier = matchedTour.pricing.find(p => p.tier === pkg);
-      if (pricingTier) return parseInt(pricingTier.priceUSD.replace("$", "").replace(",", ""));
-    }
-    const matchedApiTour = tours.find(t => t.title === form.tourTitle);
-    if (matchedApiTour) {
-      if (pkg === "Standard") return parseFloat(matchedApiTour.standard_price);
-      if (pkg === "Premium")  return parseFloat(matchedApiTour.premium_price);
-      if (pkg === "Luxury")   return parseFloat(matchedApiTour.luxury_price);
+    const match = tours.find(t => t.title === form.tourTitle);
+    if (match) {
+      if (pkg === "Standard") return parseFloat(match.standard_price) || 890;
+      if (pkg === "Premium")  return parseFloat(match.premium_price)  || 1450;
+      if (pkg === "Luxury")   return parseFloat(match.luxury_price)   || 2800;
     }
     return { Standard: 890, Premium: 1450, Luxury: 2800, Romance: 1800 }[pkg];
   };
@@ -591,16 +542,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         </div>
         <p style={S.confirmedLabel}>Booking Confirmed</p>
         <h3 style={S.confirmedTitle}>You&apos;re going on safari!</h3>
-        <p style={S.confirmedSub}>
-          A confirmation has been sent to <strong style={{ color:"#4B5320" }}>{form.email}</strong>.<br/>Our team will contact you within 24 hours.
-        </p>
+        <p style={S.confirmedSub}>A confirmation has been sent to <strong style={{ color:"#4B5320" }}>{form.email}</strong>.<br/>Our team will contact you within 24 hours.</p>
         {currentBooking && <div style={S.refBadge}>Booking Ref: <strong style={{ color:"#4B5320" }}>{currentBooking.reference}</strong></div>}
-        <button onClick={() => downloadBookingPDF({
-          reference: currentBooking?.reference||"—", name: form.name, email: form.email,
-          phone: fullPhone, tourTitle: form.tourTitle, date: form.date,
-          adults: form.adults, children: form.children,
-          pkg: form.package, days: form.days, pricePerPerson, totalPrice, depositAmount,
-        })} style={S.pdfBtn} className="bf-pdf-btn">
+        <button onClick={() => downloadBookingPDF({ reference: currentBooking?.reference||"—", name: form.name, email: form.email, phone: fullPhone, tourTitle: form.tourTitle, date: form.date, adults: form.adults, children: form.children, pkg: form.package, days: form.days, pricePerPerson, totalPrice, depositAmount })} style={S.pdfBtn} className="bf-pdf-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ flexShrink:0 }}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download PDF Invoice
         </button>
@@ -684,11 +628,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       {/* ════ STEP 1 ════ */}
       {step === 1 && (
         <div className="bf-step">
-
-          {/* Grouped Tour Dropdown */}
           <TourDropdown
             value={form.tourTitle}
-            onChange={(tour) => setForm({ ...form, tourTitle: tour })}
+            onChange={tour => setForm({ ...form, tourTitle: tour })}
+            tours={tours}
+            loading={toursLoading}
           />
 
           <div style={S.row}>
@@ -735,32 +679,28 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       {step === 2 && (
         <div className="bf-step">
           <p style={S.secLabel}>Travel Packages</p>
-          <p style={{ ...S.secHint, marginBottom:"20px" }}>Four distinct tiers of service — from essential comfort to bespoke romantic escapes — ensuring your safari matches your vision perfectly.</p>
+          <p style={{ ...S.secHint, marginBottom:"20px" }}>Four distinct tiers of service — from essential comfort to bespoke romantic escapes.</p>
           <div style={S.pkgGrid}>
             {packages.map(pkg => {
               const isActive = form.package === pkg;
-              const pkgPrice = getPricePerPerson(pkg);
               const detail = PACKAGE_DETAILS[pkg];
-              const adultsTotal = pkgPrice * adults;
-              const childrenTotal = pkgPrice * 0.5 * children;
-              const pkgTotal = adultsTotal + childrenTotal;
               return (
                 <button key={pkg} type="button" onClick={() => setForm({ ...form, package: pkg })} className="bf-pkg"
                   style={{ display:"flex", flexDirection:"column", alignItems:"stretch", gap:"12px", padding:"16px", borderRadius:"12px", cursor:"pointer", outline:"none", transition:"all 0.2s",
                     border: isActive?"2px solid #4B5320":"2px solid #e5e0d8", background: isActive?"#f0f4ea":"#faf9f7", boxShadow: isActive?"0 0 0 3px rgba(75,83,32,0.1)":"none" }}>
                   <div style={{ display:"flex", gap:"10px", alignItems:"flex-start" }}>
-                    <span style={{ width:28, height:28, borderRadius:"6px", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, background: isActive?"#4B5320":"#f0ede8", color: isActive?"#fff":"#9a9590", fontSize:"13px" }}>
+                    <span style={{ width:28, height:28, borderRadius:"6px", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, background: isActive?"#4B5320":"#f0ede8", color: isActive?"#fff":"#9a9590" }}>
                       {PACKAGE_ICONS[pkg]}
                     </span>
                     <div style={{ flex:1, textAlign:"left" }}>
-                      <p style={{ fontSize:"14px", fontWeight:700, color:"#2a2520", margin:"0 0 3px 0" }}>{detail.title}{detail.popular ? " ⭐" : ""}</p>
-                      <p style={{ fontSize:"12px", color:"#7a7560", margin:0 }}>{detail.subtitle}</p>
+                      <p style={{ fontSize:"14px", fontWeight:700, color:"#1a1a1a", margin:"0 0 3px 0" }}>{detail.title}{detail.popular ? " ⭐" : ""}</p>
+                      <p style={{ fontSize:"12px", color:"#5a5040", margin:0 }}>{detail.subtitle}</p>
                     </div>
                   </div>
                   <div style={{ paddingTop:"8px", borderTop:"1px solid rgba(75,83,32,0.1)", textAlign:"left" }}>
                     <p style={{ fontSize:"13px", fontWeight:700, color:"#4B5320", margin:"6px 0" }}>{detail.price}</p>
-                    <ul style={{ margin:"8px 0 0 0", paddingLeft:"18px", fontSize:"12px", color:"#5a5040", lineHeight:"1.5" }}>
-                      {detail.features.map((feature, i) => <li key={i} style={{ marginBottom:"4px" }}>{feature}</li>)}
+                    <ul style={{ margin:"8px 0 0 0", paddingLeft:"18px", fontSize:"12px", color:"#3a3530", lineHeight:"1.5" }}>
+                      {detail.features.map((f, i) => <li key={i} style={{ marginBottom:"4px" }}>{f}</li>)}
                     </ul>
                   </div>
                 </button>
@@ -770,7 +710,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
 
           <div style={S.priceBreakdown}>
             <div style={S.priceRowHdr}>Price Breakdown</div>
-            <div style={S.priceRow}><span style={S.priceLabel}>{PACKAGE_DETAILS[form.package].title} package (adults)</span><span style={S.priceVal}>{fmt(pricePerPerson)}/adult</span></div>
+            <div style={S.priceRow}><span style={S.priceLabel}>{PACKAGE_DETAILS[form.package].title} package</span><span style={S.priceVal}>{fmt(pricePerPerson)}/adult</span></div>
             <div style={S.priceRow}><span style={S.priceLabel}>× {adults} adult{adults>1?"s":""}</span><span style={S.priceVal}>{fmt(pricePerPerson * adults)}</span></div>
             {children > 0 && (<>
               <div style={S.priceRow}><span style={S.priceLabel}>Children (50% discount)</span><span style={S.priceVal}>{fmt(pricePerPerson * 0.5)}/child</span></div>
@@ -778,9 +718,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             </>)}
             <div style={S.priceRow}><span style={S.priceLabel}>Duration</span><span style={S.priceVal}>{form.days} day{Number(form.days)>1?"s":""}</span></div>
             <div style={S.priceDivider}/>
-            <div style={S.priceRow}><span style={{ ...S.priceLabel, fontWeight:700, color:"#2a2520", fontSize:"13px" }}>Total Amount</span><span style={{ ...S.priceVal, fontWeight:700, color:"#4B5320", fontSize:"16px" }}>{fmt(totalPrice)}</span></div>
-            <div style={S.priceRow}><span style={{ ...S.priceLabel, color:"#7a8550" }}>Deposit now (60%)</span><span style={{ ...S.priceVal, color:"#7a8550", fontWeight:600 }}>{fmt(depositAmount)}</span></div>
-            <div style={S.priceRow}><span style={{ ...S.priceLabel, color:"#b0aa9e" }}>Balance on arrival (40%)</span><span style={{ ...S.priceVal, color:"#b0aa9e" }}>{fmt(balanceAmount)}</span></div>
+            <div style={S.priceRow}><span style={{ ...S.priceLabel, fontWeight:700, color:"#1a1a1a", fontSize:"13px" }}>Total Amount</span><span style={{ ...S.priceVal, fontWeight:700, color:"#4B5320", fontSize:"16px" }}>{fmt(totalPrice)}</span></div>
+            <div style={S.priceRow}><span style={{ ...S.priceLabel, color:"#4B5320" }}>Deposit now (60%)</span><span style={{ ...S.priceVal, color:"#4B5320", fontWeight:600 }}>{fmt(depositAmount)}</span></div>
+            <div style={S.priceRow}><span style={{ ...S.priceLabel, color:"#7a7060" }}>Balance on arrival (40%)</span><span style={{ ...S.priceVal, color:"#7a7060" }}>{fmt(balanceAmount)}</span></div>
           </div>
 
           <p style={S.secLabel}>Payment Method</p>
@@ -794,7 +734,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
                 <button key={id} type="button" onClick={() => setForm({ ...form, paymentMethod: id })} className="bf-pay"
                   style={{ display:"flex", alignItems:"center", gap:"10px", padding:"12px 14px", borderRadius:"10px", cursor:"pointer", outline:"none", transition:"all 0.2s", textAlign:"left",
                     border: isActive?"1.5px solid #4B5320":"1.5px solid #e5e0d8", background: isActive?"#f0f4ea":"#faf9f7", boxShadow: isActive?"0 0 0 3px rgba(75,83,32,0.1)":"none" }}>
-                  <span style={{ width:32, height:32, borderRadius:"8px", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.2s", background: isActive?"#4B5320":"#f0ede8", color: isActive?"#fff":"#9a9590" }}>{icon}</span>
+                  <span style={{ width:32, height:32, borderRadius:"8px", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, background: isActive?"#4B5320":"#f0ede8", color: isActive?"#fff":"#9a9590" }}>{icon}</span>
                   <span><span style={S.payLabel}>{label}</span><span style={S.paySub}>{sub}</span></span>
                 </button>
               );
@@ -827,14 +767,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               { label:"Children",     val: `${form.children} ${Number(form.children)===1?"child":"children"}` },
               { label:"Package",      val: form.package },
               { label:"Per Adult",    val: fmt(pricePerPerson) },
-              { label:"Total Amount", val: fmt(totalPrice), bold: true },
+              { label:"Total Amount", val: fmt(totalPrice),    bold: true },
               { label:"Deposit (60%)",val: fmt(depositAmount), highlight: true },
               { label:"Balance (40%)",val: fmt(balanceAmount) },
               { label:"Payment",      val: form.paymentMethod==="mpesa"?`M-Pesa (${form.mpesaNumber})`:form.paymentMethod==="card"?"Credit / Debit Card":"—" },
             ].map(({ label, val, bold, highlight }, i, arr) => (
               <div key={label} style={{ ...S.reviewRow, ...(i===arr.length-1?{ borderBottom:"none", paddingBottom:0 }:{}) }}>
                 <span style={S.reviewLabel}>{label}</span>
-                <span style={{ ...S.reviewVal, ...(bold?{ fontWeight:700, color:"#2a2520" }:{}), ...(highlight?{ fontWeight:700, color:"#4B5320" }:{}) }}>{val}</span>
+                <span style={{ ...S.reviewVal, ...(bold?{ fontWeight:700, color:"#1a1a1a" }:{}), ...(highlight?{ fontWeight:700, color:"#4B5320" }:{}) }}>{val}</span>
               </div>
             ))}
           </div>
@@ -871,70 +811,70 @@ const CheckIcon = () => (
 );
 
 const S: Record<string, React.CSSProperties> = {
-  form:       { display:"flex", flexDirection:"column", gap:0 },
-  progress:   { display:"flex", alignItems:"center", gap:0, marginBottom:"6px" },
-  dot:        { width:26, height:26, borderRadius:"50%", background:"#f0ede8", border:"2px solid #e5e0d8", display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.3s", flexShrink:0 },
-  dotActive:  { background:"#4B5320", border:"2px solid #4B5320" },
-  dotDone:    { background:"#4B5320", border:"2px solid #4B5320" },
-  line:       { flex:1, height:2, background:"#e5e0d8", transition:"background 0.4s" },
-  lineDone:   { background:"#4B5320" },
-  stepLabel:  { fontSize:"11px", fontFamily:"'DM Sans',sans-serif", color:"#9a9590", letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:"20px", marginTop:"4px" },
-  label:      { display:"block", fontSize:"11px", fontWeight:600, color:"#6b6560", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:"6px", fontFamily:"'DM Sans',sans-serif" },
-  optTag:     { fontWeight:400, color:"#b0aa9e", textTransform:"none", letterSpacing:0 },
-  input:      { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#2a2520", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", transition:"border-color 0.2s, box-shadow 0.2s", boxSizing:"border-box" },
-  select:     { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#2a2520", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", cursor:"pointer", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='6'%3E%3Cpath d='M.5.5l5 5 5-5' stroke='%234B5320' stroke-width='1.4' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center", boxSizing:"border-box" },
-  textarea:   { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#2a2520", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", resize:"none", boxSizing:"border-box" },
-  row:        { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" },
-  secLabel:   { fontSize:"10px", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px", marginTop:"4px" },
-  secHint:    { fontSize:"13px", color:"#6b6560", fontFamily:"'DM Sans',sans-serif", lineHeight:1.6, marginBottom:"16px" },
-  pkgGrid:    { display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"8px", marginBottom:"16px" },
+  form:           { display:"flex", flexDirection:"column", gap:0 },
+  progress:       { display:"flex", alignItems:"center", gap:0, marginBottom:"6px" },
+  dot:            { width:26, height:26, borderRadius:"50%", background:"#f0ede8", border:"2px solid #e5e0d8", display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.3s", flexShrink:0 },
+  dotActive:      { background:"#4B5320", border:"2px solid #4B5320" },
+  dotDone:        { background:"#4B5320", border:"2px solid #4B5320" },
+  line:           { flex:1, height:2, background:"#e5e0d8", transition:"background 0.4s" },
+  lineDone:       { background:"#4B5320" },
+  stepLabel:      { fontSize:"11px", fontFamily:"'DM Sans',sans-serif", color:"#7a7060", letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:"20px", marginTop:"4px" },
+  label:          { display:"block", fontSize:"11px", fontWeight:600, color:"#3a3530", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:"6px", fontFamily:"'DM Sans',sans-serif" },
+  optTag:         { fontWeight:400, color:"#b0aa9e", textTransform:"none", letterSpacing:0 },
+  input:          { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#1a1a1a", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", transition:"border-color 0.2s, box-shadow 0.2s", boxSizing:"border-box" },
+  select:         { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#1a1a1a", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", cursor:"pointer", appearance:"none", backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='6'%3E%3Cpath d='M.5.5l5 5 5-5' stroke='%234B5320' stroke-width='1.4' fill='none'/%3E%3C/svg%3E")`, backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center", boxSizing:"border-box" },
+  textarea:       { width:"100%", padding:"9px 12px", border:"1.5px solid #e5e0d8", borderRadius:"8px", fontSize:"14px", color:"#1a1a1a", background:"#faf9f7", outline:"none", fontFamily:"'DM Sans',sans-serif", resize:"none", boxSizing:"border-box" },
+  row:            { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" },
+  secLabel:       { fontSize:"10px", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:"#7a7060", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px", marginTop:"4px" },
+  secHint:        { fontSize:"13px", color:"#3a3530", fontFamily:"'DM Sans',sans-serif", lineHeight:1.6, marginBottom:"16px" },
+  pkgGrid:        { display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"8px", marginBottom:"16px" },
   priceBreakdown: { background:"#f6f8f0", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"14px 16px", marginBottom:"20px" },
-  priceRowHdr:    { fontSize:"9px", fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", color:"#7a8550", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px" },
-  priceRow:   { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"4px 0" },
-  priceLabel: { fontSize:"12px", color:"#6b6560", fontFamily:"'DM Sans',sans-serif" },
-  priceVal:   { fontSize:"13px", fontWeight:600, color:"#2a2520", fontFamily:"'DM Sans',sans-serif" },
-  priceDivider:{ height:1, background:"#dde8c0", margin:"8px 0" },
-  payGrid:    { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px", marginBottom:"16px" },
-  payLabel:   { display:"block", fontSize:"12px", fontWeight:700, color:"#2a2520", fontFamily:"'DM Sans',sans-serif" },
-  paySub:     { display:"block", fontSize:"10px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginTop:"1px" },
-  mpesaBox:   { background:"#f6f8f0", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"14px 16px", marginBottom:"16px" },
-  mpesaHint:  { fontSize:"11px", color:"#7a8550", fontFamily:"'DM Sans',sans-serif", marginTop:"4px", lineHeight:1.5 },
-  reviewBox:  { border:"1.5px solid #e6e0d8", borderRadius:"12px", overflow:"hidden", marginBottom:"14px" },
-  reviewRow:  { display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"10px 14px", borderBottom:"1px solid #f0ede8", gap:"12px" },
-  reviewLabel:{ fontSize:"10px", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", flexShrink:0 },
-  reviewVal:  { fontSize:"13px", color:"#2a2520", fontFamily:"'DM Sans',sans-serif", textAlign:"right", wordBreak:"break-word" },
-  terms:      { fontSize:"11px", color:"#b0aa9e", fontFamily:"'DM Sans',sans-serif", lineHeight:1.6, marginBottom:"12px" },
-  navRow:     { display:"flex", gap:"8px", marginTop:"8px" },
-  backBtn:    { padding:"11px 16px", border:"1.5px solid #e5e0d8", borderRadius:"8px", background:"#fff", color:"#6b6560", fontSize:"12px", fontFamily:"'DM Sans',sans-serif", cursor:"pointer", fontWeight:600, transition:"all 0.2s", flexShrink:0 },
-  nextBtn:    { flex:1, padding:"12px 20px", background:"#4B5320", color:"#fff", border:"none", borderRadius:"8px", fontSize:"12px", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"background 0.2s, transform 0.15s" },
-  spinWrap:   { display:"flex", alignItems:"center", justifyContent:"center", gap:"8px" },
-  errorBanner:{ display:"flex", alignItems:"center", gap:"8px", background:"#fef2f2", border:"1.5px solid #fca5a5", borderRadius:"8px", padding:"10px 14px", marginBottom:"14px", fontSize:"12px", color:"#dc2626", fontFamily:"'DM Sans',sans-serif" },
+  priceRowHdr:    { fontSize:"9px", fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", color:"#4B5320", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px" },
+  priceRow:       { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"4px 0" },
+  priceLabel:     { fontSize:"12px", color:"#3a3530", fontFamily:"'DM Sans',sans-serif" },
+  priceVal:       { fontSize:"13px", fontWeight:600, color:"#1a1a1a", fontFamily:"'DM Sans',sans-serif" },
+  priceDivider:   { height:1, background:"#dde8c0", margin:"8px 0" },
+  payGrid:        { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px", marginBottom:"16px" },
+  payLabel:       { display:"block", fontSize:"12px", fontWeight:700, color:"#1a1a1a", fontFamily:"'DM Sans',sans-serif" },
+  paySub:         { display:"block", fontSize:"10px", color:"#7a7060", fontFamily:"'DM Sans',sans-serif", marginTop:"1px" },
+  mpesaBox:       { background:"#f6f8f0", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"14px 16px", marginBottom:"16px" },
+  mpesaHint:      { fontSize:"11px", color:"#4B5320", fontFamily:"'DM Sans',sans-serif", marginTop:"4px", lineHeight:1.5 },
+  reviewBox:      { border:"1.5px solid #e6e0d8", borderRadius:"12px", overflow:"hidden", marginBottom:"14px" },
+  reviewRow:      { display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"10px 14px", borderBottom:"1px solid #f0ede8", gap:"12px" },
+  reviewLabel:    { fontSize:"10px", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", color:"#7a7060", fontFamily:"'DM Sans',sans-serif", flexShrink:0 },
+  reviewVal:      { fontSize:"13px", color:"#1a1a1a", fontFamily:"'DM Sans',sans-serif", textAlign:"right", wordBreak:"break-word" },
+  terms:          { fontSize:"11px", color:"#7a7060", fontFamily:"'DM Sans',sans-serif", lineHeight:1.6, marginBottom:"12px" },
+  navRow:         { display:"flex", gap:"8px", marginTop:"8px" },
+  backBtn:        { padding:"11px 16px", border:"1.5px solid #e5e0d8", borderRadius:"8px", background:"#fff", color:"#3a3530", fontSize:"12px", fontFamily:"'DM Sans',sans-serif", cursor:"pointer", fontWeight:600, transition:"all 0.2s", flexShrink:0 },
+  nextBtn:        { flex:1, padding:"12px 20px", background:"#4B5320", color:"#fff", border:"none", borderRadius:"8px", fontSize:"12px", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"background 0.2s, transform 0.15s" },
+  spinWrap:       { display:"flex", alignItems:"center", justifyContent:"center", gap:"8px" },
+  errorBanner:    { display:"flex", alignItems:"center", gap:"8px", background:"#fef2f2", border:"1.5px solid #fca5a5", borderRadius:"8px", padding:"10px 14px", marginBottom:"14px", fontSize:"12px", color:"#dc2626", fontFamily:"'DM Sans',sans-serif" },
   confirmedWrap:  { textAlign:"center", padding:"28px 16px" },
   confirmedIcon:  { width:52, height:52, borderRadius:"50%", background:"#f0f4ea", border:"2px solid #4B5320", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" },
   confirmedLabel: { fontSize:"10px", fontWeight:700, letterSpacing:"0.2em", textTransform:"uppercase", color:"#4B5320", fontFamily:"'DM Sans',sans-serif", marginBottom:"6px" },
-  confirmedTitle: { fontSize:"22px", fontWeight:700, color:"#2a2520", fontFamily:"'DM Sans',sans-serif", marginBottom:"8px" },
-  confirmedSub:   { fontSize:"14px", color:"#6b6560", fontFamily:"'DM Sans',sans-serif", lineHeight:1.7, marginBottom:"16px" },
-  refBadge:       { display:"inline-block", background:"#f0f4ea", border:"1px solid #c8d09e", borderRadius:"8px", padding:"8px 16px", fontSize:"13px", fontFamily:"'DM Sans',sans-serif", color:"#4a5a28", marginBottom:"16px" },
+  confirmedTitle: { fontSize:"22px", fontWeight:700, color:"#1a1a1a", fontFamily:"'DM Sans',sans-serif", marginBottom:"8px" },
+  confirmedSub:   { fontSize:"14px", color:"#3a3530", fontFamily:"'DM Sans',sans-serif", lineHeight:1.7, marginBottom:"16px" },
+  refBadge:       { display:"inline-block", background:"#f0f4ea", border:"1px solid #c8d09e", borderRadius:"8px", padding:"8px 16px", fontSize:"13px", fontFamily:"'DM Sans',sans-serif", color:"#1a1a1a", marginBottom:"16px" },
   pdfBtn:         { display:"inline-flex", alignItems:"center", justifyContent:"center", gap:"8px", background:"#4B5320", color:"#fff", border:"none", borderRadius:"10px", padding:"12px 24px", fontSize:"13px", fontWeight:700, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", marginBottom:"16px", transition:"background 0.2s, transform 0.15s" },
-  pillRow:    { display:"flex", gap:"8px", justifyContent:"center", marginBottom:"18px", flexWrap:"wrap" },
-  pill:       { display:"inline-flex", alignItems:"center", fontSize:"11px", fontWeight:600, padding:"5px 12px", borderRadius:"20px", fontFamily:"'DM Sans',sans-serif" },
-  pillGreen:  { background:"#f0f4ea", color:"#4B5320", border:"1px solid #c8d09e" },
+  pillRow:        { display:"flex", gap:"8px", justifyContent:"center", marginBottom:"18px", flexWrap:"wrap" },
+  pill:           { display:"inline-flex", alignItems:"center", fontSize:"11px", fontWeight:600, padding:"5px 12px", borderRadius:"20px", fontFamily:"'DM Sans',sans-serif" },
+  pillGreen:      { background:"#f0f4ea", color:"#4B5320", border:"1px solid #c8d09e" },
   resetBtn:       { display:"block", margin:"0 auto", background:"transparent", border:"1.5px solid #e5e0d8", color:"#4B5320", padding:"9px 22px", borderRadius:"8px", fontSize:"12px", fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" },
   mpesaWaitIcon:  { width:52, height:52, borderRadius:"50%", background:"#f0f4ea", border:"2px solid #4B5320", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" },
-  mpesaTimer:     { fontSize:"11px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginTop:"8px" },
-  stripeHeader:      { display:"flex", alignItems:"center", gap:"8px", marginBottom:"6px" },
-  stripeHeaderText:  { fontSize:"13px", color:"#4a5a28", fontFamily:"'DM Sans',sans-serif" },
-  stripeRef:         { fontSize:"12px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginBottom:"16px" },
-  stripeElementWrap: { border:"1.5px solid #e5e0d8", borderRadius:"10px", padding:"16px", background:"#faf9f7", marginBottom:"16px" },
-  stripeError:       { fontSize:"12px", color:"#dc2626", fontFamily:"'DM Sans',sans-serif", marginBottom:"12px", background:"#fef2f2", padding:"8px 12px", borderRadius:"6px", border:"1px solid #fca5a5" },
-  ddChevron:  { position:"absolute", right:"12px", top:"50%", transform:"translateY(-50%)", pointerEvents:"none" },
-  ccBtn:      { display:"flex", alignItems:"center", gap:"6px", padding:"9px 10px", border:"1.5px solid #e5e0d8", borderRadius:"8px", background:"#faf9f7", cursor:"pointer", whiteSpace:"nowrap", flexShrink:0, outline:"none", transition:"border-color 0.2s" },
-  ccDropdown: { position:"absolute", top:"100%", left:0, width:"220px", background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:200, marginTop:"4px" },
-  ccItem:     { display:"flex", alignItems:"center", gap:"8px", padding:"8px 12px", cursor:"pointer", transition:"background 0.15s", borderBottom:"1px solid #f5f2ee" },
-  groupDropdown: { position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 10px 30px rgba(0,0,0,0.12)", zIndex:100, marginTop:"4px" },
-  groupHeader: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 14px", background:"#f6f8f0", borderBottom:"1px solid #e8e0d0", cursor:"pointer", userSelect:"none" },
-  groupTitle: { fontSize:"11px", fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", color:"#4B5320", fontFamily:"'DM Sans',sans-serif" },
-  groupTourItem: { padding:"9px 14px 9px 24px", cursor:"pointer", borderBottom:"1px solid #f5f2ee", fontSize:"13px", color:"#2a2520", fontFamily:"'DM Sans',sans-serif", transition:"background 0.15s", display:"flex", alignItems:"center" },
+  mpesaTimer:     { fontSize:"11px", color:"#7a7060", fontFamily:"'DM Sans',sans-serif", marginTop:"8px" },
+  stripeHeader:       { display:"flex", alignItems:"center", gap:"8px", marginBottom:"6px" },
+  stripeHeaderText:   { fontSize:"13px", color:"#1a1a1a", fontFamily:"'DM Sans',sans-serif" },
+  stripeRef:          { fontSize:"12px", color:"#7a7060", fontFamily:"'DM Sans',sans-serif", marginBottom:"16px" },
+  stripeElementWrap:  { border:"1.5px solid #e5e0d8", borderRadius:"10px", padding:"16px", background:"#faf9f7", marginBottom:"16px" },
+  stripeError:        { fontSize:"12px", color:"#dc2626", fontFamily:"'DM Sans',sans-serif", marginBottom:"12px", background:"#fef2f2", padding:"8px 12px", borderRadius:"6px", border:"1px solid #fca5a5" },
+  ddChevron:      { position:"absolute", right:"12px", top:"50%", transform:"translateY(-50%)", pointerEvents:"none" },
+  ccBtn:          { display:"flex", alignItems:"center", gap:"6px", padding:"9px 10px", border:"1.5px solid #e5e0d8", borderRadius:"8px", background:"#faf9f7", cursor:"pointer", whiteSpace:"nowrap", flexShrink:0, outline:"none", transition:"border-color 0.2s" },
+  ccDropdown:     { position:"absolute", top:"100%", left:0, width:"220px", background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:200, marginTop:"4px" },
+  ccItem:         { display:"flex", alignItems:"center", gap:"8px", padding:"8px 12px", cursor:"pointer", transition:"background 0.15s", borderBottom:"1px solid #f5f2ee" },
+  groupDropdown:  { position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1.5px solid #d8d0c8", borderRadius:"12px", boxShadow:"0 12px 32px rgba(0,0,0,0.14)", zIndex:100, marginTop:"4px", overflow:"hidden" },
+  groupHeader:    { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 14px", background:"#f4f1ec", borderBottom:"1px solid #e8e0d0", cursor:"pointer", userSelect:"none" },
+  groupTitle:     { fontSize:"11px", fontWeight:700, letterSpacing:"0.07em", textTransform:"uppercase", color:"#2a2520", fontFamily:"'DM Sans',sans-serif" },
+  groupTourItem:  { padding:"10px 14px 10px 20px", cursor:"pointer", borderBottom:"1px solid #f0ede8", fontSize:"13px", color:"#1a1a1a", fontFamily:"'DM Sans',sans-serif", transition:"background 0.15s", display:"flex", alignItems:"center" },
 };
 
 const css = `
@@ -942,6 +882,7 @@ const css = `
   @keyframes bfFadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
   @keyframes bfSpin{to{transform:rotate(360deg);}}
   @keyframes bfSpinLg{to{transform:rotate(360deg);}}
+  @keyframes bfSpinSm{to{transform:rotate(360deg);}}
   .bf-step{animation:bfFadeUp 0.35s ease both;}
   .bf-next:hover:not(:disabled){background:#3a4118!important;transform:translateY(-1px);}
   .bf-next:disabled{opacity:0.55;cursor:not-allowed;}
@@ -953,12 +894,13 @@ const css = `
   .bf-mpesa{animation:bfFadeUp 0.3s ease both;}
   .bf-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:bfSpin 0.7s linear infinite;}
   .bf-spinner-lg{display:inline-block;width:28px;height:28px;border:3px solid rgba(75,83,32,0.2);border-top-color:#4B5320;border-radius:50%;animation:bfSpinLg 0.9s linear infinite;}
-  .bf-dd-item:hover{background:#f6f8f0!important;}
+  .bf-spinner-sm{display:inline-block;width:13px;height:13px;border:2px solid rgba(75,83,32,0.2);border-top-color:#4B5320;border-radius:50%;animation:bfSpinSm 0.7s linear infinite;}
+  .bf-dd-item:hover{background:#f0f4ea!important;color:#1a1a1a!important;cursor:pointer;}
   .bf-dd-item:last-child{border-bottom:none!important;}
   .bf-cc-btn:hover{border-color:#4B5320!important;}
   .bf-cc-item:hover{background:#f6f8f0!important;}
   .bf-cc-item:last-child{border-bottom:none!important;}
-  .bf-group-header:hover{background:#eef2e6!important;}
+  .bf-group-header:hover{background:#edeae4!important;}
 `;
 
 export default BookingForm;

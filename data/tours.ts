@@ -12,6 +12,7 @@ export interface TourPricing {
 }
 
 export interface TourData {
+  tags: any;
   slug: string;
   image: string;
   title: string;
@@ -54,9 +55,10 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$1,200", priceKES: "KSh 155,000", includes: ["Shared game drives", "Standard tented camp", "Full board meals", "Park fees"] },
       { tier: "Premium", priceUSD: "$1,800", priceKES: "KSh 233,000", includes: ["Private 4×4 Landcruiser", "Luxury Boutique Camps", "Expert Naturalist Guide", "Sundowner Experiences"] },
-      { tier: "Luxury",   priceUSD: "$2,400", priceKES: "KSh 310,000", includes: ["Private game drives", "Luxury lodge", "All meals & drinks", "Charter transfer"] },
-      { tier: "Romance",  priceUSD: "$1,800", priceKES: "Custom pricing", includes: ["Personalised Romantic Itinerary", "Candlelit Bush Dinner", "Couples Spa Treatment", "Romantic Sundowner"] },
+      { tier: "Luxury", priceUSD: "$2,400", priceKES: "KSh 310,000", includes: ["Private game drives", "Luxury lodge", "All meals & drinks", "Charter transfer"] },
+      { tier: "Romance", priceUSD: "$1,800", priceKES: "Custom pricing", includes: ["Personalised Romantic Itinerary", "Candlelit Bush Dinner", "Couples Spa Treatment", "Romantic Sundowner"] },
     ],
+    tags: undefined
   },
   {
     slug: "amboseli-bush-safari",
@@ -79,6 +81,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$750", priceKES: "KSh 97,000", includes: ["Park fees", "Accommodation", "Meals", "Game drives"] },
     ],
+    tags: undefined
   },
   {
     slug: "tsavo-wilderness-safari",
@@ -102,6 +105,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$900", priceKES: "KSh 116,000", includes: ["Game drives", "Accommodation", "Meals", "Park fees"] },
     ],
+    tags: undefined
   },
 
   // ── BEACH ESCAPES ─────────────────────────────────────────────────────────
@@ -125,6 +129,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$950", priceKES: "KSh 123,000", includes: ["Beach resort stay", "Breakfast daily", "Snorkelling trip"] },
     ],
+    tags: undefined
   },
   {
     slug: "diani-beach-retreat",
@@ -149,6 +154,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$850", priceKES: "KSh 110,000", includes: ["Resort stay", "Breakfast", "Day trip", "Water sports"] },
     ],
+    tags: undefined
   },
   {
     slug: "lamu-island-escape",
@@ -172,6 +178,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$1,100", priceKES: "KSh 142,000", includes: ["Flights", "Boutique stay", "Guided town walk", "Dhow cruise"] },
     ],
+    tags: undefined
   },
 
   // ── MOUNTAIN JOURNEYS & ALPINE HIKING ────────────────────────────────────
@@ -197,6 +204,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$800", priceKES: "KSh 103,000", includes: ["Mountain guide", "Park fees", "Camping", "Meals on trail"] },
     ],
+    tags: undefined
   },
   {
     slug: "aberdare-highland-hike",
@@ -219,6 +227,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$620", priceKES: "KSh 80,000", includes: ["Guide", "Park fees", "Camping gear", "Meals"] },
     ],
+    tags: undefined
   },
   {
     slug: "kilimanjaro-expedition",
@@ -243,11 +252,12 @@ export const toursData: TourData[] = [
       { day: 7, title: "Summit & Descent", description: "Midnight summit push, descend to gate." },
     ],
     pricing: [
-      { tier: "Standard",  priceUSD: "$2,200", priceKES: "KSh 285,000", includes: ["Guide", "Porters", "Park fees", "Accommodation", "Meals"] },
-      { tier: "Premium",   priceUSD: "$3,100", priceKES: "KSh 400,000", includes: ["Private guide", "Porter team", "Park fees", "Superior camps", "All meals"] },
-      { tier: "Luxury",    priceUSD: "$4,500", priceKES: "KSh 583,000", includes: ["Expert mountain guide", "Premium porters", "Luxury camps", "Gourmet meals", "Photography support"] },
-      { tier: "Romance",   priceUSD: "$3,200", priceKES: "Custom pricing", includes: ["Couples summit experience", "Romantic high-altitude dinner", "Private guide", "Couple photography session"] },
+      { tier: "Standard", priceUSD: "$2,200", priceKES: "KSh 285,000", includes: ["Guide", "Porters", "Park fees", "Accommodation", "Meals"] },
+      { tier: "Premium", priceUSD: "$3,100", priceKES: "KSh 400,000", includes: ["Private guide", "Porter team", "Park fees", "Superior camps", "All meals"] },
+      { tier: "Luxury", priceUSD: "$4,500", priceKES: "KSh 583,000", includes: ["Expert mountain guide", "Premium porters", "Luxury camps", "Gourmet meals", "Photography support"] },
+      { tier: "Romance", priceUSD: "$3,200", priceKES: "Custom pricing", includes: ["Couples summit experience", "Romantic high-altitude dinner", "Private guide", "Couple photography session"] },
     ],
+    tags: undefined
   },
 
   // ── ADVENTURE & WILDLIFE ──────────────────────────────────────────────────
@@ -272,6 +282,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$780", priceKES: "KSh 101,000", includes: ["Flights", "Lodge", "Game drives", "Full board"] },
     ],
+    tags: undefined
   },
   {
     slug: "ol-pejeta-rhino-trek",
@@ -293,6 +304,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$550", priceKES: "KSh 71,000", includes: ["Conservation fees", "Lodge", "Guide", "Meals"] },
     ],
+    tags: undefined
   },
   {
     slug: "lake-nakuru-flamingo-safari",
@@ -314,6 +326,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$480", priceKES: "KSh 62,000", includes: ["Park fees", "Hotel", "Game drive", "Breakfast"] },
     ],
+    tags: undefined
   },
 
   // ── CITY SAFARI / GAME & PARK ─────────────────────────────────────────────
@@ -336,6 +349,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$150", priceKES: "KSh 18,000", includes: ["Park fees", "Guide", "Vehicle", "Bottled water"] },
     ],
+    tags: undefined
   },
   {
     slug: "giraffe-centre-elephant-orphanage",
@@ -356,6 +370,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$120", priceKES: "KSh 15,500", includes: ["Entry fees", "Transport", "Guide", "Bottled water"] },
     ],
+    tags: undefined
   },
   {
     slug: "hell-s-gate-cycling-safari",
@@ -376,6 +391,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Standard", priceUSD: "$180", priceKES: "KSh 23,000", includes: ["Bike hire", "Park fees", "Guide", "Gorge walk"] },
     ],
+    tags: undefined
   },
 
   // ── LODGE SAFARI & SIGNATURE FOOD ─────────────────────────────────────────
@@ -404,6 +420,7 @@ export const toursData: TourData[] = [
       { tier: "Luxury", priceUSD: "$2,800", priceKES: "KSh 362,000", includes: ["Charter flights", "Luxury lodge", "All meals & drinks", "Spa treatment", "Private game drives"] },
       { tier: "Romance", priceUSD: "$2,400", priceKES: "Custom pricing", includes: ["Romantic bush dinner", "Champagne & rose petals", "Couples spa package", "Private sundowner location", "Anniversary celebration"] },
     ],
+    tags: undefined
   },
   {
     slug: "laikipia-ranch-gourmet-safari",
@@ -426,6 +443,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Luxury", priceUSD: "$1,900", priceKES: "KSh 245,000", includes: ["Flights", "Full board", "Night drives", "Conservation fees", "Walking safari"] },
     ],
+    tags: undefined
   },
   {
     slug: "amboseli-lodge-kilimanjaro-views",
@@ -448,6 +466,7 @@ export const toursData: TourData[] = [
     pricing: [
       { tier: "Luxury", priceUSD: "$1,400", priceKES: "KSh 181,000", includes: ["Lodge", "All meals", "Game drives", "Cultural visit", "Maasai dinner"] },
     ],
+    tags: undefined
   },
 
   // ── INTERNATIONAL ADVENTURES ──────────────────────────────────────────────
@@ -476,6 +495,7 @@ export const toursData: TourData[] = [
       { tier: "Standard", priceUSD: "$1,800", priceKES: "KSh 233,000", includes: ["Hotel stays", "Breakfast daily", "Mountain trains", "Guided hikes", "Meals"] },
       { tier: "Luxury", priceUSD: "$2,700", priceKES: "KSh 350,000", includes: ["Luxury hotels", "All meals", "Premium train passes", "Spa included", "Private guide"] },
     ],
+    tags: undefined
   },
   {
     slug: "bali-island-retreat",
@@ -506,6 +526,7 @@ export const toursData: TourData[] = [
       { tier: "Standard", priceUSD: "$1,600", priceKES: "KSh 207,000", includes: ["Luxury villa stay", "Breakfast daily", "Temple tours", "Water sports", "Spa treatment", "Transfers"] },
       { tier: "Premium", priceUSD: "$2,400", priceKES: "KSh 311,000", includes: ["Premier villa", "All meals", "Private guide", "Daily spa", "Helicopter option", "Airport transfers"] },
     ],
+    tags: undefined
   },
   {
     slug: "dubai-city-of-gold",
@@ -533,6 +554,7 @@ export const toursData: TourData[] = [
       { tier: "Standard", priceUSD: "$1,400", priceKES: "KSh 181,000", includes: ["Hotel stay", "Breakfast", "Desert safari", "Burj Khalifa", "Gold Souk tour", "Transfers"] },
       { tier: "Luxury", priceUSD: "$2,200", priceKES: "KSh 285,000", includes: ["Luxury hotel", "All meals", "Private safari", "Helicopter tour", "Premium dining", "Concierge service"] },
     ],
+    tags: undefined
   },
   {
     slug: "maldives-paradise",
@@ -563,6 +585,7 @@ export const toursData: TourData[] = [
       { tier: "Standard", priceUSD: "$2,200", priceKES: "KSh 285,000", includes: ["Overwater villa", "All meals", "Snorkelling trips", "Island tour", "Spa session", "Transfers"] },
       { tier: "Luxury", priceUSD: "$3,800", priceKES: "KSh 492,000", includes: ["Premier villa", "Gourmet meals", "Private dive trips", "Spa daily", "Water sports unlimited", "Helicopter transfer"] },
     ],
+    tags: undefined
   },
   {
     slug: "istanbul-where-worlds-meet",
@@ -591,6 +614,7 @@ export const toursData: TourData[] = [
       { tier: "Standard", priceUSD: "$1,100", priceKES: "KSh 142,000", includes: ["Hotel stay", "Breakfast", "Guided tours", "Bosphorus cruise", "Museum entries", "Transfers"] },
       { tier: "Premium", priceUSD: "$1,700", priceKES: "KSh 220,000", includes: ["Luxury hotel", "All meals", "Private guide", "VIP experiences", "Turkish spa", "Concierge"] },
     ],
+    tags: undefined
   },
   {
     slug: "paris-city-of-light",
@@ -620,6 +644,7 @@ export const toursData: TourData[] = [
       { tier: "Standard", priceUSD: "$2,500", priceKES: "KSh 324,000", includes: ["Hotels", "Breakfast", "Guided tours", "Museum entries", "Versailles tour", "Transfers"] },
       { tier: "Premium", priceUSD: "$3,800", priceKES: "KSh 492,000", includes: ["Luxury hotels", "All meals", "Private guide", "Wine tours", "Fine dining", "Helicopter tour option"] },
     ],
+    tags: undefined
   },
   {
     slug: "egypt-land-of-pharaohs",
@@ -650,6 +675,7 @@ export const toursData: TourData[] = [
       { tier: "Standard", priceUSD: "$1,300", priceKES: "KSh 168,000", includes: ["Hotels", "Nile cruise", "Breakfasts", "Guided tours", "Entry fees", "Transfers"] },
       { tier: "Premium", priceUSD: "$2,100", priceKES: "KSh 272,000", includes: ["Luxury hotels", "Luxury cruise", "All meals", "Private guide", "Hot air balloon option", "VIP access"] },
     ],
+    tags: undefined
   },
   {
     slug: "thailand-land-of-smiles",
@@ -682,6 +708,7 @@ export const toursData: TourData[] = [
       { tier: "Standard", priceUSD: "$1,800", priceKES: "KSh 233,000", includes: ["Hotels & resorts", "Breakfasts", "Island tours", "Temple tours", "Elephant sanctuary", "Transfers"] },
       { tier: "Premium", priceUSD: "$2,800", priceKES: "KSh 363,000", includes: ["Luxury hotels", "All meals", "Private guide", "VIP experiences", "Spa sessions", "Helicopter option"] },
     ],
+    tags: undefined
   },
   {
     slug: "rome-eternal-city",
@@ -711,6 +738,7 @@ export const toursData: TourData[] = [
       { tier: "Standard", priceUSD: "$2,100", priceKES: "KSh 272,000", includes: ["Hotels", "Breakfast", "Museum entries", "Guided tours", "Amalfi Coast tour", "Transfers"] },
       { tier: "Premium", priceUSD: "$3,200", priceKES: "KSh 414,000", includes: ["Luxury hotels", "All meals", "Private guide", "VIP museum access", "Fine dining", "Spa session"] },
     ],
+    tags: undefined
   },
   {
     slug: "peru-machu-picchu",
@@ -738,6 +766,7 @@ export const toursData: TourData[] = [
       { tier: "Standard", priceUSD: "$2,100", priceKES: "KSh 272,000", includes: ["Hotels", "Train tickets", "Trek guide", "Meals on trek", "Entry fees"] },
       { tier: "Premium", priceUSD: "$3,200", priceKES: "KSh 414,000", includes: ["Luxury hotels", "Premium train", "Expert guide", "All meals", "Porter service"] },
     ],
+    tags: undefined
   },
   {
     slug: "japan-cultural-journey",
@@ -766,6 +795,7 @@ export const toursData: TourData[] = [
       { tier: "Standard", priceUSD: "$2,400", priceKES: "KSh 311,000", includes: ["Hotels", "JR Pass", "Breakfasts", "Guided tours", "Temples entry"] },
       { tier: "Premium", priceUSD: "$3,600", priceKES: "KSh 467,000", includes: ["Luxury hotels", "Private guide", "All meals", "Premium experiences", "Transport"] },
     ],
+    tags: undefined
   },
   {
     slug: "iceland-volcanic-adventure",
@@ -791,6 +821,7 @@ export const toursData: TourData[] = [
       { tier: "Standard", priceUSD: "$1,650", priceKES: "KSh 214,000", includes: ["Hotel stays", "Breakfast", "Guided tours", "Blue Lagoon entry", "Transport"] },
       { tier: "Luxury", priceUSD: "$2,450", priceKES: "KSh 318,000", includes: ["Luxury hotel", "All meals", "Private guide", "Ice cave + glacier hike", "Northern lights tour"] },
     ],
+    tags: undefined
   },
 ];
 
