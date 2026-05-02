@@ -20,7 +20,6 @@ export default function Navbar() {
     const handleScroll = () => {
       setScrolled(window.scrollY > 30);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -33,17 +32,17 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
 
-        {/* Logo */}
-        <Link href="/" className="flex flex-col items-center">
+        {/* Logo + Brand Name — horizontal side by side */}
+        <Link href="/" className="flex flex-row items-center gap-3">
           <Image
             src="/logo.png"
             alt="Wikima Safari Logo"
-            width={70}
-            height={70}
+            width={60}
+            height={60}
             priority
+            className="shrink-0"
           />
-
-          <span className={`${vintage.className} text-3xl md:text-4xl`}>
+          <span className={`${vintage.className} text-3xl md:text-4xl leading-none`}>
             <span className="text-[#1f4d3a]">Wikima</span>{" "}
             <span className="text-[#db900e]">Safari</span>{" "}
             <span className="text-[#5c3d2e]">Expeditions</span>
@@ -53,17 +52,11 @@ export default function Navbar() {
         {/* Desktop Menu */}
         <nav className="hidden lg:flex items-center gap-8 font-semibold">
 
-          <Link
-            href="/"
-            className="text-[#1f4d3a] hover:text-[#f59e0b]"
-          >
+          <Link href="/" className="text-[#1f4d3a] hover:text-[#f59e0b]">
             Home
           </Link>
 
-          <Link
-            href="/tours"
-            className="text-[#1f4d3a] hover:text-[#f59e0b]"
-          >
+          <Link href="/tours" className="text-[#1f4d3a] hover:text-[#f59e0b]">
             Tours
           </Link>
 
@@ -73,34 +66,23 @@ export default function Navbar() {
             onMouseEnter={() => setGalleryOpen(true)}
             onMouseLeave={() => setGalleryOpen(false)}
           >
-            <button
-              className="flex items-center gap-1 text-[#1f4d3a] hover:text-[#f59e0b]"
-            >
+            <button className="flex items-center gap-1 text-[#1f4d3a] hover:text-[#f59e0b]">
               Gallery <ChevronDown size={16} />
             </button>
 
             {galleryOpen && (
               <div className="absolute top-full mt-3 bg-white shadow-lg rounded-lg py-2 w-40 border">
-                <Link
-                  href="/gallery/photos"
-                  className="block px-4 py-2 hover:bg-gray-100 text-[#1f4d3a]"
-                >
+                <Link href="/gallery/photos" className="block px-4 py-2 hover:bg-gray-100 text-[#1f4d3a]">
                   Photos
                 </Link>
-                <Link
-                  href="/gallery/videos"
-                  className="block px-4 py-2 hover:bg-gray-100 text-[#1f4d3a]"
-                >
+                <Link href="/gallery/videos" className="block px-4 py-2 hover:bg-gray-100 text-[#1f4d3a]">
                   Videos
                 </Link>
               </div>
             )}
           </div>
 
-          <Link
-            href="/contact"
-            className="text-[#1f4d3a] hover:text-[#f59e0b]"
-          >
+          <Link href="/contact" className="text-[#1f4d3a] hover:text-[#f59e0b]">
             Contact
           </Link>
 
@@ -114,10 +96,7 @@ export default function Navbar() {
         </nav>
 
         {/* Mobile Menu Button */}
-        <button
-          className="lg:hidden text-[#1f4d3a]"
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
+        <button className="lg:hidden text-[#1f4d3a]" onClick={() => setMenuOpen(!menuOpen)}>
           {menuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
       </div>
@@ -125,13 +104,10 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {menuOpen && (
         <div className="lg:hidden bg-[#f5f0e8] border-t shadow-md">
-
           <nav className="flex flex-col p-5 gap-4 font-semibold text-[#1f4d3a]">
-
             <Link href="/">Home</Link>
             <Link href="/tours">Tours</Link>
 
-            {/* Mobile Gallery Dropdown */}
             <div>
               <button
                 onClick={() => setGalleryOpen(!galleryOpen)}
@@ -139,7 +115,6 @@ export default function Navbar() {
               >
                 Gallery <ChevronDown size={16} />
               </button>
-
               {galleryOpen && (
                 <div className="ml-4 mt-2 flex flex-col gap-2">
                   <Link href="/gallery/photos">Photos</Link>
@@ -156,9 +131,7 @@ export default function Navbar() {
             >
               Book Now
             </Link>
-
           </nav>
-
         </div>
       )}
     </header>

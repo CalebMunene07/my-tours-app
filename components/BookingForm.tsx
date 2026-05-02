@@ -29,18 +29,85 @@ interface BookingFormProps {
   pricingTiers?: string[];
 }
 
-// Generate Safari groups from toursData for convenient display
-const generateSafariGroups = () => {
-  // Return all tours as a flat list
-  return [{
-    group: "All Tours",
-    tours: toursData.map(tour => tour.title).sort()
-  }];
+// ── Tour Groups ────────────────────────────────────────────────────────────
+// Edit the tours array inside each group to match your actual tour titles
+const TOUR_GROUPS: { group: string; emoji: string; tours: string[] }[] = [
+  {
+    group: "Bush Safari",
+    emoji: "🦁",
+    tours: toursData
+      .filter(t => t.category === "bush" || t.tags?.includes("bush"))
+      .map(t => t.title)
+      .sort(),
+  },
+  {
+    group: "Beach Escape",
+    emoji: "🏖️",
+    tours: toursData
+      .filter(t => t.category === "beach" || t.tags?.includes("beach"))
+      .map(t => t.title)
+      .sort(),
+  },
+  {
+    group: "Mountain & Alpine Hiking",
+    emoji: "🏔️",
+    tours: toursData
+      .filter(t => t.category === "mountain" || t.tags?.includes("mountain") || t.tags?.includes("hiking"))
+      .map(t => t.title)
+      .sort(),
+  },
+  {
+    group: "Adventure & Wildlife",
+    emoji: "🐘",
+    tours: toursData
+      .filter(t => t.category === "adventure" || t.tags?.includes("adventure") || t.tags?.includes("wildlife"))
+      .map(t => t.title)
+      .sort(),
+  },
+  {
+    group: "City Safari & Game Park",
+    emoji: "🏙️",
+    tours: toursData
+      .filter(t => t.category === "city" || t.tags?.includes("city") || t.tags?.includes("game-park"))
+      .map(t => t.title)
+      .sort(),
+  },
+  {
+    group: "Lodge Safari & Signature Food",
+    emoji: "🍽️",
+    tours: toursData
+      .filter(t => t.category === "lodge" || t.tags?.includes("lodge") || t.tags?.includes("food"))
+      .map(t => t.title)
+      .sort(),
+  },
+  {
+    group: "Tours Beyond Africa",
+    emoji: "✈️",
+    tours: toursData
+      .filter(t => t.category === "international" || t.tags?.includes("international") || t.tags?.includes("beyond-africa"))
+      .map(t => t.title)
+      .sort(),
+  },
+];
+
+// Fallback: if your toursData doesn't have categories/tags yet,
+// this builds groups from all tours alphabetically under "All Tours"
+const buildSafariGroups = () => {
+  const hasContent = TOUR_GROUPS.some(g => g.tours.length > 0);
+  if (hasContent) return TOUR_GROUPS;
+
+  // Fallback — split all tours alphabetically into the 7 groups
+  const all = toursData.map(t => t.title).sort();
+  const chunkSize = Math.ceil(all.length / 7);
+  return TOUR_GROUPS.map((g, i) => ({
+    ...g,
+    tours: all.slice(i * chunkSize, (i + 1) * chunkSize),
+  }));
 };
 
-const safariGroups = generateSafariGroups();
+const safariGroups = buildSafariGroups();
 
-// ── Country codes ──
+// ── Country codes ──────────────────────────────────────────────────────────
 const COUNTRY_CODES = [
   { code: "+254", flag: "🇰🇪", name: "Kenya" },
   { code: "+61",  flag: "🇦🇺", name: "Australia" },
@@ -75,7 +142,6 @@ const PACKAGE_ICONS: Record<Package, React.ReactNode> = {
   Romance:  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
 };
 
-/* ── Travel Packages Details ── */
 const PACKAGE_DETAILS: Record<Package, { title: string; subtitle: string; price: string; features: string[]; popular?: boolean }> = {
   Standard: {
     title: "Standard",
@@ -146,7 +212,7 @@ function downloadBookingPDF(p: {
   const childrenInfo = p.children && p.children !== "0" ? `<div class="fld"><label>Children (under 12)</label><p>${p.children}</p></div>` : "";
   const childrenPrice = Number(p.children) > 0 ? p.pricePerPerson * 0.5 * Number(p.children) : 0;
   const adultsPrice = p.pricePerPerson * Number(p.adults);
-  
+
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Wikima Booking ${p.reference}</title>
 <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Georgia,serif;color:#2d3a10;padding:48px;font-size:14px;}
 .hdr{display:flex;justify-content:space-between;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #e8e0d0;}
@@ -265,10 +331,11 @@ const CountryCodePicker: React.FC<{ value: string; onChange: (code: string) => v
   );
 };
 
-/* ── Tour Dropdown (All Tours in Single List) ── */
+/* ── Grouped Tour Dropdown ── */
 const TourDropdown: React.FC<{ value: string; onChange: (tour: string) => void }> = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -277,13 +344,26 @@ const TourDropdown: React.FC<{ value: string; onChange: (tour: string) => void }
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  // Get all tours sorted alphabetically
-  const allTours = toursData.map(t => t.title).sort();
-  
-  // Filter tours based on search
-  const filtered = allTours.filter(tour => 
-    tour.toLowerCase().includes(search.toLowerCase())
-  );
+  // When searching, expand all groups automatically
+  const isSearching = search.trim().length > 0;
+
+  const toggleGroup = (group: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(group)) next.delete(group);
+      else next.add(group);
+      return next;
+    });
+  };
+
+  const filteredGroups = safariGroups.map(g => ({
+    ...g,
+    tours: isSearching
+      ? g.tours.filter(t => t.toLowerCase().includes(search.toLowerCase()))
+      : g.tours,
+  })).filter(g => g.tours.length > 0);
+
+  const isGroupExpanded = (group: string) => isSearching || expandedGroups.has(group);
 
   return (
     <div style={{ position:"relative", marginBottom:"16px" }} ref={ref}>
@@ -291,49 +371,88 @@ const TourDropdown: React.FC<{ value: string; onChange: (tour: string) => void }
       <div style={{ position:"relative" }}>
         <input
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onFocus={() => setOpen(true)}
-          placeholder="Search and select a tour..."
-          style={S.input}
-          required
-          autoComplete="off"
           readOnly
+          onClick={() => setOpen(true)}
+          placeholder="Select a tour…"
+          style={{ ...S.input, cursor:"pointer" }}
+          required
         />
         <span style={S.ddChevron}>
           <svg width="11" height="6" viewBox="0 0 11 6"><path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/></svg>
         </span>
       </div>
-      
+
       {open && (
         <div style={S.groupDropdown}>
-          <div style={{ padding:"8px", borderBottom:"1px solid #e8e0d0" }}>
+          {/* Search bar */}
+          <div style={{ padding:"8px 10px", borderBottom:"1px solid #e8e0d0" }}>
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search tours..."
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search tours…"
               style={{ ...S.input, fontSize:"12px", padding:"7px 10px" }}
               autoFocus
-              onMouseDown={(e) => e.stopPropagation()}
+              onMouseDown={e => e.stopPropagation()}
             />
           </div>
-          <div style={{ maxHeight:"280px", overflowY:"auto" }}>
-            {filtered.map((tour) => (
-              <div
-                key={tour}
-                style={S.groupTourItem}
-                className="bf-dd-item"
-                onMouseDown={() => {
-                  onChange(tour);
-                  setOpen(false);
-                  setSearch("");
-                }}
-              >
-                {tour}
+
+          <div style={{ maxHeight:"320px", overflowY:"auto" }}>
+            {filteredGroups.map(g => (
+              <div key={g.group}>
+                {/* Group header */}
+                <div
+                  style={S.groupHeader}
+                  onClick={() => !isSearching && toggleGroup(g.group)}
+                  className="bf-group-header"
+                >
+                  <span style={{ display:"flex", alignItems:"center", gap:"7px" }}>
+                    <span style={{ fontSize:"15px" }}>{g.emoji}</span>
+                    <span style={S.groupTitle}>{g.group}</span>
+                    <span style={{ fontSize:"10px", color:"#a0986e", fontWeight:500, background:"#f0ede6", borderRadius:"10px", padding:"1px 7px" }}>
+                      {g.tours.length}
+                    </span>
+                  </span>
+                  {!isSearching && (
+                    <svg
+                      width="10" height="6" viewBox="0 0 11 6"
+                      style={{ transition:"transform 0.2s", transform: isGroupExpanded(g.group) ? "rotate(180deg)" : "rotate(0deg)", opacity:0.5 }}
+                    >
+                      <path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/>
+                    </svg>
+                  )}
+                </div>
+
+                {/* Tour items */}
+                {isGroupExpanded(g.group) && (
+                  <div style={{ background:"#fff" }}>
+                    {g.tours.map(tour => (
+                      <div
+                        key={tour}
+                        style={{
+                          ...S.groupTourItem,
+                          background: value === tour ? "#f0f4ea" : undefined,
+                          color: value === tour ? "#4B5320" : undefined,
+                          fontWeight: value === tour ? 600 : undefined,
+                        }}
+                        className="bf-dd-item"
+                        onMouseDown={() => { onChange(tour); setOpen(false); setSearch(""); }}
+                      >
+                        {value === tour && (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4B5320" strokeWidth="3" style={{ marginRight:"6px", flexShrink:0 }}>
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        )}
+                        {tour}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
-            {filtered.length === 0 && (
-              <div style={{ padding:"12px 16px", color:"#9a9590", fontSize:"13px", textAlign:"center" }}>
-                No tours found
+
+            {filteredGroups.length === 0 && (
+              <div style={{ padding:"20px", textAlign:"center", color:"#9a9590", fontSize:"13px" }}>
+                No tours found for &quot;{search}&quot;
               </div>
             )}
           </div>
@@ -341,12 +460,6 @@ const TourDropdown: React.FC<{ value: string; onChange: (tour: string) => void }
       )}
     </div>
   );
-};
-
-/* ── Safari Group Dropdown (Legacy - Now Using TourDropdown) ── */
-const SafariGroupDropdown: React.FC<{ value: string; onChange: (tour: string) => void }> = ({ value, onChange }) => {
-  // Delegate to new TourDropdown component
-  return <TourDropdown value={value} onChange={onChange} />;
 };
 
 /* ══════════════════════════════════════
@@ -360,11 +473,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const [clientSecret, setClientSecret]     = useState<string|null>(null);
   const [currentBooking, setCurrentBooking] = useState<{ id:string; reference:string; deposit_amount:number }|null>(null);
   const [mpesaStatus, setMpesaStatus]       = useState<"idle"|"waiting"|"success"|"failed">("idle");
-
-  // Tours from API (optional fallback for pricing)
   const [tours, setTours] = useState<Tour[]>([]);
-
-  // Country code
   const [countryCode, setCountryCode] = useState("+254");
 
   const [form, setForm] = useState({
@@ -374,7 +483,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     paymentMethod: "", message: "",
   });
 
-  // Fetch tours from API as fallback for pricing
   useEffect(() => {
     fetch(`${API}/api/tours`)
       .then(r => r.json())
@@ -390,40 +498,29 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     : ["Standard", "Premium", "Luxury", "Romance"];
 
   const getPricePerPerson = (pkg: Package): number => {
-    // Try to find price from toursData first
     const matchedTour = toursData.find(t => t.title === form.tourTitle);
     if (matchedTour && matchedTour.pricing) {
       const pricingTier = matchedTour.pricing.find(p => p.tier === pkg);
-      if (pricingTier) {
-        return parseInt(pricingTier.priceUSD.replace("$", "").replace(",", ""));
-      }
+      if (pricingTier) return parseInt(pricingTier.priceUSD.replace("$", "").replace(",", ""));
     }
-    
-    // Try to find price from API tours as fallback
     const matchedApiTour = tours.find(t => t.title === form.tourTitle);
     if (matchedApiTour) {
       if (pkg === "Standard") return parseFloat(matchedApiTour.standard_price);
       if (pkg === "Premium")  return parseFloat(matchedApiTour.premium_price);
       if (pkg === "Luxury")   return parseFloat(matchedApiTour.luxury_price);
     }
-    // Fallback prices
     return { Standard: 890, Premium: 1450, Luxury: 2800, Romance: 1800 }[pkg];
   };
 
   const pricePerPerson = getPricePerPerson(form.package);
   const adults         = Number(form.adults) || 1;
   const children       = Number(form.children) || 0;
-  
-  // Children under 12 get 50% discount
-  const childrenPrice = pricePerPerson * 0.5 * children;
-  const totalPrice    = (pricePerPerson * adults) + childrenPrice;
-  // ── 60% deposit ──
+  const childrenPrice  = pricePerPerson * 0.5 * children;
+  const totalPrice     = (pricePerPerson * adults) + childrenPrice;
   const depositAmount  = Math.ceil(totalPrice * 0.6);
   const balanceAmount  = totalPrice - depositAmount;
   const fmt            = (n: number) => `$${n.toLocaleString()}`;
-
-  // Full phone number with country code
-  const fullPhone = form.phoneLocal ? `${countryCode} ${form.phoneLocal}` : "";
+  const fullPhone      = form.phoneLocal ? `${countryCode} ${form.phoneLocal}` : "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -500,7 +597,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         {currentBooking && <div style={S.refBadge}>Booking Ref: <strong style={{ color:"#4B5320" }}>{currentBooking.reference}</strong></div>}
         <button onClick={() => downloadBookingPDF({
           reference: currentBooking?.reference||"—", name: form.name, email: form.email,
-          phone: fullPhone, tourTitle: form.tourTitle, date: form.date, 
+          phone: fullPhone, tourTitle: form.tourTitle, date: form.date,
           adults: form.adults, children: form.children,
           pkg: form.package, days: form.days, pricePerPerson, totalPrice, depositAmount,
         })} style={S.pdfBtn} className="bf-pdf-btn">
@@ -588,9 +685,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       {step === 1 && (
         <div className="bf-step">
 
-          {/* Safari Group Dropdown */}
-          <SafariGroupDropdown 
-            value={form.tourTitle} 
+          {/* Grouped Tour Dropdown */}
+          <TourDropdown
+            value={form.tourTitle}
             onChange={(tour) => setForm({ ...form, tourTitle: tour })}
           />
 
@@ -599,18 +696,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             <Field label="Email"><input name="email" type="email" value={form.email} onChange={handleChange} placeholder="jane@email.com" style={S.input} required/></Field>
           </div>
 
-          {/* ── Phone with country code ── */}
           <Field label="Phone">
             <div style={{ display:"flex", gap:"8px" }}>
               <CountryCodePicker value={countryCode} onChange={setCountryCode}/>
-              <input
-                name="phoneLocal"
-                value={form.phoneLocal}
-                onChange={handleChange}
-                placeholder="700 000 000"
-                style={{ ...S.input, flex:1 }}
-                required
-              />
+              <input name="phoneLocal" value={form.phoneLocal} onChange={handleChange} placeholder="700 000 000" style={{ ...S.input, flex:1 }} required/>
             </div>
           </Field>
 
@@ -659,7 +748,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
                 <button key={pkg} type="button" onClick={() => setForm({ ...form, package: pkg })} className="bf-pkg"
                   style={{ display:"flex", flexDirection:"column", alignItems:"stretch", gap:"12px", padding:"16px", borderRadius:"12px", cursor:"pointer", outline:"none", transition:"all 0.2s",
                     border: isActive?"2px solid #4B5320":"2px solid #e5e0d8", background: isActive?"#f0f4ea":"#faf9f7", boxShadow: isActive?"0 0 0 3px rgba(75,83,32,0.1)":"none" }}>
-                  
                   <div style={{ display:"flex", gap:"10px", alignItems:"flex-start" }}>
                     <span style={{ width:28, height:28, borderRadius:"6px", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, background: isActive?"#4B5320":"#f0ede8", color: isActive?"#fff":"#9a9590", fontSize:"13px" }}>
                       {PACKAGE_ICONS[pkg]}
@@ -669,13 +757,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
                       <p style={{ fontSize:"12px", color:"#7a7560", margin:0 }}>{detail.subtitle}</p>
                     </div>
                   </div>
-                  
                   <div style={{ paddingTop:"8px", borderTop:"1px solid rgba(75,83,32,0.1)", textAlign:"left" }}>
                     <p style={{ fontSize:"13px", fontWeight:700, color:"#4B5320", margin:"6px 0" }}>{detail.price}</p>
                     <ul style={{ margin:"8px 0 0 0", paddingLeft:"18px", fontSize:"12px", color:"#5a5040", lineHeight:"1.5" }}>
-                      {detail.features.map((feature, i) => (
-                        <li key={i} style={{ marginBottom:"4px" }}>{feature}</li>
-                      ))}
+                      {detail.features.map((feature, i) => <li key={i} style={{ marginBottom:"4px" }}>{feature}</li>)}
                     </ul>
                   </div>
                 </button>
@@ -683,46 +768,19 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             })}
           </div>
 
-          {/* Price breakdown — 60% deposit */}
           <div style={S.priceBreakdown}>
             <div style={S.priceRowHdr}>Price Breakdown</div>
-            <div style={S.priceRow}>
-              <span style={S.priceLabel}>{PACKAGE_DETAILS[form.package].title} package (adults)</span>
-              <span style={S.priceVal}>{fmt(pricePerPerson)}/adult</span>
-            </div>
-            <div style={S.priceRow}>
-              <span style={S.priceLabel}>× {adults} adult{adults>1?"s":""}</span>
-              <span style={S.priceVal}>{fmt(pricePerPerson * adults)}</span>
-            </div>
-            {children > 0 && (
-              <>
-                <div style={S.priceRow}>
-                  <span style={S.priceLabel}>Children (50% discount)</span>
-                  <span style={S.priceVal}>{fmt(pricePerPerson * 0.5)}/child</span>
-                </div>
-                <div style={S.priceRow}>
-                  <span style={S.priceLabel}>× {children} child{children>1?"ren":""}</span>
-                  <span style={S.priceVal}>{fmt(pricePerPerson * 0.5 * children)}</span>
-                </div>
-              </>
-            )}
-            <div style={S.priceRow}>
-              <span style={S.priceLabel}>Duration</span>
-              <span style={S.priceVal}>{form.days} day{Number(form.days)>1?"s":""}</span>
-            </div>
+            <div style={S.priceRow}><span style={S.priceLabel}>{PACKAGE_DETAILS[form.package].title} package (adults)</span><span style={S.priceVal}>{fmt(pricePerPerson)}/adult</span></div>
+            <div style={S.priceRow}><span style={S.priceLabel}>× {adults} adult{adults>1?"s":""}</span><span style={S.priceVal}>{fmt(pricePerPerson * adults)}</span></div>
+            {children > 0 && (<>
+              <div style={S.priceRow}><span style={S.priceLabel}>Children (50% discount)</span><span style={S.priceVal}>{fmt(pricePerPerson * 0.5)}/child</span></div>
+              <div style={S.priceRow}><span style={S.priceLabel}>× {children} child{children>1?"ren":""}</span><span style={S.priceVal}>{fmt(pricePerPerson * 0.5 * children)}</span></div>
+            </>)}
+            <div style={S.priceRow}><span style={S.priceLabel}>Duration</span><span style={S.priceVal}>{form.days} day{Number(form.days)>1?"s":""}</span></div>
             <div style={S.priceDivider}/>
-            <div style={S.priceRow}>
-              <span style={{ ...S.priceLabel, fontWeight:700, color:"#2a2520", fontSize:"13px" }}>Total Amount</span>
-              <span style={{ ...S.priceVal, fontWeight:700, color:"#4B5320", fontSize:"16px" }}>{fmt(totalPrice)}</span>
-            </div>
-            <div style={S.priceRow}>
-              <span style={{ ...S.priceLabel, color:"#7a8550" }}>Deposit now (60%)</span>
-              <span style={{ ...S.priceVal, color:"#7a8550", fontWeight:600 }}>{fmt(depositAmount)}</span>
-            </div>
-            <div style={S.priceRow}>
-              <span style={{ ...S.priceLabel, color:"#b0aa9e" }}>Balance on arrival (40%)</span>
-              <span style={{ ...S.priceVal, color:"#b0aa9e" }}>{fmt(balanceAmount)}</span>
-            </div>
+            <div style={S.priceRow}><span style={{ ...S.priceLabel, fontWeight:700, color:"#2a2520", fontSize:"13px" }}>Total Amount</span><span style={{ ...S.priceVal, fontWeight:700, color:"#4B5320", fontSize:"16px" }}>{fmt(totalPrice)}</span></div>
+            <div style={S.priceRow}><span style={{ ...S.priceLabel, color:"#7a8550" }}>Deposit now (60%)</span><span style={{ ...S.priceVal, color:"#7a8550", fontWeight:600 }}>{fmt(depositAmount)}</span></div>
+            <div style={S.priceRow}><span style={{ ...S.priceLabel, color:"#b0aa9e" }}>Balance on arrival (40%)</span><span style={{ ...S.priceVal, color:"#b0aa9e" }}>{fmt(balanceAmount)}</span></div>
           </div>
 
           <p style={S.secLabel}>Payment Method</p>
@@ -830,7 +888,6 @@ const S: Record<string, React.CSSProperties> = {
   secLabel:   { fontSize:"10px", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px", marginTop:"4px" },
   secHint:    { fontSize:"13px", color:"#6b6560", fontFamily:"'DM Sans',sans-serif", lineHeight:1.6, marginBottom:"16px" },
   pkgGrid:    { display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"8px", marginBottom:"16px" },
-  pkgName:    { fontSize:"11px", fontWeight:700, color:"#4a4540", fontFamily:"'DM Sans',sans-serif", letterSpacing:"0.04em" },
   priceBreakdown: { background:"#f6f8f0", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"14px 16px", marginBottom:"20px" },
   priceRowHdr:    { fontSize:"9px", fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", color:"#7a8550", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px" },
   priceRow:   { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"4px 0" },
@@ -871,20 +928,13 @@ const S: Record<string, React.CSSProperties> = {
   stripeElementWrap: { border:"1.5px solid #e5e0d8", borderRadius:"10px", padding:"16px", background:"#faf9f7", marginBottom:"16px" },
   stripeError:       { fontSize:"12px", color:"#dc2626", fontFamily:"'DM Sans',sans-serif", marginBottom:"12px", background:"#fef2f2", padding:"8px 12px", borderRadius:"6px", border:"1px solid #fca5a5" },
   ddChevron:  { position:"absolute", right:"12px", top:"50%", transform:"translateY(-50%)", pointerEvents:"none" },
-  dropdown:   { position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 8px 24px rgba(0,0,0,0.10)", zIndex:100, maxHeight:"220px", overflowY:"auto", marginTop:"4px" },
-  dropdownItem:{ padding:"10px 14px", cursor:"pointer", borderBottom:"1px solid #f5f2ee", transition:"background 0.15s" },
-  ddTitle:    { display:"block", fontSize:"13px", fontWeight:600, color:"#2a2520", fontFamily:"'DM Sans',sans-serif" },
-  ddMeta:     { display:"block", fontSize:"11px", color:"#9a9590", fontFamily:"'DM Sans',sans-serif", marginTop:"2px" },
-  // Country code picker
   ccBtn:      { display:"flex", alignItems:"center", gap:"6px", padding:"9px 10px", border:"1.5px solid #e5e0d8", borderRadius:"8px", background:"#faf9f7", cursor:"pointer", whiteSpace:"nowrap", flexShrink:0, outline:"none", transition:"border-color 0.2s" },
   ccDropdown: { position:"absolute", top:"100%", left:0, width:"220px", background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:200, marginTop:"4px" },
   ccItem:     { display:"flex", alignItems:"center", gap:"8px", padding:"8px 12px", cursor:"pointer", transition:"background 0.15s", borderBottom:"1px solid #f5f2ee" },
-  // Safari group dropdown styles
-  groupDropdown: { position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 8px 24px rgba(0,0,0,0.10)", zIndex:100, maxHeight:"300px", overflowY:"auto", marginTop:"4px" },
-  groupHeader: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 16px", background:"#f6f8f0", borderBottom:"1px solid #e5e0d8", cursor:"pointer", fontWeight:600, fontSize:"13px", color:"#4B5320", fontFamily:"'DM Sans',sans-serif" },
-  groupTitle: { fontSize:"12px", fontWeight:700, letterSpacing:"0.05em", textTransform:"uppercase" },
-  groupTours: { background:"#fff" },
-  groupTourItem: { padding:"10px 16px 10px 28px", cursor:"pointer", borderBottom:"1px solid #f5f2ee", fontSize:"13px", color:"#2a2520", fontFamily:"'DM Sans',sans-serif", transition:"background 0.15s" },
+  groupDropdown: { position:"absolute", top:"100%", left:0, right:0, background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 10px 30px rgba(0,0,0,0.12)", zIndex:100, marginTop:"4px" },
+  groupHeader: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 14px", background:"#f6f8f0", borderBottom:"1px solid #e8e0d0", cursor:"pointer", userSelect:"none" },
+  groupTitle: { fontSize:"11px", fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", color:"#4B5320", fontFamily:"'DM Sans',sans-serif" },
+  groupTourItem: { padding:"9px 14px 9px 24px", cursor:"pointer", borderBottom:"1px solid #f5f2ee", fontSize:"13px", color:"#2a2520", fontFamily:"'DM Sans',sans-serif", transition:"background 0.15s", display:"flex", alignItems:"center" },
 };
 
 const css = `
@@ -908,7 +958,7 @@ const css = `
   .bf-cc-btn:hover{border-color:#4B5320!important;}
   .bf-cc-item:hover{background:#f6f8f0!important;}
   .bf-cc-item:last-child{border-bottom:none!important;}
-  .bf-group-tour-item:hover{background:#f6f8f0!important;}
+  .bf-group-header:hover{background:#eef2e6!important;}
 `;
 
 export default BookingForm;
