@@ -12,7 +12,7 @@ import {
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 // ── API URL — update this if you change ports ──────────────────────────────
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "https://wikima-backend.onrender.com";
 
 type Package = "Standard" | "Premium" | "Luxury" | "Romance";
 
