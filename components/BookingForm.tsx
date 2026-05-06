@@ -9,11 +9,11 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripePromise = loadStripe("pk_test_51T8GuIJX96zH0EgOBqbSnJ640we4m1SGYAEyhbbU7YuY86yavOObrGlYe7cE9eUuhopUp913ZoyV4arvOxxQ1t0J00F2L1lhAQ");
 
 // ── API URL — update this if you change ports ──────────────────────────────
-const API = process.env.NEXT_PUBLIC_API_URL ?? "https://wikima-backend.onrender.com";
-
+// ── API URL — update this if you change ports ──────────────────────────────
+const API = "https://wikima-backend.onrender.com";
 type Package = "Standard" | "Premium" | "Luxury" | "Romance";
 
 interface Tour {
