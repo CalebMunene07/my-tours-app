@@ -10,10 +10,8 @@ import {
 } from "@stripe/react-stripe-js";
 
 const stripePromise = loadStripe("pk_test_51T8GuIJX96zH0EgOBqbSnJ640we4m1SGYAEyhbbU7YuY86yavOObrGlYe7cE9eUuhopUp913ZoyV4arvOxxQ1t0J00F2L1lhAQ");
-
-// ── API URL — update this if you change ports ──────────────────────────────
-// ── API URL — update this if you change ports ──────────────────────────────
 const API = "https://wikima-backend.onrender.com";
+
 type Package = "Standard" | "Premium" | "Luxury" | "Romance";
 
 interface Tour {
@@ -24,7 +22,6 @@ interface Tour {
   premium_price: string;
   luxury_price: string;
   category?: string;
-  tags?: string[];
 }
 
 interface BookingFormProps {
@@ -32,18 +29,91 @@ interface BookingFormProps {
   pricingTiers?: string[];
 }
 
-// ── 7 Tour Groups — tours are loaded from the API and assigned here ─────────
-// Once your tours are in Supabase, add a `category` column with one of these
-// values: bush | beach | mountain | adventure | city | lodge | international
-// The form will automatically sort them into the correct group.
-const GROUP_CONFIG = [
-  { group: "Bush Safari",                    emoji: "🦁",  category: "bush"          },
-  { group: "Beach Escape",                   emoji: "🏖️",  category: "beach"         },
-  { group: "Mountain & Alpine Hiking",       emoji: "🏔️",  category: "mountain"      },
-  { group: "Adventure & Wildlife",           emoji: "🐘",  category: "adventure"     },
-  { group: "City Safari & Game Park",        emoji: "🏙️",  category: "city"          },
-  { group: "Lodge Safari & Signature Food",  emoji: "🍽️",  category: "lodge"         },
-  { group: "Tours Beyond Africa",            emoji: "🌍",  category: "international" },
+// ── Hardcoded tour groups — always visible, no API dependency ──────────────
+const STATIC_GROUPS = [
+  {
+    group: "Bush Safari",
+    emoji: "🦁",
+    category: "bush",
+    tours: [
+      "Masai Mara Safari",
+      "Amboseli Bush Safari",
+      "Tsavo Wilderness Safari",
+    ],
+  },
+  {
+    group: "Beach Escape",
+    emoji: "🏖️",
+    category: "beach",
+    tours: [
+      "Malindi Beach Escape",
+      "Diani Beach Retreat",
+      "Lamu Island Escape",
+    ],
+  },
+  {
+    group: "Mountain & Alpine Hiking",
+    emoji: "🏔️",
+    category: "mountain",
+    tours: [
+      "Mount Kenya Trek",
+      "Aberdare Highland Hike",
+      "Mt Kilimanjaro Expedition",
+    ],
+  },
+  {
+    group: "Adventure & Wildlife",
+    emoji: "🐘",
+    category: "adventure",
+    tours: [
+      "Samburu Wildlife Adventure",
+      "Ol Pejeta Rhino Trek",
+      "Lake Nakuru Flamingo Safari",
+    ],
+  },
+  {
+    group: "City Safari & Game Park",
+    emoji: "🏙️",
+    category: "city",
+    tours: [
+      "Nairobi National Park Day",
+      "Giraffe Centre & Elephant Orphanage",
+      "Hell's Gate Cycling Safari",
+    ],
+  },
+  {
+    group: "Lodge Safari & Signature Food",
+    emoji: "🍽️",
+    category: "lodge",
+    tours: [
+      "Mara Luxury Lodge Safari",
+      "Laikipia Ranch Gourmet Safari",
+      "Amboseli Lodge & Kilimanjaro Views",
+    ],
+  },
+  {
+    group: "Tours Beyond Africa",
+    emoji: "🌍",
+    category: "international",
+    tours: [
+      "Dubai",
+      "Maldives",
+      "Istanbul, Turkey",
+      "Bali, Indonesia",
+      "Paris, France",
+      "Egypt",
+      "Thailand",
+      "Rome, Italy",
+    ],
+  },
+];
+
+// ── Child age ranges with pricing ─────────────────────────────────────────
+const CHILD_AGE_RANGES = [
+  { label: "Infant (0–2 yrs)",   value: "infant",   discount: 1.00 }, // free
+  { label: "Toddler (3–5 yrs)",  value: "toddler",  discount: 0.75 }, // 25% off
+  { label: "Child (6–11 yrs)",   value: "child",    discount: 0.50 }, // 50% off
+  { label: "Youth (12–17 yrs)",  value: "youth",    discount: 0.25 }, // 25% off
 ];
 
 // ── Country codes ───────────────────────────────────────────────────────────
@@ -112,15 +182,19 @@ const PACKAGE_DETAILS: Record<Package, { title: string; subtitle: string; price:
 /* ── PDF helper ─────────────────────────────────────────────────────────── */
 function downloadBookingPDF(p: {
   reference:string; name:string; email:string; phone:string;
-  tourTitle:string; date:string; adults:string; children:string; pkg:Package;
+  tourTitle:string; date:string; adults:string; children:string;
+  childAgeRange:string; pkg:Package;
   days:string; pricePerPerson:number; totalPrice:number; depositAmount:number;
 }) {
   const balance = p.totalPrice - p.depositAmount;
   const depositPct = Math.round((p.depositAmount / p.totalPrice) * 100);
   const tDate = p.date ? new Date(p.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}) : "—";
   const today = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
-  const childrenInfo = p.children && p.children !== "0" ? `<div class="fld"><label>Children (under 12)</label><p>${p.children}</p></div>` : "";
-  const childrenPrice = Number(p.children) > 0 ? p.pricePerPerson * 0.5 * Number(p.children) : 0;
+  const ageLabel = CHILD_AGE_RANGES.find(a => a.value === p.childAgeRange)?.label || "";
+  const childrenInfo = Number(p.children) > 0
+    ? `<div class="fld"><label>Children</label><p>${p.children} × ${ageLabel}</p></div>` : "";
+  const childDiscount = CHILD_AGE_RANGES.find(a => a.value === p.childAgeRange)?.discount ?? 0.5;
+  const childrenPrice = Number(p.children) > 0 ? p.pricePerPerson * (1 - childDiscount) * Number(p.children) : 0;
   const adultsPrice = p.pricePerPerson * Number(p.adults);
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Wikima Booking ${p.reference}</title>
 <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Georgia,serif;color:#2d3a10;padding:48px;font-size:14px;}
@@ -136,12 +210,24 @@ function downloadBookingPDF(p: {
 <body>
 <div class="hdr"><div class="brand"><h1>WIKIMA SAFARI</h1><p>Expeditions · East Africa</p></div><div class="ref"><div class="lbl">Booking Reference</div><div class="val">${p.reference}</div></div></div>
 <div class="badge">✓ Booking <strong>Confirmed</strong> — Thank you, ${p.name}. We look forward to hosting you.</div>
-<div class="sec"><div class="sec-t">Guest Details</div><div class="grid"><div class="fld"><label>Full Name</label><p>${p.name}</p></div><div class="fld"><label>Email</label><p>${p.email}</p></div>${p.phone?`<div class="fld"><label>Phone</label><p>${p.phone}</p></div>`:""}${childrenInfo}</div></div>
-<div class="sec"><div class="sec-t">Safari Details</div><div class="grid"><div class="fld"><label>Tour</label><p>${p.tourTitle}</p></div><div class="fld"><label>Package</label><p>${p.pkg}</p></div><div class="fld"><label>Travel Date</label><p>${tDate}</p></div><div class="fld"><label>Duration</label><p>${p.days} days</p></div><div class="fld"><label>Adults</label><p>${p.adults}</p></div><div class="fld"><label>Price Per Adult</label><p>$${p.pricePerPerson.toLocaleString()}</p></div></div></div>
+<div class="sec"><div class="sec-t">Guest Details</div><div class="grid">
+<div class="fld"><label>Full Name</label><p>${p.name}</p></div>
+<div class="fld"><label>Email</label><p>${p.email}</p></div>
+${p.phone?`<div class="fld"><label>Phone</label><p>${p.phone}</p></div>`:""}
+${childrenInfo}
+</div></div>
+<div class="sec"><div class="sec-t">Safari Details</div><div class="grid">
+<div class="fld"><label>Tour</label><p>${p.tourTitle}</p></div>
+<div class="fld"><label>Package</label><p>${p.pkg}</p></div>
+<div class="fld"><label>Travel Date</label><p>${tDate}</p></div>
+<div class="fld"><label>Duration</label><p>${p.days} days</p></div>
+<div class="fld"><label>Adults</label><p>${p.adults}</p></div>
+<div class="fld"><label>Price Per Adult</label><p>$${p.pricePerPerson.toLocaleString()}</p></div>
+</div></div>
 <div class="sec"><div class="sec-t">Payment Summary</div><div class="pay">
 <div class="row"><span class="lbl">Price per adult</span><span class="amt">$${p.pricePerPerson.toLocaleString()}</span></div>
 <div class="row"><span class="lbl">× ${p.adults} adult${Number(p.adults)>1?"s":""}</span><span class="amt">$${adultsPrice.toLocaleString()}</span></div>
-${Number(p.children)>0?`<div class="row"><span class="lbl">Children (50% discount)</span><span class="amt">$${childrenPrice.toLocaleString()}</span></div>`:""}
+${Number(p.children)>0?`<div class="row"><span class="lbl">${ageLabel} × ${p.children} (discounted)</span><span class="amt">$${childrenPrice.toLocaleString()}</span></div>`:""}
 <div class="row"><span class="lbl">Total Amount</span><span class="amt">$${p.totalPrice.toLocaleString()}</span></div>
 <div class="row"><span class="lbl">Deposit Paid (${depositPct}%)</span><span class="amt">$${p.depositAmount.toLocaleString()}</span></div>
 <div class="row"><span class="lbl">Balance on Arrival</span><span class="amt">$${balance.toLocaleString()}</span></div>
@@ -228,7 +314,7 @@ const CountryCodePicker: React.FC<{ value: string; onChange: (code: string) => v
   );
 };
 
-/* ── Grouped Tour Dropdown — loads from API ──────────────────────────────── */
+/* ── Grouped Tour Dropdown — hardcoded, instant, no API needed ───────────── */
 const TourDropdown: React.FC<{
   value: string;
   onChange: (tour: string) => void;
@@ -248,33 +334,15 @@ const TourDropdown: React.FC<{
 
   const isSearching = search.trim().length > 0;
 
-  // Build all 7 groups — tours without a category go into a visible "Uncategorised" fallback
-  // so nothing disappears. If no category column yet, all tours appear in every group until
-  // you add the category column to Supabase.
-  const builtGroups = GROUP_CONFIG.map(gc => ({
-    ...gc,
-    tours: tours
-      .filter(t => {
-        if (!t.category && !t.tags?.length) return true; // show everywhere until categorised
-        return t.category === gc.category || t.tags?.includes(gc.category);
-      })
-      .map(t => t.title)
-      .sort(),
-  }));
-
-  // Deduplicate: if tours are uncategorised and showing everywhere, keep all 7 groups visible
-  // but only show each tour once (in the first group if uncategorised)
-  const seen = new Set<string>();
-  const grouped = builtGroups.map((g, idx) => ({
-    ...g,
-    tours: g.tours.filter(title => {
-      const allCategorised = tours.every(t => t.category || t.tags?.length);
-      if (allCategorised) return true; // categories set — show normally
-      // Not categorised yet — put each tour in first group only
-      if (idx === 0) { seen.add(title); return true; }
-      return !seen.has(title);
-    }),
-  }));
+  // Merge API tours into static groups by category, keeping static tours always present
+  const mergedGroups = STATIC_GROUPS.map(sg => {
+    const apiTitles = tours
+      .filter(t => t.category === sg.category)
+      .map(t => t.title);
+    // Combine static + API, deduplicate
+    const combined = Array.from(new Set([...sg.tours, ...apiTitles])).sort();
+    return { ...sg, tours: combined };
+  });
 
   const toggleGroup = (group: string) => {
     setExpandedGroups(prev => {
@@ -284,8 +352,7 @@ const TourDropdown: React.FC<{
     });
   };
 
-  // Always show all 7 groups. Filter tours within groups when searching.
-  const filteredGroups = grouped.map(g => ({
+  const filteredGroups = mergedGroups.map(g => ({
     ...g,
     tours: isSearching
       ? g.tours.filter(t => t.toLowerCase().includes(search.toLowerCase()))
@@ -302,21 +369,17 @@ const TourDropdown: React.FC<{
           value={value}
           readOnly
           onClick={() => setOpen(true)}
-          placeholder={loading ? "Loading tours…" : "Select a tour…"}
+          placeholder="Select a tour…"
           style={{ ...S.input, cursor:"pointer", color: value ? "#1a1a1a" : "#9a9590" }}
           required
         />
         <span style={S.ddChevron}>
-          {loading
-            ? <span className="bf-spinner-sm"/>
-            : <svg width="11" height="6" viewBox="0 0 11 6"><path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/></svg>
-          }
+          <svg width="11" height="6" viewBox="0 0 11 6"><path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/></svg>
         </span>
       </div>
 
       {open && (
         <div style={S.groupDropdown}>
-          {/* Search */}
           <div style={{ padding:"8px 10px", borderBottom:"1px solid #e8e0d0", background:"#fafaf8" }}>
             <input
               value={search}
@@ -331,13 +394,9 @@ const TourDropdown: React.FC<{
           <div style={{ maxHeight:"340px", overflowY:"auto" }}>
             {filteredGroups.map(g => (
               <div key={g.group}>
-                {/* Group header — always visible even when empty */}
                 <div
-                  style={{
-                    ...S.groupHeader,
-                    opacity: g.tours.length === 0 ? 0.45 : 1,
-                  }}
-                  onClick={() => g.tours.length > 0 && !isSearching && toggleGroup(g.group)}
+                  style={{ ...S.groupHeader, opacity: g.tours.length === 0 && isSearching ? 0.4 : 1 }}
+                  onClick={() => !isSearching && toggleGroup(g.group)}
                   className="bf-group-header"
                 >
                   <span style={{ display:"flex", alignItems:"center", gap:"8px" }}>
@@ -345,14 +404,13 @@ const TourDropdown: React.FC<{
                     <span style={S.groupTitle}>{g.group}</span>
                     <span style={{
                       fontSize:"10px", fontWeight:600,
-                      background: g.tours.length > 0 ? "#e8f0dc" : "#f0ede8",
-                      color:      g.tours.length > 0 ? "#4B5320"  : "#b0a898",
+                      background:"#e8f0dc", color:"#4B5320",
                       borderRadius:"10px", padding:"1px 8px",
                     }}>
                       {g.tours.length}
                     </span>
                   </span>
-                  {!isSearching && g.tours.length > 0 && (
+                  {!isSearching && (
                     <svg width="10" height="6" viewBox="0 0 11 6"
                       style={{ transition:"transform 0.2s", transform: isExpanded(g.group) ? "rotate(180deg)" : "none", opacity:0.6 }}>
                       <path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/>
@@ -360,8 +418,7 @@ const TourDropdown: React.FC<{
                   )}
                 </div>
 
-                {/* Tour items */}
-                {isExpanded(g.group) && g.tours.length > 0 && (
+                {isExpanded(g.group) && (
                   <div>
                     {g.tours.map(title => {
                       const isSelected = value === title;
@@ -371,7 +428,7 @@ const TourDropdown: React.FC<{
                           style={{
                             ...S.groupTourItem,
                             background: isSelected ? "#eef4e4" : "#fff",
-                            color:      "#1a1a1a",
+                            color: "#1a1a1a",
                             fontWeight: isSelected ? 700 : 500,
                             borderLeft: isSelected ? "3px solid #4B5320" : "3px solid transparent",
                           }}
@@ -387,27 +444,15 @@ const TourDropdown: React.FC<{
                         </div>
                       );
                     })}
-                  </div>
-                )}
-
-                {/* Empty state for group */}
-                {isExpanded(g.group) && g.tours.length === 0 && isSearching && (
-                  <div style={{ padding:"10px 24px", fontSize:"12px", color:"#b0a898", fontStyle:"italic" }}>
-                    No results in this category
+                    {g.tours.length === 0 && isSearching && (
+                      <div style={{ padding:"10px 24px", fontSize:"12px", color:"#b0a898", fontStyle:"italic" }}>
+                        No results in this category
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             ))}
-
-            {/* Global empty state */}
-            {filteredGroups.every(g => g.tours.length === 0) && !isSearching && (
-              <div style={{ padding:"24px", textAlign:"center", color:"#9a9590", fontSize:"13px" }}>
-                No tours found. Make sure your backend is running at<br/>
-                <code style={{ fontSize:"11px", color:"#4B5320", background:"#f0f4ea", padding:"2px 6px", borderRadius:"4px", marginTop:"4px", display:"inline-block" }}>
-                  {API}
-                </code>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -433,13 +478,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const [form, setForm] = useState({
     tourTitle: propTourTitle,
     name: "", email: "", phoneLocal: "", mpesaNumber: "",
-    date: "", adults: "1", children: "0", days: "1", package: "Standard" as Package,
+    date: "", adults: "1", children: "0",
+    childAgeRange: "child", // default: Child (6–11 yrs) = 50% off
+    days: "1", package: "Standard" as Package,
     paymentMethod: "", message: "",
   });
 
-  // Fetch tours from backend API
+  // Still fetch API tours to merge extra tours into groups
   useEffect(() => {
-    setToursLoading(true);
     fetch(`${API}/api/tours`)
       .then(r => r.json())
       .then(data => { setTours(data.tours || []); setToursLoading(false); })
@@ -463,15 +509,18 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     return { Standard: 890, Premium: 1450, Luxury: 2800, Romance: 1800 }[pkg];
   };
 
-  const pricePerPerson = getPricePerPerson(form.package);
-  const adults         = Number(form.adults) || 1;
-  const children       = Number(form.children) || 0;
-  const childrenPrice  = pricePerPerson * 0.5 * children;
-  const totalPrice     = (pricePerPerson * adults) + childrenPrice;
-  const depositAmount  = Math.ceil(totalPrice * 0.6);
-  const balanceAmount  = totalPrice - depositAmount;
-  const fmt            = (n: number) => `$${n.toLocaleString()}`;
-  const fullPhone      = form.phoneLocal ? `${countryCode} ${form.phoneLocal}` : "";
+  const pricePerPerson  = getPricePerPerson(form.package);
+  const adults          = Number(form.adults) || 1;
+  const children        = Number(form.children) || 0;
+  const ageRange        = CHILD_AGE_RANGES.find(a => a.value === form.childAgeRange) ?? CHILD_AGE_RANGES[2];
+  const childDiscount   = ageRange.discount; // fraction to REMOVE from price
+  const childUnitPrice  = pricePerPerson * (1 - childDiscount);
+  const childrenTotal   = childUnitPrice * children;
+  const totalPrice      = (pricePerPerson * adults) + childrenTotal;
+  const depositAmount   = Math.ceil(totalPrice * 0.6);
+  const balanceAmount   = totalPrice - depositAmount;
+  const fmt             = (n: number) => `$${n.toLocaleString()}`;
+  const fullPhone       = form.phoneLocal ? `${countryCode} ${form.phoneLocal}` : "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -529,7 +578,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const resetForm = () => {
     setSubmitted(false); setStep(1); setClientSecret(null); setCurrentBooking(null);
     setMpesaStatus("idle"); setApiError(""); setCountryCode("+254");
-    setForm({ tourTitle: propTourTitle, name: "", email: "", phoneLocal: "", mpesaNumber: "", date: "", adults: "1", children: "0", days: "1", package: "Standard", paymentMethod: "", message: "" });
+    setForm({ tourTitle: propTourTitle, name: "", email: "", phoneLocal: "", mpesaNumber: "", date: "", adults: "1", children: "0", childAgeRange: "child", days: "1", package: "Standard", paymentMethod: "", message: "" });
   };
 
   /* ── CONFIRMED ── */
@@ -544,7 +593,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         <h3 style={S.confirmedTitle}>You&apos;re going on safari!</h3>
         <p style={S.confirmedSub}>A confirmation has been sent to <strong style={{ color:"#4B5320" }}>{form.email}</strong>.<br/>Our team will contact you within 24 hours.</p>
         {currentBooking && <div style={S.refBadge}>Booking Ref: <strong style={{ color:"#4B5320" }}>{currentBooking.reference}</strong></div>}
-        <button onClick={() => downloadBookingPDF({ reference: currentBooking?.reference||"—", name: form.name, email: form.email, phone: fullPhone, tourTitle: form.tourTitle, date: form.date, adults: form.adults, children: form.children, pkg: form.package, days: form.days, pricePerPerson, totalPrice, depositAmount })} style={S.pdfBtn} className="bf-pdf-btn">
+        <button onClick={() => downloadBookingPDF({
+          reference: currentBooking?.reference||"—", name: form.name, email: form.email,
+          phone: fullPhone, tourTitle: form.tourTitle, date: form.date,
+          adults: form.adults, children: form.children, childAgeRange: form.childAgeRange,
+          pkg: form.package, days: form.days, pricePerPerson, totalPrice, depositAmount,
+        })} style={S.pdfBtn} className="bf-pdf-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ flexShrink:0 }}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download PDF Invoice
         </button>
@@ -653,12 +707,28 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
                 {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n} {n===1?"Adult":"Adults"}</option>)}
               </select>
             </Field>
-            <Field label="Children (under 12)">
+            <Field label="Children">
               <select name="children" value={form.children} onChange={handleChange} style={S.select} className="bf-select">
                 {[0,1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} {n===1?"Child":"Children"}</option>)}
               </select>
             </Field>
           </div>
+
+          {/* Child age range — only shown when children > 0 */}
+          {Number(form.children) > 0 && (
+            <Field label="Child Age Range">
+              <select name="childAgeRange" value={form.childAgeRange} onChange={handleChange} style={S.select} className="bf-select">
+                {CHILD_AGE_RANGES.map(r => (
+                  <option key={r.value} value={r.value}>
+                    {r.label} — {r.discount === 1 ? "Free" : `${Math.round(r.discount * 100)}% off`}
+                  </option>
+                ))}
+              </select>
+              <p style={{ fontSize:"11px", color:"#4B5320", marginTop:"5px", fontFamily:"'DM Sans',sans-serif" }}>
+                {ageRange.label}: {ageRange.discount === 1 ? "Travels free" : `${Math.round(ageRange.discount * 100)}% discount — ${fmt(childUnitPrice)} per child`}
+              </p>
+            </Field>
+          )}
 
           <div style={S.row}>
             <Field label="Number of Days">
@@ -713,8 +783,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             <div style={S.priceRow}><span style={S.priceLabel}>{PACKAGE_DETAILS[form.package].title} package</span><span style={S.priceVal}>{fmt(pricePerPerson)}/adult</span></div>
             <div style={S.priceRow}><span style={S.priceLabel}>× {adults} adult{adults>1?"s":""}</span><span style={S.priceVal}>{fmt(pricePerPerson * adults)}</span></div>
             {children > 0 && (<>
-              <div style={S.priceRow}><span style={S.priceLabel}>Children (50% discount)</span><span style={S.priceVal}>{fmt(pricePerPerson * 0.5)}/child</span></div>
-              <div style={S.priceRow}><span style={S.priceLabel}>× {children} child{children>1?"ren":""}</span><span style={S.priceVal}>{fmt(pricePerPerson * 0.5 * children)}</span></div>
+              <div style={S.priceRow}>
+                <span style={S.priceLabel}>{ageRange.label} {ageRange.discount===1?"(Free)":"(" + Math.round(ageRange.discount*100) + "% off)"}</span>
+                <span style={S.priceVal}>{ageRange.discount===1?"Free":fmt(childUnitPrice)}/child</span>
+              </div>
+              <div style={S.priceRow}><span style={S.priceLabel}>× {children} child{children>1?"ren":""}</span><span style={S.priceVal}>{ageRange.discount===1?"Free":fmt(childrenTotal)}</span></div>
             </>)}
             <div style={S.priceRow}><span style={S.priceLabel}>Duration</span><span style={S.priceVal}>{form.days} day{Number(form.days)>1?"s":""}</span></div>
             <div style={S.priceDivider}/>
@@ -764,7 +837,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               { label:"Date",         val: form.date ? new Date(form.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "—" },
               { label:"Days",         val: `${form.days} day${Number(form.days)>1?"s":""}` },
               { label:"Adults",       val: `${form.adults} ${Number(form.adults)===1?"adult":"adults"}` },
-              { label:"Children",     val: `${form.children} ${Number(form.children)===1?"child":"children"}` },
+              { label:"Children",     val: Number(form.children)>0 ? `${form.children} × ${ageRange.label}` : "None" },
               { label:"Package",      val: form.package },
               { label:"Per Adult",    val: fmt(pricePerPerson) },
               { label:"Total Amount", val: fmt(totalPrice),    bold: true },
