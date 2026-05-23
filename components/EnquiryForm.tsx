@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { Send, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
-// ── Hardcoded — no env var dependency ─────────────────────────────────────
 const API = "https://wikima-backend.onrender.com";
 const PRIMARY = "#07301d";
 
@@ -20,11 +19,11 @@ const COUNTRY_CODES = [
 ];
 
 const PACKAGES = [
-  { id: "standard", label: "Standard",          tagline: "Essential safari comfort",           price: "From $890 / person",   icon: "🏕️", popular: false },
-  { id: "premium",  label: "Premium",            tagline: "Private vehicle & boutique camps",   price: "From $1,450 / person", icon: "⭐", popular: true  },
-  { id: "luxury",   label: "Luxury",             tagline: "Ultra-luxury with zero compromises", price: "From $2,800 / person", icon: "💎", popular: false },
-  { id: "romance",  label: "Romance Escape",     tagline: "Honeymoons & special occasions",     price: "From $1,800 / couple", icon: "💍", popular: false },
-  { id: "custom",   label: "Custom Itinerary",   tagline: "Fully tailored to your needs",       price: "Price on request",     icon: "✨", popular: false },
+  { id: "standard", label: "Standard",        tagline: "Essential safari comfort",           price: "From $890 / person",   icon: "🏕️", popular: false },
+  { id: "premium",  label: "Premium",          tagline: "Private vehicle & boutique camps",   price: "From $1,450 / person", icon: "⭐", popular: true  },
+  { id: "luxury",   label: "Luxury",           tagline: "Ultra-luxury with zero compromises", price: "From $2,800 / person", icon: "💎", popular: false },
+  { id: "romance",  label: "Romance Escape",   tagline: "Honeymoons & special occasions",     price: "From $1,800 / couple", icon: "💍", popular: false },
+  { id: "custom",   label: "Custom Itinerary", tagline: "Fully tailored to your needs",       price: "Price on request",     icon: "✨", popular: false },
 ];
 
 const INTERESTS = [
@@ -47,10 +46,10 @@ export default function EnquiryForm() {
   const inputCls = "w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-800 bg-white focus:outline-none focus:border-[#07301d] focus:ring-2 focus:ring-[#07301d]/20 transition-all placeholder:text-gray-400";
   const labelCls = "block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5";
 
-  const [step, setStep]         = useState(1);
+  const [step, setStep]           = useState(1);
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState("");
 
   const [form, setForm] = useState({
     name: "", email: "", phoneLocal: "", countryCode: "+254",
@@ -79,32 +78,24 @@ export default function EnquiryForm() {
     setError("");
 
     try {
-      // Uses /api/newsletter/subscribe as the contact endpoint
-      // since /api/contact doesn't exist — sends name + email + message
-      const res = await fetch(`${API}/api/newsletter/subscribe`, {
+      // ✅ Correct endpoint — sends email to company via Resend
+      const res = await fetch(`${API}/api/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name:    form.name,
-          email:   form.email,
-          phone:   `${form.countryCode} ${form.phoneLocal}`,
-          message: `
-SAFARI ENQUIRY
-━━━━━━━━━━━━━━━━━━━━
-Package:      ${form.package || "Not specified"}
-Destinations: ${form.destinations || "Not specified"}
-Travel Date:  ${form.travelDate || "Not specified"}
-Flexibility:  ${form.flexibility}
-Adults:       ${form.adults}
-Children:     ${form.children}
-Duration:     ${form.duration} days
-Budget:       ${form.budget || "Not specified"}
-Interests:    ${form.interests.join(", ") || "Not specified"}
-Heard via:    ${form.hearAboutUs || "Not specified"}
-
-Message:
-${form.message || "(none)"}
-          `.trim(),
+          name:         form.name,
+          email:        form.email,
+          phone:        form.phoneLocal ? `${form.countryCode} ${form.phoneLocal}` : "",
+          package:      form.package,
+          destinations: form.destinations,
+          travelDate:   form.travelDate,
+          adults:       form.adults,
+          children:     form.children,
+          duration:     form.duration,
+          budget:       form.budget,
+          interests:    form.interests,
+          hearAboutUs:  form.hearAboutUs,
+          message:      form.message,
         }),
       });
 
@@ -129,7 +120,10 @@ ${form.message || "(none)"}
           <CheckCircle2 size={28} className="text-[#07301d]" />
         </div>
         <h3 className="text-xl font-bold text-gray-900 mb-2">Enquiry Received!</h3>
-        <p className="text-gray-500 text-sm">Our team will contact you within 24 hours.</p>
+        <p className="text-gray-500 text-sm leading-relaxed">
+          We&apos;ve sent a copy to <strong className="text-gray-700">{form.email}</strong>.<br/>
+          Our team will contact you within 24 hours.
+        </p>
         <button
           onClick={() => { setSubmitted(false); setStep(1); }}
           className="mt-6 text-xs text-gray-400 hover:text-[#07301d] underline"
@@ -148,9 +142,9 @@ ${form.message || "(none)"}
         {[1, 2, 3].map((s, i) => (
           <React.Fragment key={s}>
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-              s < step  ? "bg-[#07301d] text-white" :
+              s < step   ? "bg-[#07301d] text-white" :
               s === step ? "bg-[#07301d] text-white ring-4 ring-[#07301d]/20" :
-              "bg-gray-100 text-gray-400"
+                           "bg-gray-100 text-gray-400"
             }`}>
               {s < step ? "✓" : s}
             </div>
@@ -279,8 +273,8 @@ ${form.message || "(none)"}
                 <button key={b} type="button" onClick={() => set("budget", b)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                     form.budget === b
-                      ? "bg-[#0b492c] text-white border-[#0b4429]"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-[#09311e]"
+                      ? "bg-[#07301d] text-white border-[#07301d]"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-[#07301d]"
                   }`}>
                   {b}
                 </button>
@@ -295,8 +289,8 @@ ${form.message || "(none)"}
                 <button key={item} type="button" onClick={() => toggleInterest(item)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                     form.interests.includes(item)
-                      ? "bg-[#093a23] text-white border-[#094126]"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-[#0a492c]"
+                      ? "bg-[#07301d] text-white border-[#07301d]"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-[#07301d]"
                   }`}>
                   {item}
                 </button>
@@ -309,7 +303,6 @@ ${form.message || "(none)"}
       {/* ── STEP 3: Review & Send ── */}
       {step === 3 && (
         <div className="space-y-4">
-          {/* Summary card */}
           <div className="bg-[#f6f9f4] border border-[#c8dfc0] rounded-2xl p-5 space-y-2 text-sm">
             {[
               { label: "Name",         val: form.name || "—" },
