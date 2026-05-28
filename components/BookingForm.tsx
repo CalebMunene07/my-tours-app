@@ -1,15 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { loadStripe } from "@stripe/stripe-js";
-import {
-  Elements,
-  PaymentElement,
-  useStripe,
-  useElements,
-} from "@stripe/react-stripe-js";
 
-const stripePromise = loadStripe("pk_test_51T8GuIJX96zH0EgOBqbSnJ640we4m1SGYAEyhbbU7YuY86yavOObrGlYe7cE9eUuhopUp913ZoyV4arvOxxQ1t0J00F2L1lhAQ");
+// ── Stripe REMOVED — using Paystack redirect instead ──────────────────────
 const API = "https://wikima-backend.onrender.com";
 
 type Package = "Standard" | "Premium" | "Luxury" | "Romance";
@@ -110,10 +103,10 @@ const STATIC_GROUPS = [
 
 // ── Child age ranges with pricing ─────────────────────────────────────────
 const CHILD_AGE_RANGES = [
-  { label: "Infant (0–2 yrs)",   value: "infant",   discount: 1.00 }, // free
-  { label: "Toddler (3–5 yrs)",  value: "toddler",  discount: 0.75 }, // 25% off
-  { label: "Child (6–11 yrs)",   value: "child",    discount: 0.50 }, // 50% off
-  { label: "Youth (12–17 yrs)",  value: "youth",    discount: 0.25 }, // 25% off
+  { label: "Infant (0–2 yrs)",  value: "infant",  discount: 1.00 },
+  { label: "Toddler (3–5 yrs)", value: "toddler", discount: 0.75 },
+  { label: "Child (6–11 yrs)",  value: "child",   discount: 0.50 },
+  { label: "Youth (12–17 yrs)", value: "youth",   discount: 0.25 },
 ];
 
 // ── Country codes ───────────────────────────────────────────────────────────
@@ -242,39 +235,6 @@ ${Number(p.children)>0?`<div class="row"><span class="lbl">${ageLabel} × ${p.ch
   setTimeout(() => win.print(), 600);
 }
 
-/* ── Stripe checkout ─────────────────────────────────────────────────────── */
-const StripeCheckout: React.FC<{ bookingRef:string; amount:string; onSuccess:()=>void; onBack:()=>void }> = ({ bookingRef, amount, onSuccess, onBack }) => {
-  const stripe = useStripe(), elements = useElements();
-  const [paying, setPaying] = useState(false);
-  const [error, setError]   = useState("");
-  const handlePay = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-    setPaying(true); setError("");
-    const { error: se } = await stripe.confirmPayment({ elements, confirmParams: { return_url: `${window.location.origin}/booking/confirmed` }, redirect: "if_required" });
-    if (se) { setError(se.message || "Payment failed."); setPaying(false); } else onSuccess();
-  };
-  return (
-    <div className="bf-step">
-      <div style={S.stripeHeader}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5320" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        <span style={S.stripeHeaderText}>Secure Card Payment · <strong>{amount}</strong> deposit</span>
-      </div>
-      <p style={S.stripeRef}>Booking ref: <strong style={{ color:"#4B5320" }}>{bookingRef}</strong></p>
-      <form onSubmit={handlePay}>
-        <div style={S.stripeElementWrap}><PaymentElement/></div>
-        {error && <p style={S.stripeError}>{error}</p>}
-        <div style={S.navRow}>
-          <button type="button" onClick={onBack} style={S.backBtn} className="bf-back">← Back</button>
-          <button type="submit" disabled={!stripe||paying} style={S.nextBtn} className="bf-next">
-            {paying ? <span style={S.spinWrap}><span className="bf-spinner"/> Processing…</span> : `Pay ${amount}`}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-};
-
 /* ── Country Code Picker ─────────────────────────────────────────────────── */
 const CountryCodePicker: React.FC<{ value: string; onChange: (code: string) => void }> = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
@@ -314,7 +274,7 @@ const CountryCodePicker: React.FC<{ value: string; onChange: (code: string) => v
   );
 };
 
-/* ── Grouped Tour Dropdown — hardcoded, instant, no API needed ───────────── */
+/* ── Grouped Tour Dropdown ───────────────────────────────────────────────── */
 const TourDropdown: React.FC<{
   value: string;
   onChange: (tour: string) => void;
@@ -334,12 +294,8 @@ const TourDropdown: React.FC<{
 
   const isSearching = search.trim().length > 0;
 
-  // Merge API tours into static groups by category, keeping static tours always present
   const mergedGroups = STATIC_GROUPS.map(sg => {
-    const apiTitles = tours
-      .filter(t => t.category === sg.category)
-      .map(t => t.title);
-    // Combine static + API, deduplicate
+    const apiTitles = tours.filter(t => t.category === sg.category).map(t => t.title);
     const combined = Array.from(new Set([...sg.tours, ...apiTitles])).sort();
     return { ...sg, tours: combined };
   });
@@ -354,12 +310,13 @@ const TourDropdown: React.FC<{
 
   const filteredGroups = mergedGroups.map(g => ({
     ...g,
-    tours: isSearching
-      ? g.tours.filter(t => t.toLowerCase().includes(search.toLowerCase()))
-      : g.tours,
+    tours: isSearching ? g.tours.filter(t => t.toLowerCase().includes(search.toLowerCase())) : g.tours,
   }));
 
   const isExpanded = (group: string) => isSearching || expandedGroups.has(group);
+
+  // suppress unused warning
+  void loading;
 
   return (
     <div style={{ position:"relative", marginBottom:"16px" }} ref={ref}>
@@ -390,7 +347,6 @@ const TourDropdown: React.FC<{
               onMouseDown={e => e.stopPropagation()}
             />
           </div>
-
           <div style={{ maxHeight:"340px", overflowY:"auto" }}>
             {filteredGroups.map(g => (
               <div key={g.group}>
@@ -402,11 +358,7 @@ const TourDropdown: React.FC<{
                   <span style={{ display:"flex", alignItems:"center", gap:"8px" }}>
                     <span style={{ fontSize:"16px", lineHeight:1 }}>{g.emoji}</span>
                     <span style={S.groupTitle}>{g.group}</span>
-                    <span style={{
-                      fontSize:"10px", fontWeight:600,
-                      background:"#e8f0dc", color:"#4B5320",
-                      borderRadius:"10px", padding:"1px 8px",
-                    }}>
+                    <span style={{ fontSize:"10px", fontWeight:600, background:"#e8f0dc", color:"#4B5320", borderRadius:"10px", padding:"1px 8px" }}>
                       {g.tours.length}
                     </span>
                   </span>
@@ -417,21 +369,13 @@ const TourDropdown: React.FC<{
                     </svg>
                   )}
                 </div>
-
                 {isExpanded(g.group) && (
                   <div>
                     {g.tours.map(title => {
                       const isSelected = value === title;
                       return (
-                        <div
-                          key={title}
-                          style={{
-                            ...S.groupTourItem,
-                            background: isSelected ? "#eef4e4" : "#fff",
-                            color: "#1a1a1a",
-                            fontWeight: isSelected ? 700 : 500,
-                            borderLeft: isSelected ? "3px solid #4B5320" : "3px solid transparent",
-                          }}
+                        <div key={title}
+                          style={{ ...S.groupTourItem, background: isSelected?"#eef4e4":"#fff", color:"#1a1a1a", fontWeight: isSelected?700:500, borderLeft: isSelected?"3px solid #4B5320":"3px solid transparent" }}
                           className="bf-dd-item"
                           onMouseDown={() => { onChange(title); setOpen(false); setSearch(""); }}
                         >
@@ -445,9 +389,7 @@ const TourDropdown: React.FC<{
                       );
                     })}
                     {g.tours.length === 0 && isSearching && (
-                      <div style={{ padding:"10px 24px", fontSize:"12px", color:"#b0a898", fontStyle:"italic" }}>
-                        No results in this category
-                      </div>
+                      <div style={{ padding:"10px 24px", fontSize:"12px", color:"#b0a898", fontStyle:"italic" }}>No results in this category</div>
                     )}
                   </div>
                 )}
@@ -468,28 +410,50 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const [loading, setLoading]     = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [apiError, setApiError]   = useState("");
-  const [clientSecret, setClientSecret]     = useState<string|null>(null);
   const [currentBooking, setCurrentBooking] = useState<{ id:string; reference:string; deposit_amount:number }|null>(null);
   const [mpesaStatus, setMpesaStatus]       = useState<"idle"|"waiting"|"success"|"failed">("idle");
   const [tours, setTours]         = useState<Tour[]>([]);
   const [toursLoading, setToursLoading] = useState(true);
   const [countryCode, setCountryCode]   = useState("+254");
 
+  // ── Paystack: redirecting state ──────────────────────────────────────────
+  const [paystackRedirecting, setPaystackRedirecting] = useState(false);
+
   const [form, setForm] = useState({
     tourTitle: propTourTitle,
     name: "", email: "", phoneLocal: "", mpesaNumber: "",
     date: "", adults: "1", children: "0",
-    childAgeRange: "child", // default: Child (6–11 yrs) = 50% off
+    childAgeRange: "child",
     days: "1", package: "Standard" as Package,
     paymentMethod: "", message: "",
   });
 
-  // Still fetch API tours to merge extra tours into groups
   useEffect(() => {
     fetch(`${API}/api/tours`)
       .then(r => r.json())
       .then(data => { setTours(data.tours || []); setToursLoading(false); })
       .catch(() => setToursLoading(false));
+  }, []);
+
+  // ── Check if user returned from Paystack checkout ───────────────────────
+  // Paystack redirects back to FRONTEND_URL/booking/confirm?reference=XXX
+  // This handles that case if BookingForm is rendered on that page
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("reference") || params.get("trxref");
+    if (!ref) return;
+
+    // Verify the payment with the backend
+    fetch(`${API}/api/payments/paystack/verify/${ref}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === "success") {
+          setSubmitted(true);
+          // Reconstruct minimal booking info from reference for confirmation screen
+          setCurrentBooking({ id: "", reference: ref, deposit_amount: 0 });
+        }
+      })
+      .catch(console.error);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>) =>
@@ -513,7 +477,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const adults          = Number(form.adults) || 1;
   const children        = Number(form.children) || 0;
   const ageRange        = CHILD_AGE_RANGES.find(a => a.value === form.childAgeRange) ?? CHILD_AGE_RANGES[2];
-  const childDiscount   = ageRange.discount; // fraction to REMOVE from price
+  const childDiscount   = ageRange.discount;
   const childUnitPrice  = pricePerPerson * (1 - childDiscount);
   const childrenTotal   = childUnitPrice * children;
   const totalPrice      = (pricePerPerson * adults) + childrenTotal;
@@ -526,7 +490,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     e.preventDefault();
     if (step < 3) { setStep(step + 1); return; }
     setLoading(true); setApiError("");
+
     try {
+      // 1. Create the booking
       const bookingRes = await fetch(`${API}/api/bookings`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -536,13 +502,19 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           days: Number(form.days), totalAmount: totalPrice, depositAmount,
         }),
       });
-      if (!bookingRes.ok) { const err = await bookingRes.json(); throw new Error(err.error || "Failed to create booking"); }
+      if (!bookingRes.ok) {
+        const err = await bookingRes.json();
+        throw new Error(err.error || "Failed to create booking");
+      }
       const { booking } = await bookingRes.json();
       setCurrentBooking(booking);
 
+      // 2. Handle M-Pesa
       if (form.paymentMethod === "mpesa") {
         const phone = form.mpesaNumber.replace(/\s+/g, "");
-        if (!phone.startsWith("254") || phone.length !== 12) throw new Error("Phone must be 2547XXXXXXXX (12 digits)");
+        if (!phone.startsWith("254") || phone.length !== 12)
+          throw new Error("Phone must be 2547XXXXXXXX (12 digits)");
+
         const mpesaRes = await fetch(`${API}/api/payments/mpesa/stk-push`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ phone, amount: depositAmount, bookingRef: booking.reference, bookingId: booking.id }),
@@ -550,6 +522,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         if (!mpesaRes.ok) throw new Error("Failed to initiate M-Pesa payment");
         const { checkoutRequestId } = await mpesaRes.json();
         setMpesaStatus("waiting"); setLoading(false); setStep(4);
+
         let attempts = 0;
         const poll = setInterval(async () => {
           attempts++;
@@ -560,15 +533,27 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             else if (status === "failed" || attempts >= 10) { clearInterval(poll); setMpesaStatus("failed"); }
           } catch { /* keep polling */ }
         }, 3000);
+
+      // 3. Handle Paystack card payment — initialize then REDIRECT
       } else if (form.paymentMethod === "card") {
-        const stripeRes = await fetch(`${API}/api/payments/stripe/create-intent`, {
+        const paystackRes = await fetch(`${API}/api/payments/paystack/initialize`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: depositAmount, bookingId: booking.id, bookingRef: booking.reference, customerEmail: form.email }),
+          body: JSON.stringify({
+            amount: depositAmount,
+            bookingId: booking.id,
+            bookingRef: booking.reference,
+            customerEmail: form.email,
+          }),
         });
-        if (!stripeRes.ok) throw new Error("Failed to create payment intent");
-        const { clientSecret: secret } = await stripeRes.json();
-        setClientSecret(secret); setLoading(false); setStep(4);
+        if (!paystackRes.ok) throw new Error("Failed to initialize Paystack payment");
+        const { authorizationUrl } = await paystackRes.json();
+
+        // Redirect user to Paystack hosted checkout
+        setPaystackRedirecting(true);
+        setLoading(false);
+        window.location.href = authorizationUrl;
       }
+
     } catch (err: unknown) {
       setApiError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
@@ -576,8 +561,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   };
 
   const resetForm = () => {
-    setSubmitted(false); setStep(1); setClientSecret(null); setCurrentBooking(null);
+    setSubmitted(false); setStep(1); setCurrentBooking(null);
     setMpesaStatus("idle"); setApiError(""); setCountryCode("+254");
+    setPaystackRedirecting(false);
     setForm({ tourTitle: propTourTitle, name: "", email: "", phoneLocal: "", mpesaNumber: "", date: "", adults: "1", children: "0", childAgeRange: "child", days: "1", package: "Standard", paymentMethod: "", message: "" });
   };
 
@@ -592,7 +578,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         <p style={S.confirmedLabel}>Booking Confirmed</p>
         <h3 style={S.confirmedTitle}>You&apos;re going on safari!</h3>
         <p style={S.confirmedSub}>A confirmation has been sent to <strong style={{ color:"#4B5320" }}>{form.email}</strong>.<br/>Our team will contact you within 24 hours.</p>
-        {currentBooking && <div style={S.refBadge}>Booking Ref: <strong style={{ color:"#4B5320" }}>{currentBooking.reference}</strong></div>}
+        {currentBooking?.reference && (
+          <div style={S.refBadge}>Booking Ref: <strong style={{ color:"#4B5320" }}>{currentBooking.reference}</strong></div>
+        )}
         <button onClick={() => downloadBookingPDF({
           reference: currentBooking?.reference||"—", name: form.name, email: form.email,
           phone: fullPhone, tourTitle: form.tourTitle, date: form.date,
@@ -607,6 +595,19 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           <span style={{ ...S.pill, ...S.pillGreen }}><CheckIcon/> Booking Saved</span>
         </div>
         <button style={S.resetBtn} onClick={resetForm}>Start new booking</button>
+      </div>
+    );
+  }
+
+  /* ── PAYSTACK REDIRECTING SCREEN ── */
+  if (paystackRedirecting) {
+    return (
+      <div style={S.confirmedWrap}>
+        <style>{css}</style>
+        <div style={S.mpesaWaitIcon}><span className="bf-spinner-lg"/></div>
+        <p style={S.confirmedLabel}>Redirecting to Payment</p>
+        <h3 style={S.confirmedTitle}>Opening secure checkout…</h3>
+        <p style={S.confirmedSub}>You&apos;re being redirected to Paystack&apos;s secure card payment page.<br/>Do not close this tab.</p>
       </div>
     );
   }
@@ -636,34 +637,15 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     );
   }
 
-  /* ── STRIPE SCREEN ── */
-  if (step === 4 && form.paymentMethod === "card" && clientSecret && currentBooking) {
-    return (<>
-      <style>{css}</style>
-      <div style={S.progress}>
-        {[1,2,3,4].map(s => (<React.Fragment key={s}>
-          <div style={{ ...S.dot, ...(s<4?S.dotDone:S.dotActive) }}>
-            {s<4 ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                 : <span style={{ fontSize:"10px",fontWeight:700,color:"#fff" }}>4</span>}
-          </div>
-          {s<4 && <div style={{ ...S.line, ...S.lineDone }}/>}
-        </React.Fragment>))}
-      </div>
-      <p style={S.stepLabel}>Card Payment</p>
-      <Elements stripe={stripePromise} options={{ clientSecret }}>
-        <StripeCheckout bookingRef={currentBooking.reference} amount={fmt(depositAmount)} onSuccess={() => setSubmitted(true)} onBack={() => setStep(3)}/>
-      </Elements>
-    </>);
-  }
-
   /* ── STEPS 1–3 ── */
   return (<>
     <style>{css}</style>
     <div style={S.progress}>
       {[1,2,3].map(s => (<React.Fragment key={s}>
         <div style={{ ...S.dot, ...(s<step?S.dotDone:s===step?S.dotActive:{}) }}>
-          {s<step ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
-                  : <span style={{ fontSize:"10px",fontWeight:700,color:s===step?"#fff":"#a0a09a" }}>{s}</span>}
+          {s<step
+            ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+            : <span style={{ fontSize:"10px",fontWeight:700,color:s===step?"#fff":"#a0a09a" }}>{s}</span>}
         </div>
         {s<3 && <div style={{ ...S.line, ...(s<step?S.lineDone:{}) }}/>}
       </React.Fragment>))}
@@ -682,12 +664,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       {/* ════ STEP 1 ════ */}
       {step === 1 && (
         <div className="bf-step">
-          <TourDropdown
-            value={form.tourTitle}
-            onChange={tour => setForm({ ...form, tourTitle: tour })}
-            tours={tours}
-            loading={toursLoading}
-          />
+          <TourDropdown value={form.tourTitle} onChange={tour => setForm({ ...form, tourTitle: tour })} tours={tours} loading={toursLoading}/>
 
           <div style={S.row}>
             <Field label="Full Name"><input name="name" value={form.name} onChange={handleChange} placeholder="Jane Doe" style={S.input} required/></Field>
@@ -714,7 +691,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             </Field>
           </div>
 
-          {/* Child age range — only shown when children > 0 */}
           {Number(form.children) > 0 && (
             <Field label="Child Age Range">
               <select name="childAgeRange" value={form.childAgeRange} onChange={handleChange} style={S.select} className="bf-select">
@@ -784,7 +760,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             <div style={S.priceRow}><span style={S.priceLabel}>× {adults} adult{adults>1?"s":""}</span><span style={S.priceVal}>{fmt(pricePerPerson * adults)}</span></div>
             {children > 0 && (<>
               <div style={S.priceRow}>
-                <span style={S.priceLabel}>{ageRange.label} {ageRange.discount===1?"(Free)":"(" + Math.round(ageRange.discount*100) + "% off)"}</span>
+                <span style={S.priceLabel}>{ageRange.label} {ageRange.discount===1?"(Free)":"("+Math.round(ageRange.discount*100)+"% off)"}</span>
                 <span style={S.priceVal}>{ageRange.discount===1?"Free":fmt(childUnitPrice)}/child</span>
               </div>
               <div style={S.priceRow}><span style={S.priceLabel}>× {children} child{children>1?"ren":""}</span><span style={S.priceVal}>{ageRange.discount===1?"Free":fmt(childrenTotal)}</span></div>
@@ -822,6 +798,15 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               <p style={S.mpesaHint}>Format: 2547XXXXXXXX (no + or spaces). You&apos;ll receive an STK push.</p>
             </div>
           )}
+
+          {/* ── Paystack info banner when card is selected ── */}
+          {form.paymentMethod === "card" && (
+            <div style={{ background:"#f0f4ea", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"12px 14px", marginTop:"8px" }}>
+              <p style={{ fontSize:"12px", color:"#4B5320", fontFamily:"'DM Sans',sans-serif", margin:0, lineHeight:1.6 }}>
+                <strong>Secure card payment via Paystack</strong> — you&apos;ll be redirected to Paystack&apos;s hosted checkout page to complete your payment, then returned here automatically.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -830,20 +815,20 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         <div className="bf-step">
           <div style={S.reviewBox}>
             {[
-              { label:"Tour",         val: form.tourTitle || "—" },
-              { label:"Guest",        val: form.name },
-              { label:"Email",        val: form.email },
-              { label:"Phone",        val: fullPhone || "—" },
-              { label:"Date",         val: form.date ? new Date(form.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "—" },
-              { label:"Days",         val: `${form.days} day${Number(form.days)>1?"s":""}` },
-              { label:"Adults",       val: `${form.adults} ${Number(form.adults)===1?"adult":"adults"}` },
-              { label:"Children",     val: Number(form.children)>0 ? `${form.children} × ${ageRange.label}` : "None" },
-              { label:"Package",      val: form.package },
-              { label:"Per Adult",    val: fmt(pricePerPerson) },
-              { label:"Total Amount", val: fmt(totalPrice),    bold: true },
-              { label:"Deposit (60%)",val: fmt(depositAmount), highlight: true },
-              { label:"Balance (40%)",val: fmt(balanceAmount) },
-              { label:"Payment",      val: form.paymentMethod==="mpesa"?`M-Pesa (${form.mpesaNumber})`:form.paymentMethod==="card"?"Credit / Debit Card":"—" },
+              { label:"Tour",          val: form.tourTitle || "—" },
+              { label:"Guest",         val: form.name },
+              { label:"Email",         val: form.email },
+              { label:"Phone",         val: fullPhone || "—" },
+              { label:"Date",          val: form.date ? new Date(form.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "—" },
+              { label:"Days",          val: `${form.days} day${Number(form.days)>1?"s":""}` },
+              { label:"Adults",        val: `${form.adults} ${Number(form.adults)===1?"adult":"adults"}` },
+              { label:"Children",      val: Number(form.children)>0 ? `${form.children} × ${ageRange.label}` : "None" },
+              { label:"Package",       val: form.package },
+              { label:"Per Adult",     val: fmt(pricePerPerson) },
+              { label:"Total Amount",  val: fmt(totalPrice),    bold: true },
+              { label:"Deposit (60%)", val: fmt(depositAmount), highlight: true },
+              { label:"Balance (40%)", val: fmt(balanceAmount) },
+              { label:"Payment",       val: form.paymentMethod==="mpesa"?`M-Pesa (${form.mpesaNumber})`:form.paymentMethod==="card"?"Card via Paystack":"—" },
             ].map(({ label, val, bold, highlight }, i, arr) => (
               <div key={label} style={{ ...S.reviewRow, ...(i===arr.length-1?{ borderBottom:"none", paddingBottom:0 }:{}) }}>
                 <span style={S.reviewLabel}>{label}</span>
@@ -851,18 +836,25 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               </div>
             ))}
           </div>
-          <p style={S.terms}>By confirming you agree to Wikima Safari&apos;s booking terms. A 60% deposit of <strong>{fmt(depositAmount)}</strong> is charged upon confirmation. Balance of <strong>{fmt(balanceAmount)}</strong> is due on arrival.</p>
+          <p style={S.terms}>
+            By confirming you agree to Wikima Safari&apos;s booking terms. A 60% deposit of <strong>{fmt(depositAmount)}</strong> is charged upon confirmation. Balance of <strong>{fmt(balanceAmount)}</strong> is due on arrival.
+            {form.paymentMethod === "card" && " You will be redirected to Paystack to complete card payment."}
+          </p>
         </div>
       )}
 
       <div style={S.navRow}>
         {step > 1 && <button type="button" onClick={() => setStep(step-1)} style={S.backBtn} className="bf-back">← Back</button>}
-        <button type="submit" disabled={loading||(step===2&&!form.paymentMethod)}
-          style={{ ...S.nextBtn, ...(step===1?{ width:"100%" }:{}) }} className="bf-next">
+        <button
+          type="submit"
+          disabled={loading || (step===2 && !form.paymentMethod)}
+          style={{ ...S.nextBtn, ...(step===1?{ width:"100%" }:{}) }}
+          className="bf-next"
+        >
           {loading
             ? <span style={S.spinWrap}><span className="bf-spinner"/>{step===3?"Creating booking…":"Processing…"}</span>
-            : step<3 ? "Continue →"
-            : form.paymentMethod==="mpesa" ? `Send M-Pesa Push · ${fmt(depositAmount)}`
+            : step < 3 ? "Continue →"
+            : form.paymentMethod === "mpesa" ? `Send M-Pesa Push · ${fmt(depositAmount)}`
             : `Pay by Card · ${fmt(depositAmount)}`}
         </button>
       </div>
@@ -935,11 +927,6 @@ const S: Record<string, React.CSSProperties> = {
   resetBtn:       { display:"block", margin:"0 auto", background:"transparent", border:"1.5px solid #e5e0d8", color:"#4B5320", padding:"9px 22px", borderRadius:"8px", fontSize:"12px", fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" },
   mpesaWaitIcon:  { width:52, height:52, borderRadius:"50%", background:"#f0f4ea", border:"2px solid #4B5320", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" },
   mpesaTimer:     { fontSize:"11px", color:"#7a7060", fontFamily:"'DM Sans',sans-serif", marginTop:"8px" },
-  stripeHeader:       { display:"flex", alignItems:"center", gap:"8px", marginBottom:"6px" },
-  stripeHeaderText:   { fontSize:"13px", color:"#1a1a1a", fontFamily:"'DM Sans',sans-serif" },
-  stripeRef:          { fontSize:"12px", color:"#7a7060", fontFamily:"'DM Sans',sans-serif", marginBottom:"16px" },
-  stripeElementWrap:  { border:"1.5px solid #e5e0d8", borderRadius:"10px", padding:"16px", background:"#faf9f7", marginBottom:"16px" },
-  stripeError:        { fontSize:"12px", color:"#dc2626", fontFamily:"'DM Sans',sans-serif", marginBottom:"12px", background:"#fef2f2", padding:"8px 12px", borderRadius:"6px", border:"1px solid #fca5a5" },
   ddChevron:      { position:"absolute", right:"12px", top:"50%", transform:"translateY(-50%)", pointerEvents:"none" },
   ccBtn:          { display:"flex", alignItems:"center", gap:"6px", padding:"9px 10px", border:"1.5px solid #e5e0d8", borderRadius:"8px", background:"#faf9f7", cursor:"pointer", whiteSpace:"nowrap", flexShrink:0, outline:"none", transition:"border-color 0.2s" },
   ccDropdown:     { position:"absolute", top:"100%", left:0, width:"220px", background:"#fff", border:"1.5px solid #e5e0d8", borderRadius:"10px", boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:200, marginTop:"4px" },
@@ -955,7 +942,6 @@ const css = `
   @keyframes bfFadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
   @keyframes bfSpin{to{transform:rotate(360deg);}}
   @keyframes bfSpinLg{to{transform:rotate(360deg);}}
-  @keyframes bfSpinSm{to{transform:rotate(360deg);}}
   .bf-step{animation:bfFadeUp 0.35s ease both;}
   .bf-next:hover:not(:disabled){background:#3a4118!important;transform:translateY(-1px);}
   .bf-next:disabled{opacity:0.55;cursor:not-allowed;}
@@ -967,7 +953,6 @@ const css = `
   .bf-mpesa{animation:bfFadeUp 0.3s ease both;}
   .bf-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:bfSpin 0.7s linear infinite;}
   .bf-spinner-lg{display:inline-block;width:28px;height:28px;border:3px solid rgba(75,83,32,0.2);border-top-color:#4B5320;border-radius:50%;animation:bfSpinLg 0.9s linear infinite;}
-  .bf-spinner-sm{display:inline-block;width:13px;height:13px;border:2px solid rgba(75,83,32,0.2);border-top-color:#4B5320;border-radius:50%;animation:bfSpinSm 0.7s linear infinite;}
   .bf-dd-item:hover{background:#f0f4ea!important;color:#1a1a1a!important;cursor:pointer;}
   .bf-dd-item:last-child{border-bottom:none!important;}
   .bf-cc-btn:hover{border-color:#4B5320!important;}

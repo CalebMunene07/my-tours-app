@@ -134,7 +134,7 @@ export default function TopBar() {
           </div>
           <div className="hidden sm:flex items-center gap-1.5">
             <Phone size={11} className="text-[#D4AF37]" />
-            <a href="tel:+254720069550" className="hover:text-white transition-colors">+254 720 069 550</a>
+            <a href="tel:+254 141519364" className="hover:text-white transition-colors">+254 141519364/ 0141519367</a>
           </div>
           <div className="hidden lg:flex items-center gap-1.5">
             <Mail size={11} className="text-[#D4AF37]" />

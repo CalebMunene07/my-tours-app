@@ -31,10 +31,10 @@ export default function ContactPage() {
                   <div>
                     <p className="font-bold text-gray-900">Call Us</p>
                     <a href="tel:+61430057611" className="block text-gray-600 hover:text-[#4B5320] transition-colors">
-                      +61 430 057 611
+                      +254 141519364
                     </a>
                     <a href="tel:+254720069550" className="block text-gray-600 hover:text-[#4B5320] transition-colors mt-0.5">
-                      +254 720 069 550
+                      +254 141519367
                     </a>
                   </div>
                 </div>
