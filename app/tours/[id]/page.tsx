@@ -2,7 +2,7 @@
 // ── SERVER COMPONENT — no "use client" here ──────────────────────────────────
 // generateStaticParams and dynamicParams MUST be in a server component.
 // The actual UI is in TourDetailClient which handles all interactivity.
-
+// app/tours/[id]/page.tsx
 import { toursData } from "@/data/tours";
 import TourDetailClient from "./TourDetailClient";
 
@@ -12,10 +12,11 @@ export function generateStaticParams() {
 
 export const dynamicParams = false;
 
-export default function TourDetailPage({
+export default async function TourDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  return <TourDetailClient id={params.id} />;
+  const { id } = await params;
+  return <TourDetailClient id={id} />;
 }
