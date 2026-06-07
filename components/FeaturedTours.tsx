@@ -3,47 +3,32 @@ import Image from "next/image";
 import { toursData } from "@/data/tours";
 
 /**
- * Add a `category` field to each tour in your toursData array.
- * Valid values: "bush-safari" | "beach-escape" | "mountain-journey" |
- *               "adventure-wildlife" | "city-safari" | "lodge-safari"
+ * CATEGORIES now reflect the three docx source files:
+ *  1. kenya-safari      → Kenya_Safaris.docx   (private road safaris)
+ *  2. budget-safari     → Budget_safaris.docx  (group joining safaris)
+ *  3. fly-inn-safari    → Fly_inn_safaris.docx (fly-in + Serengeti road)
+ *
+ * Update the `category` field on each TourData entry in tours.ts to match.
  */
 
 const CATEGORIES = [
   {
-    key: "bush-safari",
-    label: "Bush Safaris",
+    key: "kenya-safari",
+    label: "Kenya Safaris",
     icon: "🦁",
-    description: "Immerse yourself in the untamed African bush",
+    description: "Private road safaris across Kenya's finest national parks & reserves",
   },
   {
-    key: "beach-escape",
-    label: "Beach Escapes",
-    icon: "🏖️",
-    description: "Sun, sea and serenity along Kenya's coastline",
+    key: "budget-safari",
+    label: "Budget Group Joining Safaris",
+    icon: "🤝",
+    description: "Join a shared group — all the wildlife, wallet-friendly prices",
   },
   {
-    key: "mountain-journey",
-    label: "Mountain Journeys & Guided Alpine Hiking",
-    icon: "🏔️",
-    description: "Conquer peaks and trek through highland landscapes",
-  },
-  {
-    key: "adventure-wildlife",
-    label: "Adventure & Wildlife",
-    icon: "🐘",
-    description: "Thrilling encounters with Africa's iconic wildlife",
-  },
-  {
-    key: "city-safari",
-    label: "City Safari / Game & Park",
-    icon: "🏙️",
-    description: "Urban adventures and day trips to nearby reserves",
-  },
-  {
-    key: "lodge-safari",
-    label: "Lodge Safari & Signature Food",
-    icon: "🍽️",
-    description: "Luxury lodges paired with unforgettable culinary experiences",
+    key: "fly-inn-safari",
+    label: "Fly-Inn Safaris",
+    icon: "✈️",
+    description: "Skip the road — fly direct into Masai Mara or the Serengeti",
   },
 ];
 
@@ -59,7 +44,6 @@ interface Tour {
 
 const TourCard = ({ tour }: { tour: Tour }) => (
   <Link href={`/tours/${tour.slug}`} className="group block">
-    {/* Image */}
     <div className="relative overflow-hidden rounded-2xl mb-5 aspect-3/4 shadow-lg">
       <Image
         src={tour.image}
@@ -75,7 +59,6 @@ const TourCard = ({ tour }: { tour: Tour }) => (
         </span>
       </div>
     </div>
-    {/* Text */}
     <div className="space-y-2">
       <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#4B5320] transition-colors">
         {tour.title}
@@ -144,14 +127,7 @@ const FeaturedTours = () => {
                     className="inline-flex items-center gap-2 border-2 border-[#4B5320] text-[#4B5320] px-10 py-3 rounded-sm font-semibold tracking-wider uppercase text-xs hover:bg-[#4B5320] hover:text-white transition-all duration-200"
                   >
                     See More {cat.label}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </Link>

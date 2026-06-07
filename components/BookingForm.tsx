@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 
-// ── Stripe REMOVED — using Paystack redirect instead ──────────────────────
 const API = "https://wikima-backend.onrender.com";
 
 type Package = "Standard" | "Premium" | "Luxury" | "Romance";
@@ -22,81 +21,44 @@ interface BookingFormProps {
   pricingTiers?: string[];
 }
 
-// ── Hardcoded tour groups — always visible, no API dependency ──────────────
+// ── Tour groups derived directly from tours.ts categories & titles ─────────
+// Category keys match: kenya-safari, budget-safari, fly-inn-safari
 const STATIC_GROUPS = [
   {
-    group: "Bush Safari",
+    group: "Kenya Safaris",
     emoji: "🦁",
-    category: "bush",
+    category: "kenya-safari",
     tours: [
-      "Masai Mara Safari",
-      "Amboseli Bush Safari",
-      "Tsavo Wilderness Safari",
+      { slug: "3-day-masai-mara",          title: "3-Day Masai Mara Safari" },
+      { slug: "3-day-amboseli",             title: "3-Day Amboseli Safari" },
+      { slug: "4-day-mara-nakuru",          title: "4-Day Masai Mara & Lake Nakuru" },
+      { slug: "4-day-northern-kenya",       title: "4-Day Northern Kenya Safari" },
+      { slug: "5-day-mara-nakuru-naivasha", title: "5-Day Mara, Nakuru & Naivasha" },
+      { slug: "6-day-mara-nakuru-amboseli", title: "6-Day Mara, Nakuru & Amboseli" },
+      { slug: "7-day-kenya-grand-safari",   title: "7-Day Kenya Grand Safari" },
     ],
   },
   {
-    group: "Beach Escape",
-    emoji: "🏖️",
-    category: "beach",
+    group: "Budget Group Joining Safaris",
+    emoji: "🤝",
+    category: "budget-safari",
     tours: [
-      "Malindi Beach Escape",
-      "Diani Beach Retreat",
-      "Lamu Island Escape",
+      { slug: "budget-3-day-masai-mara",             title: "3-Day Budget Masai Mara Group Safari" },
+      { slug: "budget-4-day-mara-nakuru",             title: "4-Day Masai Mara & Lake Nakuru Group Safari" },
+      { slug: "budget-5-day-mara-nakuru-naivasha",   title: "5-Day Mara, Nakuru & Naivasha Group Safari" },
+      { slug: "budget-7-day-grand-circuit",           title: "7-Day Grand Kenya Circuit Group Safari" },
     ],
   },
   {
-    group: "Mountain & Alpine Hiking",
-    emoji: "🏔️",
-    category: "mountain",
+    group: "Fly-Inn Safaris",
+    emoji: "✈️",
+    category: "fly-inn-safari",
     tours: [
-      "Mount Kenya Trek",
-      "Aberdare Highland Hike",
-      "Mt Kilimanjaro Expedition",
-    ],
-  },
-  {
-    group: "Adventure & Wildlife",
-    emoji: "🐘",
-    category: "adventure",
-    tours: [
-      "Samburu Wildlife Adventure",
-      "Ol Pejeta Rhino Trek",
-      "Lake Nakuru Flamingo Safari",
-    ],
-  },
-  {
-    group: "City Safari & Game Park",
-    emoji: "🏙️",
-    category: "city",
-    tours: [
-      "Nairobi National Park Day",
-      "Giraffe Centre & Elephant Orphanage",
-      "Hell's Gate Cycling Safari",
-    ],
-  },
-  {
-    group: "Lodge Safari & Signature Food",
-    emoji: "🍽️",
-    category: "lodge",
-    tours: [
-      "Mara Luxury Lodge Safari",
-      "Laikipia Ranch Gourmet Safari",
-      "Amboseli Lodge & Kilimanjaro Views",
-    ],
-  },
-  {
-    group: "Tours Beyond Africa",
-    emoji: "🌍",
-    category: "international",
-    tours: [
-      "Dubai",
-      "Maldives",
-      "Istanbul, Turkey",
-      "Bali, Indonesia",
-      "Paris, France",
-      "Egypt",
-      "Thailand",
-      "Rome, Italy",
+      { slug: "fly-inn-mara-3-day",             title: "3-Day Masai Mara Flying Safari" },
+      { slug: "fly-inn-mara-4-day",             title: "4-Day Masai Mara Flying Safari" },
+      { slug: "fly-inn-serengeti-3-day",        title: "3-Day Serengeti Flying Safari" },
+      { slug: "fly-inn-serengeti-4-day",        title: "4-Day Serengeti Flying Safari" },
+      { slug: "4-day-serengeti-ngorongoro-road", title: "4-Day Serengeti & Ngorongoro Road Safari" },
     ],
   },
 ];
@@ -278,9 +240,9 @@ const CountryCodePicker: React.FC<{ value: string; onChange: (code: string) => v
 const TourDropdown: React.FC<{
   value: string;
   onChange: (tour: string) => void;
-  tours: Tour[];
+  apiTours: Tour[];
   loading: boolean;
-}> = ({ value, onChange, tours, loading }) => {
+}> = ({ value, onChange, apiTours, loading }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -294,11 +256,26 @@ const TourDropdown: React.FC<{
 
   const isSearching = search.trim().length > 0;
 
+  // Merge API tours into the correct static group by category, deduplicating by title
   const mergedGroups = STATIC_GROUPS.map(sg => {
-    const apiTitles = tours.filter(t => t.category === sg.category).map(t => t.title);
-    const combined = Array.from(new Set([...sg.tours, ...apiTitles])).sort();
-    return { ...sg, tours: combined };
+    const apiMatches = apiTours
+      .filter(t => t.category === sg.category)
+      .map(t => ({ slug: t.id || t.title, title: t.title }));
+
+    // Combine static tours with any extra API tours not already listed
+    const staticTitles = new Set(sg.tours.map(t => t.title));
+    const extraApiTours = apiMatches.filter(t => !staticTitles.has(t.title));
+
+    return {
+      ...sg,
+      tours: [...sg.tours, ...extraApiTours],
+    };
   });
+
+  // Flat list of all tour titles for search
+  const allTours = mergedGroups.flatMap(g =>
+    g.tours.map(t => ({ ...t, group: g.group, emoji: g.emoji }))
+  );
 
   const toggleGroup = (group: string) => {
     setExpandedGroups(prev => {
@@ -308,14 +285,13 @@ const TourDropdown: React.FC<{
     });
   };
 
-  const filteredGroups = mergedGroups.map(g => ({
-    ...g,
-    tours: isSearching ? g.tours.filter(t => t.toLowerCase().includes(search.toLowerCase())) : g.tours,
-  }));
-
   const isExpanded = (group: string) => isSearching || expandedGroups.has(group);
 
-  // suppress unused warning
+  // When searching, show flat filtered list; otherwise show grouped
+  const searchResults = isSearching
+    ? allTours.filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
+    : [];
+
   void loading;
 
   return (
@@ -337,6 +313,7 @@ const TourDropdown: React.FC<{
 
       {open && (
         <div style={S.groupDropdown}>
+          {/* Search */}
           <div style={{ padding:"8px 10px", borderBottom:"1px solid #e8e0d0", background:"#fafaf8" }}>
             <input
               value={search}
@@ -347,60 +324,98 @@ const TourDropdown: React.FC<{
               onMouseDown={e => e.stopPropagation()}
             />
           </div>
-          <div style={{ maxHeight:"340px", overflowY:"auto" }}>
-            {filteredGroups.map(g => (
-              <div key={g.group}>
-                <div
-                  style={{ ...S.groupHeader, opacity: g.tours.length === 0 && isSearching ? 0.4 : 1 }}
-                  onClick={() => !isSearching && toggleGroup(g.group)}
-                  className="bf-group-header"
-                >
-                  <span style={{ display:"flex", alignItems:"center", gap:"8px" }}>
-                    <span style={{ fontSize:"16px", lineHeight:1 }}>{g.emoji}</span>
-                    <span style={S.groupTitle}>{g.group}</span>
-                    <span style={{ fontSize:"10px", fontWeight:600, background:"#e8f0dc", color:"#4B5320", borderRadius:"10px", padding:"1px 8px" }}>
-                      {g.tours.length}
+
+          <div style={{ maxHeight:"360px", overflowY:"auto" }}>
+
+            {/* ── Search results (flat) ── */}
+            {isSearching ? (
+              searchResults.length > 0 ? (
+                searchResults.map(tour => {
+                  const isSelected = value === tour.title;
+                  return (
+                    <div key={tour.slug}
+                      style={{ ...S.groupTourItem, paddingLeft:"14px", background: isSelected?"#eef4e4":"#fff", fontWeight: isSelected?700:500, borderLeft: isSelected?"3px solid #4B5320":"3px solid transparent" }}
+                      className="bf-dd-item"
+                      onMouseDown={() => { onChange(tour.title); setOpen(false); setSearch(""); }}
+                    >
+                      <span style={{ fontSize:"13px", marginRight:"6px", opacity:0.7 }}>{tour.emoji}</span>
+                      {isSelected && (
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4B5320" strokeWidth="3" style={{ marginRight:"6px", flexShrink:0 }}>
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      )}
+                      {tour.title}
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ padding:"16px 14px", fontSize:"12px", color:"#b0a898", fontStyle:"italic", textAlign:"center" }}>
+                  No tours found for &ldquo;{search}&rdquo;
+                </div>
+              )
+            ) : (
+              /* ── Grouped list ── */
+              mergedGroups.map(g => (
+                <div key={g.group}>
+                  {/* Group header */}
+                  <div
+                    style={S.groupHeader}
+                    onClick={() => toggleGroup(g.group)}
+                    className="bf-group-header"
+                  >
+                    <span style={{ display:"flex", alignItems:"center", gap:"8px" }}>
+                      <span style={{ fontSize:"16px", lineHeight:1 }}>{g.emoji}</span>
+                      <span style={S.groupTitle}>{g.group}</span>
+                      <span style={{ fontSize:"10px", fontWeight:600, background:"#e8f0dc", color:"#4B5320", borderRadius:"10px", padding:"1px 8px" }}>
+                        {g.tours.length}
+                      </span>
                     </span>
-                  </span>
-                  {!isSearching && (
                     <svg width="10" height="6" viewBox="0 0 11 6"
                       style={{ transition:"transform 0.2s", transform: isExpanded(g.group) ? "rotate(180deg)" : "none", opacity:0.6 }}>
                       <path d="M.5.5l5 5 5-5" stroke="#4B5320" strokeWidth="1.4" fill="none"/>
                     </svg>
+                  </div>
+
+                  {/* Tour items */}
+                  {isExpanded(g.group) && (
+                    <div>
+                      {g.tours.map(tour => {
+                        const isSelected = value === tour.title;
+                        return (
+                          <div key={tour.slug}
+                            style={{ ...S.groupTourItem, background: isSelected?"#eef4e4":"#fff", color:"#1a1a1a", fontWeight: isSelected?700:500, borderLeft: isSelected?"3px solid #4B5320":"3px solid transparent" }}
+                            className="bf-dd-item"
+                            onMouseDown={() => { onChange(tour.title); setOpen(false); setSearch(""); }}
+                          >
+                            {isSelected && (
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4B5320" strokeWidth="3" style={{ marginRight:"8px", flexShrink:0 }}>
+                                <polyline points="20 6 9 17 4 12"/>
+                              </svg>
+                            )}
+                            {tour.title}
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
-                {isExpanded(g.group) && (
-                  <div>
-                    {g.tours.map(title => {
-                      const isSelected = value === title;
-                      return (
-                        <div key={title}
-                          style={{ ...S.groupTourItem, background: isSelected?"#eef4e4":"#fff", color:"#1a1a1a", fontWeight: isSelected?700:500, borderLeft: isSelected?"3px solid #4B5320":"3px solid transparent" }}
-                          className="bf-dd-item"
-                          onMouseDown={() => { onChange(title); setOpen(false); setSearch(""); }}
-                        >
-                          {isSelected && (
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4B5320" strokeWidth="3" style={{ marginRight:"8px", flexShrink:0 }}>
-                              <polyline points="20 6 9 17 4 12"/>
-                            </svg>
-                          )}
-                          {title}
-                        </div>
-                      );
-                    })}
-                    {g.tours.length === 0 && isSearching && (
-                      <div style={{ padding:"10px 24px", fontSize:"12px", color:"#b0a898", fontStyle:"italic" }}>No results in this category</div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       )}
     </div>
   );
 };
+
+/* ── Helper: look up a tour's slug from its title ────────────────────────── */
+function getTourSlug(title: string): string | undefined {
+  for (const g of STATIC_GROUPS) {
+    const match = g.tours.find(t => t.title === title);
+    if (match) return match.slug;
+  }
+  return undefined;
+}
 
 /* ══════════════════════════════════════════════════════════════
    MAIN BOOKING FORM
@@ -412,11 +427,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const [apiError, setApiError]   = useState("");
   const [currentBooking, setCurrentBooking] = useState<{ id:string; reference:string; deposit_amount:number }|null>(null);
   const [mpesaStatus, setMpesaStatus]       = useState<"idle"|"waiting"|"success"|"failed">("idle");
-  const [tours, setTours]         = useState<Tour[]>([]);
+  const [apiTours, setApiTours]   = useState<Tour[]>([]);
   const [toursLoading, setToursLoading] = useState(true);
   const [countryCode, setCountryCode]   = useState("+254");
-
-  // ── Paystack: redirecting state ──────────────────────────────────────────
   const [paystackRedirecting, setPaystackRedirecting] = useState(false);
 
   const [form, setForm] = useState({
@@ -428,28 +441,24 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     paymentMethod: "", message: "",
   });
 
+  // Fetch API tours — used only to merge extra tours not already in STATIC_GROUPS
   useEffect(() => {
     fetch(`${API}/api/tours`)
       .then(r => r.json())
-      .then(data => { setTours(data.tours || []); setToursLoading(false); })
+      .then(data => { setApiTours(data.tours || []); setToursLoading(false); })
       .catch(() => setToursLoading(false));
   }, []);
 
-  // ── Check if user returned from Paystack checkout ───────────────────────
-  // Paystack redirects back to FRONTEND_URL/booking/confirm?reference=XXX
-  // This handles that case if BookingForm is rendered on that page
+  // Handle Paystack redirect-back verification
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("reference") || params.get("trxref");
     if (!ref) return;
-
-    // Verify the payment with the backend
     fetch(`${API}/api/payments/paystack/verify/${ref}`)
       .then(r => r.json())
       .then(data => {
         if (data.status === "success") {
           setSubmitted(true);
-          // Reconstruct minimal booking info from reference for confirmation screen
           setCurrentBooking({ id: "", reference: ref, deposit_amount: 0 });
         }
       })
@@ -463,8 +472,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     ? (pricingTiers.filter(t => ["Standard","Premium","Luxury","Romance"].includes(t)) as Package[])
     : ["Standard", "Premium", "Luxury", "Romance"];
 
+  // Price lookup: first try API tours by title match, then fall back to defaults
   const getPricePerPerson = (pkg: Package): number => {
-    const match = tours.find(t => t.title === form.tourTitle);
+    const match = apiTours.find(t => t.title === form.tourTitle);
     if (match) {
       if (pkg === "Standard") return parseFloat(match.standard_price) || 890;
       if (pkg === "Premium")  return parseFloat(match.premium_price)  || 1450;
@@ -486,20 +496,31 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const fmt             = (n: number) => `$${n.toLocaleString()}`;
   const fullPhone       = form.phoneLocal ? `${countryCode} ${form.phoneLocal}` : "";
 
+  // The slug for the currently selected tour (used for backend)
+  const selectedTourSlug = getTourSlug(form.tourTitle);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step < 3) { setStep(step + 1); return; }
     setLoading(true); setApiError("");
 
     try {
-      // 1. Create the booking
       const bookingRes = await fetch(`${API}/api/bookings`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tourTitle: form.tourTitle, guestName: form.name, guestEmail: form.email,
-          guestPhone: fullPhone, travelDate: form.date, adults,
-          children, package: form.package, specialRequests: form.message,
-          days: Number(form.days), totalAmount: totalPrice, depositAmount,
+          tourTitle: form.tourTitle,
+          tourSlug: selectedTourSlug,          // ← now included
+          guestName: form.name,
+          guestEmail: form.email,
+          guestPhone: fullPhone,
+          travelDate: form.date,
+          adults,
+          children,
+          package: form.package,
+          specialRequests: form.message,
+          days: Number(form.days),
+          totalAmount: totalPrice,
+          depositAmount,
         }),
       });
       if (!bookingRes.ok) {
@@ -509,7 +530,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       const { booking } = await bookingRes.json();
       setCurrentBooking(booking);
 
-      // 2. Handle M-Pesa
       if (form.paymentMethod === "mpesa") {
         const phone = form.mpesaNumber.replace(/\s+/g, "");
         if (!phone.startsWith("254") || phone.length !== 12)
@@ -534,7 +554,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           } catch { /* keep polling */ }
         }, 3000);
 
-      // 3. Handle Paystack card payment — initialize then REDIRECT
       } else if (form.paymentMethod === "card") {
         const paystackRes = await fetch(`${API}/api/payments/paystack/initialize`, {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -547,8 +566,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         });
         if (!paystackRes.ok) throw new Error("Failed to initialize Paystack payment");
         const { authorizationUrl } = await paystackRes.json();
-
-        // Redirect user to Paystack hosted checkout
         setPaystackRedirecting(true);
         setLoading(false);
         window.location.href = authorizationUrl;
@@ -599,7 +616,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     );
   }
 
-  /* ── PAYSTACK REDIRECTING SCREEN ── */
+  /* ── PAYSTACK REDIRECTING ── */
   if (paystackRedirecting) {
     return (
       <div style={S.confirmedWrap}>
@@ -664,7 +681,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       {/* ════ STEP 1 ════ */}
       {step === 1 && (
         <div className="bf-step">
-          <TourDropdown value={form.tourTitle} onChange={tour => setForm({ ...form, tourTitle: tour })} tours={tours} loading={toursLoading}/>
+          <TourDropdown
+            value={form.tourTitle}
+            onChange={tour => setForm({ ...form, tourTitle: tour })}
+            apiTours={apiTours}
+            loading={toursLoading}
+          />
 
           <div style={S.row}>
             <Field label="Full Name"><input name="name" value={form.name} onChange={handleChange} placeholder="Jane Doe" style={S.input} required/></Field>
@@ -799,7 +821,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             </div>
           )}
 
-          {/* ── Paystack info banner when card is selected ── */}
           {form.paymentMethod === "card" && (
             <div style={{ background:"#f0f4ea", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"12px 14px", marginTop:"8px" }}>
               <p style={{ fontSize:"12px", color:"#4B5320", fontFamily:"'DM Sans',sans-serif", margin:0, lineHeight:1.6 }}>
