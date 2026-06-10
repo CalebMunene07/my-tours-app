@@ -34,7 +34,7 @@ const Footer = () => {
     <>
       {/* ── Floating WhatsApp Button ── */}
       <a
-        href="https://wa.me/254720069550?text=Hi%20Wikima%20Safari!%20I%27d%20like%20to%20enquire%20about%20a%20safari."
+        href="https://wa.me/254141519364?text=Hi%20Wikima%20Safari!%20I%27d%20like%20to%20enquire%20about%20a%20safari."
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-100 flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white pl-4 pr-5 py-3 rounded-full shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-green-300/50 group"
@@ -81,7 +81,7 @@ const Footer = () => {
                   <Youtube size={20} />
                 </a>
                 {/* WhatsApp inline */}
-                <a href="https://wa.me/254720069550" target="_blank" rel="noopener noreferrer"
+                <a href="https://wa.me/254141519364" target="_blank" rel="noopener noreferrer"
                   className="text-[#4B5320] hover:text-[#25D366] transition-colors" aria-label="WhatsApp">
                   <WhatsAppIcon size={20} />
                 </a>
@@ -108,8 +108,8 @@ const Footer = () => {
                 <li className="flex items-start gap-3">
                   <Phone size={16} className="text-[#4B5320] mt-0.5 shrink-0" />
                   <div className="flex flex-col gap-1">
-                    <a href="tel:+254720069550" className="hover:text-[#4B5320] transition">+254 141 519 364 🇰🇪</a>
-                    <a href="tel:+61430057611"  className="hover:text-[#4B5320] transition">+254 141 519 367 🇰🇪</a>
+                    <a href="tel:+254141519364" className="hover:text-[#4B5320] transition">+254 141 519 364 🇰🇪</a>
+                    <a href="tel:+254141519367"  className="hover:text-[#4B5320] transition">+254 141 519 367 🇰🇪</a>
                   </div>
                 </li>
                 <li className="flex items-center gap-3">
@@ -123,7 +123,7 @@ const Footer = () => {
                 {/* WhatsApp CTA */}
                 <li>
                   <a
-                    href="https://wa.me/254720069550?text=Hi%20Wikima%20Safari!"
+                    href="https://wa.me/254141519364?text=Hi%20Wikima%20Safari!"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#1a9e4f] font-bold text-xs px-4 py-2 rounded-full transition-colors mt-1"
