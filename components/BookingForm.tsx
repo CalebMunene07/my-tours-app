@@ -4,6 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 
 const API = "https://wikima-backend.onrender.com";
 
+// ── KSh conversion (only used at payment step display & API calls) ─────────
+const USD_TO_KSH = 130; // Update this rate as needed
+const toKsh = (usd: number) => Math.round(usd * USD_TO_KSH);
+const fmtKsh = (usd: number) => `KSh ${toKsh(usd).toLocaleString("en-KE")}`;
+
 type Package = "Standard" | "Premium" | "Luxury" | "Romance";
 
 interface Tour {
@@ -143,6 +148,9 @@ function downloadBookingPDF(p: {
 }) {
   const balance = p.totalPrice - p.depositAmount;
   const depositPct = Math.round((p.depositAmount / p.totalPrice) * 100);
+  const depositKsh = toKsh(p.depositAmount);
+  const balanceKsh = toKsh(balance);
+  const totalKsh   = toKsh(p.totalPrice);
   const tDate = p.date ? new Date(p.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}) : "—";
   const today = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
   const ageLabel = CHILD_AGE_RANGES.find(a => a.value === p.childAgeRange)?.label || "";
@@ -160,6 +168,7 @@ function downloadBookingPDF(p: {
 .sec{margin-bottom:22px;}.sec-t{font-size:9px;text-transform:uppercase;letter-spacing:3px;color:#8a7a60;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e8e0d0;}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}.fld label{font-size:9px;color:#8a7a60;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:2px;}.fld p{font-size:14px;font-weight:600;}
 .pay{background:#faf7f2;border:1px solid #e8e0d0;border-radius:8px;padding:16px;}.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0ede8;font-size:13px;}.row:last-child{border-bottom:none;padding-top:10px;font-size:15px;font-weight:bold;}.row .lbl{color:#5a5040;}.row .amt{font-weight:600;}.row:last-child .amt{color:#D4AF37;}
+.ksh{font-size:11px;color:#6a7a40;font-weight:500;display:block;margin-top:2px;}
 .ftr{margin-top:36px;padding-top:18px;border-top:1px solid #e8e0d0;display:flex;justify-content:space-between;font-size:11px;color:#8a7a60;line-height:1.7;}
 @media print{body{padding:24px;}@page{margin:0;size:A4;}}</style></head>
 <body>
@@ -183,11 +192,11 @@ ${childrenInfo}
 <div class="row"><span class="lbl">Price per adult</span><span class="amt">$${p.pricePerPerson.toLocaleString()}</span></div>
 <div class="row"><span class="lbl">× ${p.adults} adult${Number(p.adults)>1?"s":""}</span><span class="amt">$${adultsPrice.toLocaleString()}</span></div>
 ${Number(p.children)>0?`<div class="row"><span class="lbl">${ageLabel} × ${p.children} (discounted)</span><span class="amt">$${childrenPrice.toLocaleString()}</span></div>`:""}
-<div class="row"><span class="lbl">Total Amount</span><span class="amt">$${p.totalPrice.toLocaleString()}</span></div>
-<div class="row"><span class="lbl">Deposit Paid (${depositPct}%)</span><span class="amt">$${p.depositAmount.toLocaleString()}</span></div>
-<div class="row"><span class="lbl">Balance on Arrival</span><span class="amt">$${balance.toLocaleString()}</span></div>
+<div class="row"><span class="lbl">Total Amount</span><span class="amt">$${p.totalPrice.toLocaleString()} <span class="ksh">≈ KSh ${totalKsh.toLocaleString("en-KE")}</span></span></div>
+<div class="row"><span class="lbl">Deposit Paid (${depositPct}%)</span><span class="amt">$${p.depositAmount.toLocaleString()} <span class="ksh">≈ KSh ${depositKsh.toLocaleString("en-KE")}</span></span></div>
+<div class="row"><span class="lbl">Balance on Arrival</span><span class="amt">$${balance.toLocaleString()} <span class="ksh">≈ KSh ${balanceKsh.toLocaleString("en-KE")}</span></span></div>
 </div></div>
-<div class="ftr"><div>Wikima Safari Expeditions<br/>info@wikimasafari.com · +254 720 069 550<br/>wikimasafari.com</div><div style="text-align:right">Generated ${today}<br/>Official booking confirmation.</div></div>
+<div class="ftr"><div>Wikima Safari Expeditions<br/>info@wikimasafari.com · +254 720 069 550<br/>wikimasafari.com</div><div style="text-align:right">Generated ${today}<br/>Official booking confirmation.<br/>Rate: 1 USD = ${USD_TO_KSH} KSh</div></div>
 </body></html>`;
   const win = window.open("","_blank","width=820,height=950");
   if (!win) return;
@@ -256,23 +265,15 @@ const TourDropdown: React.FC<{
 
   const isSearching = search.trim().length > 0;
 
-  // Merge API tours into the correct static group by category, deduplicating by title
   const mergedGroups = STATIC_GROUPS.map(sg => {
     const apiMatches = apiTours
       .filter(t => t.category === sg.category)
       .map(t => ({ slug: t.id || t.title, title: t.title }));
-
-    // Combine static tours with any extra API tours not already listed
     const staticTitles = new Set(sg.tours.map(t => t.title));
     const extraApiTours = apiMatches.filter(t => !staticTitles.has(t.title));
-
-    return {
-      ...sg,
-      tours: [...sg.tours, ...extraApiTours],
-    };
+    return { ...sg, tours: [...sg.tours, ...extraApiTours] };
   });
 
-  // Flat list of all tour titles for search
   const allTours = mergedGroups.flatMap(g =>
     g.tours.map(t => ({ ...t, group: g.group, emoji: g.emoji }))
   );
@@ -287,7 +288,6 @@ const TourDropdown: React.FC<{
 
   const isExpanded = (group: string) => isSearching || expandedGroups.has(group);
 
-  // When searching, show flat filtered list; otherwise show grouped
   const searchResults = isSearching
     ? allTours.filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
     : [];
@@ -313,7 +313,6 @@ const TourDropdown: React.FC<{
 
       {open && (
         <div style={S.groupDropdown}>
-          {/* Search */}
           <div style={{ padding:"8px 10px", borderBottom:"1px solid #e8e0d0", background:"#fafaf8" }}>
             <input
               value={search}
@@ -326,8 +325,6 @@ const TourDropdown: React.FC<{
           </div>
 
           <div style={{ maxHeight:"360px", overflowY:"auto" }}>
-
-            {/* ── Search results (flat) ── */}
             {isSearching ? (
               searchResults.length > 0 ? (
                 searchResults.map(tour => {
@@ -354,10 +351,8 @@ const TourDropdown: React.FC<{
                 </div>
               )
             ) : (
-              /* ── Grouped list ── */
               mergedGroups.map(g => (
                 <div key={g.group}>
-                  {/* Group header */}
                   <div
                     style={S.groupHeader}
                     onClick={() => toggleGroup(g.group)}
@@ -376,7 +371,6 @@ const TourDropdown: React.FC<{
                     </svg>
                   </div>
 
-                  {/* Tour items */}
                   {isExpanded(g.group) && (
                     <div>
                       {g.tours.map(tour => {
@@ -441,7 +435,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     paymentMethod: "", message: "",
   });
 
-  // Fetch API tours — used only to merge extra tours not already in STATIC_GROUPS
   useEffect(() => {
     fetch(`${API}/api/tours`)
       .then(r => r.json())
@@ -449,7 +442,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       .catch(() => setToursLoading(false));
   }, []);
 
-  // Handle Paystack redirect-back verification
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("reference") || params.get("trxref");
@@ -472,7 +464,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     ? (pricingTiers.filter(t => ["Standard","Premium","Luxury","Romance"].includes(t)) as Package[])
     : ["Standard", "Premium", "Luxury", "Romance"];
 
-  // Price lookup: first try API tours by title match, then fall back to defaults
   const getPricePerPerson = (pkg: Package): number => {
     const match = apiTours.find(t => t.title === form.tourTitle);
     if (match) {
@@ -495,8 +486,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const balanceAmount   = totalPrice - depositAmount;
   const fmt             = (n: number) => `$${n.toLocaleString()}`;
   const fullPhone       = form.phoneLocal ? `${countryCode} ${form.phoneLocal}` : "";
-
-  // The slug for the currently selected tour (used for backend)
   const selectedTourSlug = getTourSlug(form.tourTitle);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -509,7 +498,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tourTitle: form.tourTitle,
-          tourSlug: selectedTourSlug,          // ← now included
+          tourSlug: selectedTourSlug,
           guestName: form.name,
           guestEmail: form.email,
           guestPhone: fullPhone,
@@ -535,9 +524,15 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         if (!phone.startsWith("254") || phone.length !== 12)
           throw new Error("Phone must be 2547XXXXXXXX (12 digits)");
 
+        // M-Pesa requires KSh — convert deposit from USD
         const mpesaRes = await fetch(`${API}/api/payments/mpesa/stk-push`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone, amount: depositAmount, bookingRef: booking.reference, bookingId: booking.id }),
+          body: JSON.stringify({
+            phone,
+            amount: toKsh(depositAmount),   // ← KSh for Daraja
+            bookingRef: booking.reference,
+            bookingId: booking.id,
+          }),
         });
         if (!mpesaRes.ok) throw new Error("Failed to initiate M-Pesa payment");
         const { checkoutRequestId } = await mpesaRes.json();
@@ -555,10 +550,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         }, 3000);
 
       } else if (form.paymentMethod === "card") {
+        // Paystack with KES currency
         const paystackRes = await fetch(`${API}/api/payments/paystack/initialize`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount: depositAmount,
+            amount: toKsh(depositAmount),   // ← KSh for Paystack (KES)
+            currency: "KES",
             bookingId: booking.id,
             bookingRef: booking.reference,
             customerEmail: form.email,
@@ -639,6 +636,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           <p style={S.confirmedLabel}>Waiting for Payment</p>
           <h3 style={S.confirmedTitle}>Check your phone</h3>
           <p style={S.confirmedSub}>M-Pesa prompt sent to <strong style={{ color:"#4B5320" }}>{form.mpesaNumber}</strong>.<br/>Enter your PIN to complete.</p>
+          <div style={S.kshBadge}>{fmtKsh(depositAmount)}</div>
           <p style={S.mpesaTimer}>Waiting up to 30 seconds…</p>
         </>)}
         {mpesaStatus === "failed" && (<>
@@ -776,6 +774,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             })}
           </div>
 
+          {/* ── Price breakdown (USD throughout, KSh only on deposit/payment lines) ── */}
           <div style={S.priceBreakdown}>
             <div style={S.priceRowHdr}>Price Breakdown</div>
             <div style={S.priceRow}><span style={S.priceLabel}>{PACKAGE_DETAILS[form.package].title} package</span><span style={S.priceVal}>{fmt(pricePerPerson)}/adult</span></div>
@@ -789,16 +788,44 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             </>)}
             <div style={S.priceRow}><span style={S.priceLabel}>Duration</span><span style={S.priceVal}>{form.days} day{Number(form.days)>1?"s":""}</span></div>
             <div style={S.priceDivider}/>
-            <div style={S.priceRow}><span style={{ ...S.priceLabel, fontWeight:700, color:"#1a1a1a", fontSize:"13px" }}>Total Amount</span><span style={{ ...S.priceVal, fontWeight:700, color:"#4B5320", fontSize:"16px" }}>{fmt(totalPrice)}</span></div>
-            <div style={S.priceRow}><span style={{ ...S.priceLabel, color:"#4B5320" }}>Deposit now (60%)</span><span style={{ ...S.priceVal, color:"#4B5320", fontWeight:600 }}>{fmt(depositAmount)}</span></div>
-            <div style={S.priceRow}><span style={{ ...S.priceLabel, color:"#7a7060" }}>Balance on arrival (40%)</span><span style={{ ...S.priceVal, color:"#7a7060" }}>{fmt(balanceAmount)}</span></div>
+            <div style={S.priceRow}>
+              <span style={{ ...S.priceLabel, fontWeight:700, color:"#1a1a1a", fontSize:"13px" }}>Total Amount</span>
+              <span style={{ ...S.priceVal, fontWeight:700, color:"#4B5320", fontSize:"16px" }}>{fmt(totalPrice)}</span>
+            </div>
+
+            {/* ── Deposit: show USD + KSh conversion ── */}
+            <div style={S.priceRow}>
+              <span style={{ ...S.priceLabel, color:"#4B5320" }}>Deposit now (60%)</span>
+              <span style={{ ...S.priceVal, color:"#4B5320", fontWeight:600, textAlign:"right" }}>
+                {fmt(depositAmount)}
+                <span style={{ display:"block", fontSize:"11px", color:"#6a7a40", fontWeight:500, marginTop:"2px" }}>
+                  ≈ {fmtKsh(depositAmount)}
+                </span>
+              </span>
+            </div>
+
+            {/* ── Balance: show USD + KSh conversion ── */}
+            <div style={S.priceRow}>
+              <span style={{ ...S.priceLabel, color:"#7a7060" }}>Balance on arrival (40%)</span>
+              <span style={{ ...S.priceVal, color:"#7a7060", textAlign:"right" }}>
+                {fmt(balanceAmount)}
+                <span style={{ display:"block", fontSize:"11px", color:"#9a9080", fontWeight:500, marginTop:"2px" }}>
+                  ≈ {fmtKsh(balanceAmount)}
+                </span>
+              </span>
+            </div>
+
+            {/* ── Exchange rate note ── */}
+            <div style={{ marginTop:"8px", paddingTop:"8px", borderTop:"1px dashed #dde8c0", fontSize:"10px", color:"#9a9080", fontFamily:"'DM Sans',sans-serif" }}>
+              Rate: 1 USD = {USD_TO_KSH} KSh · KSh amount charged at payment
+            </div>
           </div>
 
           <p style={S.secLabel}>Payment Method</p>
           <div style={S.payGrid}>
             {[
-              { id:"mpesa", label:"M-Pesa", sub:"STK Push", icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg> },
-              { id:"card",  label:"Card",   sub:"Visa / Mastercard", icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
+              { id:"mpesa", label:"M-Pesa", sub:"STK Push · Pay in KSh", icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg> },
+              { id:"card",  label:"Card",   sub:"Visa / Mastercard · KES", icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
             ].map(({ id, label, sub, icon }) => {
               const isActive = form.paymentMethod === id;
               return (
@@ -817,14 +844,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               <Field label="M-Pesa Number">
                 <input name="mpesaNumber" value={form.mpesaNumber} onChange={handleChange} placeholder="2547XXXXXXXX" style={S.input} required/>
               </Field>
-              <p style={S.mpesaHint}>Format: 2547XXXXXXXX (no + or spaces). You&apos;ll receive an STK push.</p>
+              <p style={S.mpesaHint}>Format: 2547XXXXXXXX (no + or spaces). You&apos;ll receive an STK push for <strong>{fmtKsh(depositAmount)}</strong>.</p>
             </div>
           )}
 
           {form.paymentMethod === "card" && (
             <div style={{ background:"#f0f4ea", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"12px 14px", marginTop:"8px" }}>
               <p style={{ fontSize:"12px", color:"#4B5320", fontFamily:"'DM Sans',sans-serif", margin:0, lineHeight:1.6 }}>
-                <strong>Secure card payment via Paystack</strong> — you&apos;ll be redirected to Paystack&apos;s hosted checkout page to complete your payment, then returned here automatically.
+                <strong>Secure card payment via Paystack</strong> — you&apos;ll be redirected to Paystack&apos;s hosted checkout to pay <strong>{fmtKsh(depositAmount)}</strong> (KES), then returned here automatically.
               </p>
             </div>
           )}
@@ -847,8 +874,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               { label:"Package",       val: form.package },
               { label:"Per Adult",     val: fmt(pricePerPerson) },
               { label:"Total Amount",  val: fmt(totalPrice),    bold: true },
-              { label:"Deposit (60%)", val: fmt(depositAmount), highlight: true },
-              { label:"Balance (40%)", val: fmt(balanceAmount) },
+              { label:"Deposit (60%)", val: `${fmt(depositAmount)} · ${fmtKsh(depositAmount)}`, highlight: true },
+              { label:"Balance (40%)", val: `${fmt(balanceAmount)} · ${fmtKsh(balanceAmount)}` },
               { label:"Payment",       val: form.paymentMethod==="mpesa"?`M-Pesa (${form.mpesaNumber})`:form.paymentMethod==="card"?"Card via Paystack":"—" },
             ].map(({ label, val, bold, highlight }, i, arr) => (
               <div key={label} style={{ ...S.reviewRow, ...(i===arr.length-1?{ borderBottom:"none", paddingBottom:0 }:{}) }}>
@@ -858,7 +885,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             ))}
           </div>
           <p style={S.terms}>
-            By confirming you agree to Wikima Safari&apos;s booking terms. A 60% deposit of <strong>{fmt(depositAmount)}</strong> is charged upon confirmation. Balance of <strong>{fmt(balanceAmount)}</strong> is due on arrival.
+            By confirming you agree to Wikima Safari&apos;s booking terms. A 60% deposit of <strong>{fmtKsh(depositAmount)}</strong> ({fmt(depositAmount)}) is charged upon confirmation. Balance of <strong>{fmtKsh(balanceAmount)}</strong> ({fmt(balanceAmount)}) is due on arrival.
             {form.paymentMethod === "card" && " You will be redirected to Paystack to complete card payment."}
           </p>
         </div>
@@ -875,8 +902,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           {loading
             ? <span style={S.spinWrap}><span className="bf-spinner"/>{step===3?"Creating booking…":"Processing…"}</span>
             : step < 3 ? "Continue →"
-            : form.paymentMethod === "mpesa" ? `Send M-Pesa Push · ${fmt(depositAmount)}`
-            : `Pay by Card · ${fmt(depositAmount)}`}
+            : form.paymentMethod === "mpesa" ? `Send M-Pesa Push · ${fmtKsh(depositAmount)}`
+            : `Pay by Card · ${fmtKsh(depositAmount)}`}
         </button>
       </div>
     </form>
@@ -916,7 +943,7 @@ const S: Record<string, React.CSSProperties> = {
   pkgGrid:        { display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"8px", marginBottom:"16px" },
   priceBreakdown: { background:"#f6f8f0", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"14px 16px", marginBottom:"20px" },
   priceRowHdr:    { fontSize:"9px", fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", color:"#4B5320", fontFamily:"'DM Sans',sans-serif", marginBottom:"10px" },
-  priceRow:       { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"4px 0" },
+  priceRow:       { display:"flex", justifyContent:"space-between", alignItems:"flex-start", padding:"4px 0" },
   priceLabel:     { fontSize:"12px", color:"#3a3530", fontFamily:"'DM Sans',sans-serif" },
   priceVal:       { fontSize:"13px", fontWeight:600, color:"#1a1a1a", fontFamily:"'DM Sans',sans-serif" },
   priceDivider:   { height:1, background:"#dde8c0", margin:"8px 0" },
@@ -941,6 +968,7 @@ const S: Record<string, React.CSSProperties> = {
   confirmedTitle: { fontSize:"22px", fontWeight:700, color:"#1a1a1a", fontFamily:"'DM Sans',sans-serif", marginBottom:"8px" },
   confirmedSub:   { fontSize:"14px", color:"#3a3530", fontFamily:"'DM Sans',sans-serif", lineHeight:1.7, marginBottom:"16px" },
   refBadge:       { display:"inline-block", background:"#f0f4ea", border:"1px solid #c8d09e", borderRadius:"8px", padding:"8px 16px", fontSize:"13px", fontFamily:"'DM Sans',sans-serif", color:"#1a1a1a", marginBottom:"16px" },
+  kshBadge:       { display:"inline-block", background:"#4B5320", color:"#fff", borderRadius:"8px", padding:"8px 20px", fontSize:"18px", fontWeight:700, fontFamily:"'DM Sans',sans-serif", marginBottom:"12px", letterSpacing:"0.02em" },
   pdfBtn:         { display:"inline-flex", alignItems:"center", justifyContent:"center", gap:"8px", background:"#4B5320", color:"#fff", border:"none", borderRadius:"10px", padding:"12px 24px", fontSize:"13px", fontWeight:700, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", marginBottom:"16px", transition:"background 0.2s, transform 0.15s" },
   pillRow:        { display:"flex", gap:"8px", justifyContent:"center", marginBottom:"18px", flexWrap:"wrap" },
   pill:           { display:"inline-flex", alignItems:"center", fontSize:"11px", fontWeight:600, padding:"5px 12px", borderRadius:"20px", fontFamily:"'DM Sans',sans-serif" },
