@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X, ChevronDown } from "lucide-react";
@@ -15,6 +15,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,6 +24,15 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleMouseEnter = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setGalleryOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    closeTimer.current = setTimeout(() => setGalleryOpen(false), 200);
+  };
 
   return (
     <header
@@ -63,11 +73,11 @@ export default function Navbar() {
           {/* Gallery Dropdown */}
           <div
             className="relative"
-            onMouseEnter={() => setGalleryOpen(true)}
-            onMouseLeave={() => setGalleryOpen(false)}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
           >
             <button className="flex items-center gap-1 text-[#1f4d3a] hover:text-[#f59e0b]">
-              Gallery <ChevronDown size={16} />
+              Gallery <ChevronDown size={16} className={`transition-transform duration-200 ${galleryOpen ? "rotate-180" : ""}`} />
             </button>
 
             {galleryOpen && (
@@ -105,28 +115,29 @@ export default function Navbar() {
       {menuOpen && (
         <div className="lg:hidden bg-[#f5f0e8] border-t shadow-md">
           <nav className="flex flex-col p-5 gap-4 font-semibold text-[#1f4d3a]">
-            <Link href="/">Home</Link>
-            <Link href="/tours">Tours</Link>
+            <Link href="/" onClick={() => setMenuOpen(false)}>Home</Link>
+            <Link href="/tours" onClick={() => setMenuOpen(false)}>Tours</Link>
 
             <div>
               <button
                 onClick={() => setGalleryOpen(!galleryOpen)}
                 className="flex items-center justify-between w-full"
               >
-                Gallery <ChevronDown size={16} />
+                Gallery <ChevronDown size={16} className={`transition-transform duration-200 ${galleryOpen ? "rotate-180" : ""}`} />
               </button>
               {galleryOpen && (
                 <div className="ml-4 mt-2 flex flex-col gap-2">
-                  <Link href="/gallery/photos">Photos</Link>
-                  <Link href="/gallery/videos">Videos</Link>
+                  <Link href="/gallery/photos" onClick={() => setMenuOpen(false)}>Photos</Link>
+                  <Link href="/gallery/videos" onClick={() => setMenuOpen(false)}>Videos</Link>
                 </div>
               )}
             </div>
 
-            <Link href="/contact">Contact</Link>
+            <Link href="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
 
             <Link
               href="/booking"
+              onClick={() => setMenuOpen(false)}
               className="bg-[#f59e0b] text-white text-center py-2 rounded-lg"
             >
               Book Now
