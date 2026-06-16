@@ -56,6 +56,8 @@ const photos = [
   { src: "/assets/photos/photo40.jpeg", alt: "" },
   { src: "/assets/photos/photo41.jpeg", alt: "" },
     { src: "/assets/photos/image.png", alt: "" },
+   { src: "/assets/photos/Dubai1.jpeg", alt: "" },
+    { src: "/assets/photos/Dubai2.jpeg", alt: "" },
   { src: "/assets/photos/logo.png", alt: "" },
   
 
