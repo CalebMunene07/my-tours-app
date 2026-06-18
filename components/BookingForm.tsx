@@ -173,7 +173,7 @@ function downloadBookingPDF(p: {
 @media print{body{padding:24px;}@page{margin:0;size:A4;}}</style></head>
 <body>
 <div class="hdr"><div class="brand"><h1>WIKIMA SAFARI</h1><p>Expeditions · East Africa</p></div><div class="ref"><div class="lbl">Booking Reference</div><div class="val">${p.reference}</div></div></div>
-<div class="badge">✓ Booking <strong>Confirmed</strong> — Thank you, ${p.name}. We look forward to hosting you.</div>
+<div class="badge">&#10003; Booking <strong>Confirmed</strong> — Thank you, ${p.name}. We look forward to hosting you.</div>
 <div class="sec"><div class="sec-t">Guest Details</div><div class="grid">
 <div class="fld"><label>Full Name</label><p>${p.name}</p></div>
 <div class="fld"><label>Email</label><p>${p.email}</p></div>
@@ -190,13 +190,13 @@ ${childrenInfo}
 </div></div>
 <div class="sec"><div class="sec-t">Payment Summary</div><div class="pay">
 <div class="row"><span class="lbl">Price per adult</span><span class="amt">$${p.pricePerPerson.toLocaleString()}</span></div>
-<div class="row"><span class="lbl">× ${p.adults} adult${Number(p.adults)>1?"s":""}</span><span class="amt">$${adultsPrice.toLocaleString()}</span></div>
-${Number(p.children)>0?`<div class="row"><span class="lbl">${ageLabel} × ${p.children} (discounted)</span><span class="amt">$${childrenPrice.toLocaleString()}</span></div>`:""}
-<div class="row"><span class="lbl">Total Amount</span><span class="amt">$${p.totalPrice.toLocaleString()} <span class="ksh">≈ KSh ${totalKsh.toLocaleString("en-KE")}</span></span></div>
-<div class="row"><span class="lbl">Deposit Paid (${depositPct}%)</span><span class="amt">$${p.depositAmount.toLocaleString()} <span class="ksh">≈ KSh ${depositKsh.toLocaleString("en-KE")}</span></span></div>
-<div class="row"><span class="lbl">Balance on Arrival</span><span class="amt">$${balance.toLocaleString()} <span class="ksh">≈ KSh ${balanceKsh.toLocaleString("en-KE")}</span></span></div>
+<div class="row"><span class="lbl">x ${p.adults} adult${Number(p.adults)>1?"s":""}</span><span class="amt">$${adultsPrice.toLocaleString()}</span></div>
+${Number(p.children)>0?`<div class="row"><span class="lbl">${ageLabel} x ${p.children} (discounted)</span><span class="amt">$${childrenPrice.toLocaleString()}</span></div>`:""}
+<div class="row"><span class="lbl">Total Amount</span><span class="amt">$${p.totalPrice.toLocaleString()} <span class="ksh">approx. KSh ${totalKsh.toLocaleString("en-KE")}</span></span></div>
+<div class="row"><span class="lbl">Deposit Paid (${depositPct}%)</span><span class="amt">$${p.depositAmount.toLocaleString()} <span class="ksh">approx. KSh ${depositKsh.toLocaleString("en-KE")}</span></span></div>
+<div class="row"><span class="lbl">Balance on Arrival</span><span class="amt">$${balance.toLocaleString()} <span class="ksh">approx. KSh ${balanceKsh.toLocaleString("en-KE")}</span></span></div>
 </div></div>
-<div class="ftr"><div>Wikima Safari Expeditions<br/>info@wikimasafari.com · +254 720 069 550<br/>wikimasafari.com</div><div style="text-align:right">Generated ${today}<br/>Official booking confirmation.<br/>Rate: 1 USD = ${USD_TO_KSH} KSh</div></div>
+<div class="ftr"><div>Wikima Safari Expeditions<br/>info@wikimasafari.com · +254 141 519 367<br/>wikimasafari.com</div><div style="text-align:right">Generated ${today}<br/>Official booking confirmation.<br/>Rate: 1 USD = ${USD_TO_KSH} KSh</div></div>
 </body></html>`;
   const win = window.open("","_blank","width=820,height=950");
   if (!win) return;
@@ -524,12 +524,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         if (!phone.startsWith("254") || phone.length !== 12)
           throw new Error("Phone must be 2547XXXXXXXX (12 digits)");
 
-        // M-Pesa requires KSh — convert deposit from USD
         const mpesaRes = await fetch(`${API}/api/payments/mpesa/stk-push`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             phone,
-            amount: toKsh(depositAmount),   // ← KSh for Daraja
+            amount: toKsh(depositAmount),
             bookingRef: booking.reference,
             bookingId: booking.id,
           }),
@@ -550,11 +549,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         }, 3000);
 
       } else if (form.paymentMethod === "card") {
-        // Paystack with KES currency
         const paystackRes = await fetch(`${API}/api/payments/paystack/initialize`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount: toKsh(depositAmount),   // ← KSh for Paystack (KES)
+            amount: toKsh(depositAmount),
             currency: "KES",
             bookingId: booking.id,
             bookingRef: booking.reference,
@@ -774,7 +772,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             })}
           </div>
 
-          {/* ── Price breakdown (USD throughout, KSh only on deposit/payment lines) ── */}
           <div style={S.priceBreakdown}>
             <div style={S.priceRowHdr}>Price Breakdown</div>
             <div style={S.priceRow}><span style={S.priceLabel}>{PACKAGE_DETAILS[form.package].title} package</span><span style={S.priceVal}>{fmt(pricePerPerson)}/adult</span></div>
@@ -792,8 +789,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               <span style={{ ...S.priceLabel, fontWeight:700, color:"#1a1a1a", fontSize:"13px" }}>Total Amount</span>
               <span style={{ ...S.priceVal, fontWeight:700, color:"#4B5320", fontSize:"16px" }}>{fmt(totalPrice)}</span>
             </div>
-
-            {/* ── Deposit: show USD + KSh conversion ── */}
             <div style={S.priceRow}>
               <span style={{ ...S.priceLabel, color:"#4B5320" }}>Deposit now (60%)</span>
               <span style={{ ...S.priceVal, color:"#4B5320", fontWeight:600, textAlign:"right" }}>
@@ -803,8 +798,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
                 </span>
               </span>
             </div>
-
-            {/* ── Balance: show USD + KSh conversion ── */}
             <div style={S.priceRow}>
               <span style={{ ...S.priceLabel, color:"#7a7060" }}>Balance on arrival (40%)</span>
               <span style={{ ...S.priceVal, color:"#7a7060", textAlign:"right" }}>
@@ -814,8 +807,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
                 </span>
               </span>
             </div>
-
-            {/* ── Exchange rate note ── */}
             <div style={{ marginTop:"8px", paddingTop:"8px", borderTop:"1px dashed #dde8c0", fontSize:"10px", color:"#9a9080", fontFamily:"'DM Sans',sans-serif" }}>
               Rate: 1 USD = {USD_TO_KSH} KSh · KSh amount charged at payment
             </div>
