@@ -74,6 +74,16 @@ const videos: VideoItem[] = [
     description: "Crystal-clear waters and white sand beaches of Malindi.",
     duration: "1:05",
   },
+
+   {
+    type: "local",
+    src: "/assets/videos/Zebra Migration.mp4",
+    poster: "/assets/photos/gallery-maasai.jpg",
+    title: "Zebra migration",
+    description: "Nostalgic and breath-taking Zebra migration in Mara",
+    duration: "0:67",
+  },
+  
   // ── Add more local videos here ──
   // {
   //   type: "local",
