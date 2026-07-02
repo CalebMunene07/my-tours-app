@@ -78,7 +78,7 @@ const videos: VideoItem[] = [
    {
     type: "local",
     src: "/assets/videos/Zebra Migration.mp4",
-    poster: "/assets/photos/gallery-maasai.jpg",
+    poster: "/assets/photos/Zebra1.jpeg",
     title: "Zebra migration",
     description: "Nostalgic and breath-taking Zebra migration in Mara",
     duration: "0:67",
