@@ -25,6 +25,10 @@ interface Booking {
   deposit_amount: string;
   status: string;
   created_at: string;
+  // NOTE: backend needs to persist & return these two fields (sent by the
+  // booking form as `visitorType` and `referredBy`) for this to populate.
+  visitor_type?: "resident" | "non-resident";
+  referred_by?: string | null; // the referral code (booking reference) of whoever referred this guest
 }
 
 interface Stats {
@@ -73,6 +77,29 @@ const PackageBadge = ({ pkg }: { pkg: string }) => {
   return (
     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${map[pkg] ?? "bg-gray-100 text-gray-600"}`}>
       {pkg}
+    </span>
+  );
+};
+
+// ── VISITOR TYPE BADGE ──
+const VisitorTypeBadge = ({ type }: { type?: "resident" | "non-resident" }) => {
+  if (!type) return <span className="text-[10px] text-gray-300 italic">—</span>;
+  const isResident = type === "resident";
+  return (
+    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+      isResident ? "bg-blue-50 text-blue-700" : "bg-purple-50 text-purple-700"
+    }`}>
+      {isResident ? "Resident" : "Non-Resident"}
+    </span>
+  );
+};
+
+// ── REFERRED BY BADGE ──
+const ReferredByBadge = ({ code }: { code?: string | null }) => {
+  if (!code) return <span className="text-[10px] text-gray-300 italic">Direct</span>;
+  return (
+    <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-0.5 rounded-md">
+      via {code}
     </span>
   );
 };
@@ -382,7 +409,8 @@ export default function AdminPage() {
       b.guest_name.toLowerCase().includes(q) ||
       b.guest_email.toLowerCase().includes(q) ||
       b.reference.toLowerCase().includes(q) ||
-      b.tour_title.toLowerCase().includes(q);
+      b.tour_title.toLowerCase().includes(q) ||
+      (b.referred_by || "").toLowerCase().includes(q);
     return matchStatus && matchSearch;
   });
 
@@ -686,7 +714,7 @@ export default function AdminPage() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-100 bg-gray-50/60">
-                          {["Reference","Guest","Tour","Date","Package","Deposit","Status","Actions"].map(h => (
+                          {["Reference","Guest","Tour","Date","Package","Visitor","Referred By","Deposit","Status","Actions"].map(h => (
                             <th key={h} className="text-left text-[10px] font-bold text-gray-400 uppercase tracking-wider px-4 py-3 whitespace-nowrap">{h}</th>
                           ))}
                         </tr>
@@ -715,6 +743,8 @@ export default function AdminPage() {
                               <p className="text-[10px] text-gray-400 mt-0.5">Booked {new Date(b.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</p>
                             </td>
                             <td className="px-4 py-3"><PackageBadge pkg={b.package}/></td>
+                            <td className="px-4 py-3"><VisitorTypeBadge type={b.visitor_type}/></td>
+                            <td className="px-4 py-3"><ReferredByBadge code={b.referred_by}/></td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <p className="font-bold text-gray-900 text-xs">${parseFloat(b.deposit_amount).toLocaleString()}</p>
                               <p className="text-[10px] text-gray-400">of ${parseFloat(b.total_amount).toLocaleString()}</p>

@@ -8,9 +8,11 @@ import { toursData } from "@/data/tours";
 import Image from "next/image";
 import BookingForm from "@/components/BookingForm";
 import { CheckCircle2, MapPin, Clock, Users, BarChart2 } from "lucide-react";
+import { useVisitorType, type VisitorType } from "@/lib/visitorType";
 
 export default function TourDetailClient({ id }: { id: string }) {
   const router = useRouter();
+  const { visitorType, setVisitorType } = useVisitorType();
 
   const tour = toursData.find((t) => t.slug === id);
 
@@ -135,7 +137,23 @@ export default function TourDetailClient({ id }: { id: string }) {
             {/* Pricing */}
             {tour.pricing && tour.pricing.length > 0 && (
               <div>
-                <h3 className="text-2xl font-bold border-b border-gray-100 pb-4 mb-6">Pricing Packages</h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4 mb-6">
+                  <h3 className="text-2xl font-bold">Pricing Packages</h3>
+                  <div className="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-2 py-1.5 w-fit">
+                    <span className="text-[10px] font-bold tracking-widest uppercase text-gray-400 pl-2">
+                      Showing rates for
+                    </span>
+                    <select
+                      value={visitorType}
+                      onChange={(e) => setVisitorType(e.target.value as VisitorType)}
+                      className="bg-transparent text-[#4B5320] font-bold text-sm pr-2 py-1 focus:outline-none cursor-pointer"
+                      aria-label="Select Resident or Non-Resident pricing"
+                    >
+                      <option value="non-resident">🌍 Non-Resident</option>
+                      <option value="resident">🇰🇪 Resident</option>
+                    </select>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {tour.pricing.map((pkg) => (
                     <div
@@ -156,25 +174,28 @@ export default function TourDetailClient({ id }: { id: string }) {
                         </p>
                       </div>
 
-                      <div className="px-6 py-5 grid grid-cols-2 gap-4 border-b border-gray-100">
-                        <div>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span className="text-base">🇰🇪</span>
-                            <span className="text-[10px] font-bold tracking-widest uppercase text-gray-400">
-                              Residents (KES)
-                            </span>
+                      <div className="px-6 py-5 border-b border-gray-100">
+                        {visitorType === "resident" ? (
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="text-base">🇰🇪</span>
+                              <span className="text-[10px] font-bold tracking-widest uppercase text-gray-400">
+                                Resident Rate (KES)
+                              </span>
+                            </div>
+                            <p className="text-3xl font-black text-[#4B5320]">{pkg.priceKES}</p>
                           </div>
-                          <p className="text-2xl font-black text-[#4B5320]">{pkg.priceKES}</p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span className="text-base">🌍</span>
-                            <span className="text-[10px] font-bold tracking-widest uppercase text-gray-400">
-                              International (USD)
-                            </span>
+                        ) : (
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="text-base">🌍</span>
+                              <span className="text-[10px] font-bold tracking-widest uppercase text-gray-400">
+                                Non-Resident Rate (USD)
+                              </span>
+                            </div>
+                            <p className="text-3xl font-black text-gray-900">{pkg.priceUSD}</p>
                           </div>
-                          <p className="text-2xl font-black text-gray-900">{pkg.priceUSD}</p>
-                        </div>
+                        )}
                       </div>
 
                       <div className="px-6 py-5">

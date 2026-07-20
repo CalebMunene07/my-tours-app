@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useVisitorType, type VisitorType } from "@/lib/visitorType";
 
 const API = "https://wikima-backend.onrender.com";
+const SITE_URL = "https://www.wikimasafari.com";
 
 // ── KSh conversion (only used at payment step display & API calls) ─────────
 const USD_TO_KSH = 130; // Update this rate as needed
@@ -411,6 +413,61 @@ function getTourSlug(title: string): string | undefined {
   return undefined;
 }
 
+/* ── Referral link shown after a successful booking ─────────────────────────
+   Uses the booking's own reference as the referral code — no separate code
+   generation needed. Purely informational for the guest: no discount or
+   monetary reward is implied or given for using it.                        */
+const ReferralLinkBox: React.FC<{ referenceCode: string }> = ({ referenceCode }) => {
+  const [copied, setCopied] = useState(false);
+  const referralUrl = `${SITE_URL}/?ref=${encodeURIComponent(referenceCode)}`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(referralUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable — user can still select & copy manually */
+    }
+  };
+
+  return (
+    <div style={{
+      background: "#f8f6f1", border: "1px solid #e8e0d0", borderRadius: "12px",
+      padding: "16px 18px", marginBottom: "18px", textAlign: "left",
+    }}>
+      <p style={{ fontSize: "12px", fontWeight: 700, color: "#4B5320", margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        Your Personal Referral Link
+      </p>
+      <p style={{ fontSize: "12px", color: "#888", margin: "0 0 10px", lineHeight: 1.5 }}>
+        Share this with friends and family. We&apos;ll know it was you who sent them our way — no discount or cash reward attached, just our thanks.
+      </p>
+      <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+        <input
+          readOnly
+          value={referralUrl}
+          onFocus={(e) => e.target.select()}
+          style={{
+            flex: "1 1 220px", minWidth: 0, background: "#fff", border: "1px solid #d8d2c2",
+            borderRadius: "8px", padding: "8px 10px", fontSize: "12px", color: "#4B5320", fontFamily: "monospace",
+          }}
+        />
+        <button
+          type="button"
+          onClick={handleCopy}
+          style={{
+            background: copied ? "#3a4118" : "#4B5320", color: "#fff", border: "none",
+            borderRadius: "8px", padding: "8px 14px", fontSize: "12px", fontWeight: 700,
+            cursor: "pointer", whiteSpace: "nowrap",
+          }}
+        >
+          {copied ? "Copied!" : "Copy Link"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 /* ══════════════════════════════════════════════════════════════
    MAIN BOOKING FORM
 ══════════════════════════════════════════════════════════════ */
@@ -419,12 +476,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const [loading, setLoading]     = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [apiError, setApiError]   = useState("");
-  const [currentBooking, setCurrentBooking] = useState<{ id:string; reference:string; deposit_amount:number }|null>(null);
+  const [currentBooking, setCurrentBooking] = useState<{ id:string; reference:string; deposit_amount:number; referral_code?:string }|null>(null);
   const [mpesaStatus, setMpesaStatus]       = useState<"idle"|"waiting"|"success"|"failed">("idle");
   const [apiTours, setApiTours]   = useState<Tour[]>([]);
   const [toursLoading, setToursLoading] = useState(true);
   const [countryCode, setCountryCode]   = useState("+254");
   const [paystackRedirecting, setPaystackRedirecting] = useState(false);
+  const [referredBy, setReferredBy]     = useState<string | null>(null);
+  const { visitorType, setVisitorType } = useVisitorType();
 
   const [form, setForm] = useState({
     tourTitle: propTourTitle,
@@ -440,6 +499,13 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       .then(r => r.json())
       .then(data => { setApiTours(data.tours || []); setToursLoading(false); })
       .catch(() => setToursLoading(false));
+  }, []);
+
+  // Capture ?ref=<referral code> if this visitor arrived via someone's referral link
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) setReferredBy(ref);
   }, []);
 
   useEffect(() => {
@@ -464,14 +530,20 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     ? (pricingTiers.filter(t => ["Standard","Premium","Luxury","Romance"].includes(t)) as Package[])
     : ["Standard", "Premium", "Luxury", "Romance"];
 
+  const RESIDENT_DISCOUNT = 0.20; // Residents pay 20% less than non-residents
+
   const getPricePerPerson = (pkg: Package): number => {
     const match = apiTours.find(t => t.title === form.tourTitle);
+    let base: number;
     if (match) {
-      if (pkg === "Standard") return parseFloat(match.standard_price) || 890;
-      if (pkg === "Premium")  return parseFloat(match.premium_price)  || 1450;
-      if (pkg === "Luxury")   return parseFloat(match.luxury_price)   || 2800;
+      if (pkg === "Standard") base = parseFloat(match.standard_price) || 890;
+      else if (pkg === "Premium")  base = parseFloat(match.premium_price)  || 1450;
+      else if (pkg === "Luxury")   base = parseFloat(match.luxury_price)   || 2800;
+      else base = { Standard: 890, Premium: 1450, Luxury: 2800, Romance: 1800 }[pkg];
+    } else {
+      base = { Standard: 890, Premium: 1450, Luxury: 2800, Romance: 1800 }[pkg];
     }
-    return { Standard: 890, Premium: 1450, Luxury: 2800, Romance: 1800 }[pkg];
+    return visitorType === "resident" ? Math.round(base * (1 - RESIDENT_DISCOUNT)) : base;
   };
 
   const pricePerPerson  = getPricePerPerson(form.package);
@@ -510,6 +582,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           days: Number(form.days),
           totalAmount: totalPrice,
           depositAmount,
+          // NOTE: backend must accept & persist these two fields for the
+          // resident/non-resident split and referral tracking to work
+          // end-to-end (see admin panel + resident pricing).
+          visitorType,               // "resident" | "non-resident"
+          referredBy: referredBy || null, // referral code of whoever sent this visitor here
         }),
       });
       if (!bookingRes.ok) {
@@ -592,6 +669,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         <p style={S.confirmedSub}>A confirmation has been sent to <strong style={{ color:"#4B5320" }}>{form.email}</strong>.<br/>Our team will contact you within 24 hours.</p>
         {currentBooking?.reference && (
           <div style={S.refBadge}>Booking Ref: <strong style={{ color:"#4B5320" }}>{currentBooking.reference}</strong></div>
+        )}
+        {currentBooking?.reference && (
+          <ReferralLinkBox referenceCode={currentBooking.reference} />
         )}
         <button onClick={() => downloadBookingPDF({
           reference: currentBooking?.reference||"—", name: form.name, email: form.email,
@@ -743,11 +823,35 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       {step === 2 && (
         <div className="bf-step">
           <p style={S.secLabel}>Travel Packages</p>
-          <p style={{ ...S.secHint, marginBottom:"20px" }}>Four distinct tiers of service — from essential comfort to bespoke romantic escapes.</p>
+          <p style={{ ...S.secHint, marginBottom:"14px" }}>Four distinct tiers of service — from essential comfort to bespoke romantic escapes.</p>
+
+          {/* Resident / Non-Resident selector — controls pricing shown below */}
+          <div style={{
+            display:"flex", alignItems:"center", gap:"10px", marginBottom:"20px",
+            background:"#f0f4ea", border:"1px solid #c8d09e", borderRadius:"10px", padding:"10px 14px",
+          }}>
+            <span style={{ fontSize:"12px", fontWeight:700, color:"#4B5320", whiteSpace:"nowrap" }}>Booking as:</span>
+            <select
+              value={visitorType}
+              onChange={(e) => setVisitorType(e.target.value as VisitorType)}
+              style={{ ...S.select, flex:1, background:"#fff" }}
+              className="bf-select"
+            >
+              <option value="non-resident">🌍 Non-Resident (International)</option>
+              <option value="resident">🇰🇪 Resident (Kenyan / East African)</option>
+            </select>
+            {visitorType === "resident" && (
+              <span style={{ fontSize:"10px", fontWeight:700, color:"#fff", background:"#4B5320", padding:"4px 8px", borderRadius:"999px", whiteSpace:"nowrap" }}>
+                20% OFF
+              </span>
+            )}
+          </div>
+
           <div style={S.pkgGrid}>
             {packages.map(pkg => {
               const isActive = form.package === pkg;
               const detail = PACKAGE_DETAILS[pkg];
+              const pkgPrice = getPricePerPerson(pkg);
               return (
                 <button key={pkg} type="button" onClick={() => setForm({ ...form, package: pkg })} className="bf-pkg"
                   style={{ display:"flex", flexDirection:"column", alignItems:"stretch", gap:"12px", padding:"16px", borderRadius:"12px", cursor:"pointer", outline:"none", transition:"all 0.2s",
@@ -762,7 +866,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
                     </div>
                   </div>
                   <div style={{ paddingTop:"8px", borderTop:"1px solid rgba(75,83,32,0.1)", textAlign:"left" }}>
-                    <p style={{ fontSize:"13px", fontWeight:700, color:"#4B5320", margin:"6px 0" }}>{detail.price}</p>
+                    <p style={{ fontSize:"13px", fontWeight:700, color:"#4B5320", margin:"6px 0" }}>
+                      {fmt(pkgPrice)} / per person
+                      {visitorType === "resident" && (
+                        <span style={{ fontSize:"11px", fontWeight:600, color:"#9a9590", textDecoration:"line-through", marginLeft:"6px" }}>
+                          {fmt(Math.round(pkgPrice / (1 - RESIDENT_DISCOUNT)))}
+                        </span>
+                      )}
+                    </p>
                     <ul style={{ margin:"8px 0 0 0", paddingLeft:"18px", fontSize:"12px", color:"#3a3530", lineHeight:"1.5" }}>
                       {detail.features.map((f, i) => <li key={i} style={{ marginBottom:"4px" }}>{f}</li>)}
                     </ul>

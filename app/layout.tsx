@@ -6,6 +6,7 @@ import TopBar from "@/components/TopBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Toaster } from "sonner";
+import { VisitorTypeProvider } from "@/lib/visitorType";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -65,10 +66,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         data-enable-grammarly="false"
         suppressHydrationWarning
       >
-        <TopBar />
-        <Navbar />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
+        <VisitorTypeProvider>
+          <TopBar />
+          <Navbar />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+        </VisitorTypeProvider>
         <Toaster position="top-center" expand={false} richColors />
         <Script
           src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
