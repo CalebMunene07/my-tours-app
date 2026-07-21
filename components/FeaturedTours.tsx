@@ -190,6 +190,41 @@ const FeaturedTours = () => {
           })}
         </div>
 
+        {/* SGR Beach Packages — resident-only, KES rates */}
+        {visitorType === "resident" && (
+          <div className="mt-24 relative rounded-3xl overflow-hidden shadow-xl">
+            <Image
+              src="/assets/diani.jpg"
+              alt="SGR Beach Packages"
+              fill
+              className="object-cover"
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/50 to-black/10" />
+            <div className="relative px-8 py-14 md:px-14 md:py-20 max-w-xl">
+              <span className="inline-block bg-white/90 text-[#4B5320] text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-4">
+                🇰🇪 Residents Only
+              </span>
+              <h3 className="text-3xl md:text-4xl font-bold text-white mb-3">
+                SGR Beach Packages
+              </h3>
+              <p className="text-white/80 text-sm leading-relaxed mb-6">
+                Ride the Standard Gauge Railway to the coast, then relax at Malindi, Watamu, the
+                North Coast or South Coast — resident rates from partner beach resorts, in KES.
+              </p>
+              <Link
+                href="/sgr-packages"
+                className="inline-flex items-center gap-2 bg-white text-[#4B5320] px-8 py-3 rounded-sm font-semibold tracking-wider uppercase text-xs hover:bg-gray-100 transition-all duration-200"
+              >
+                View SGR Packages
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* View All CTA */}
         <div className="text-center mt-24">
           <Link

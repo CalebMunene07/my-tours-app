@@ -11,7 +11,7 @@ const USD_TO_KSH = 130; // Update this rate as needed
 const toKsh = (usd: number) => Math.round(usd * USD_TO_KSH);
 const fmtKsh = (usd: number) => `KSh ${toKsh(usd).toLocaleString("en-KE")}`;
 
-type Package = "Standard" | "Premium" | "Luxury" | "Romance";
+type Package = "Standard" | "Premium" | "Luxury" | "Romance" | "SGR";
 
 interface Tour {
   id: string;
@@ -111,6 +111,7 @@ const PACKAGE_ICONS: Record<Package, React.ReactNode> = {
   Premium:  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
   Luxury:   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>,
   Romance:  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+  SGR:      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 12h20M6 5l-4 7 4 7M18 5l4 7-4 7"/></svg>,
 };
 
 const PACKAGE_DETAILS: Record<Package, { title: string; subtitle: string; price: string; features: string[]; popular?: boolean }> = {
@@ -139,6 +140,14 @@ const PACKAGE_DETAILS: Record<Package, { title: string; subtitle: string; price:
     price: "From $1,800 / per couple",
     features: ["💍 Special Occasions","Personalised Surprise Itinerary","Romantic Bush Candlelit Dinner","Rose Petal & Champagne Turndown","Couples Spa Treatment","Dedicated Romance Concierge","Anniversary/Birthday Cake on Arrival","Private Sundowner at a Secret Spot"],
   },
+  // Not rendered in the package grid — SGR bookings show a read-only
+  // hotel/rate summary instead (see the isSgrBooking branch in Step 2).
+  SGR: {
+    title: "SGR Beach Package",
+    subtitle: "Resident rate booked via a partner beach hotel.",
+    price: "",
+    features: [],
+  },
 };
 
 /* ── PDF helper ─────────────────────────────────────────────────────────── */
@@ -147,12 +156,15 @@ function downloadBookingPDF(p: {
   tourTitle:string; date:string; adults:string; children:string;
   childAgeRange:string; pkg:Package;
   days:string; pricePerPerson:number; totalPrice:number; depositAmount:number;
+  isSgrBooking?: boolean;
 }) {
   const balance = p.totalPrice - p.depositAmount;
   const depositPct = Math.round((p.depositAmount / p.totalPrice) * 100);
   const depositKsh = toKsh(p.depositAmount);
   const balanceKsh = toKsh(balance);
   const totalKsh   = toKsh(p.totalPrice);
+  // SGR (beach hotel) bookings are already priced in KES — no USD/KSh split needed
+  const money = (n: number) => p.isSgrBooking ? `KES ${Math.round(n).toLocaleString("en-KE")}` : `$${n.toLocaleString()}`;
   const tDate = p.date ? new Date(p.date+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}) : "—";
   const today = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
   const ageLabel = CHILD_AGE_RANGES.find(a => a.value === p.childAgeRange)?.label || "";
@@ -188,17 +200,17 @@ ${childrenInfo}
 <div class="fld"><label>Travel Date</label><p>${tDate}</p></div>
 <div class="fld"><label>Duration</label><p>${p.days} days</p></div>
 <div class="fld"><label>Adults</label><p>${p.adults}</p></div>
-<div class="fld"><label>Price Per Adult</label><p>$${p.pricePerPerson.toLocaleString()}</p></div>
+<div class="fld"><label>Price Per Adult</label><p>${money(p.pricePerPerson)}</p></div>
 </div></div>
 <div class="sec"><div class="sec-t">Payment Summary</div><div class="pay">
-<div class="row"><span class="lbl">Price per adult</span><span class="amt">$${p.pricePerPerson.toLocaleString()}</span></div>
-<div class="row"><span class="lbl">x ${p.adults} adult${Number(p.adults)>1?"s":""}</span><span class="amt">$${adultsPrice.toLocaleString()}</span></div>
-${Number(p.children)>0?`<div class="row"><span class="lbl">${ageLabel} x ${p.children} (discounted)</span><span class="amt">$${childrenPrice.toLocaleString()}</span></div>`:""}
-<div class="row"><span class="lbl">Total Amount</span><span class="amt">$${p.totalPrice.toLocaleString()} <span class="ksh">approx. KSh ${totalKsh.toLocaleString("en-KE")}</span></span></div>
-<div class="row"><span class="lbl">Deposit Paid (${depositPct}%)</span><span class="amt">$${p.depositAmount.toLocaleString()} <span class="ksh">approx. KSh ${depositKsh.toLocaleString("en-KE")}</span></span></div>
-<div class="row"><span class="lbl">Balance on Arrival</span><span class="amt">$${balance.toLocaleString()} <span class="ksh">approx. KSh ${balanceKsh.toLocaleString("en-KE")}</span></span></div>
+<div class="row"><span class="lbl">Price per adult</span><span class="amt">${money(p.pricePerPerson)}</span></div>
+<div class="row"><span class="lbl">x ${p.adults} adult${Number(p.adults)>1?"s":""}</span><span class="amt">${money(adultsPrice)}</span></div>
+${Number(p.children)>0?`<div class="row"><span class="lbl">${ageLabel} x ${p.children} (discounted)</span><span class="amt">${money(childrenPrice)}</span></div>`:""}
+<div class="row"><span class="lbl">Total Amount</span><span class="amt">${money(p.totalPrice)}${p.isSgrBooking?"":` <span class="ksh">approx. KSh ${totalKsh.toLocaleString("en-KE")}</span>`}</span></div>
+<div class="row"><span class="lbl">Deposit Paid (${depositPct}%)</span><span class="amt">${money(p.depositAmount)}${p.isSgrBooking?"":` <span class="ksh">approx. KSh ${depositKsh.toLocaleString("en-KE")}</span>`}</span></div>
+<div class="row"><span class="lbl">Balance on Arrival</span><span class="amt">${money(balance)}${p.isSgrBooking?"":` <span class="ksh">approx. KSh ${balanceKsh.toLocaleString("en-KE")}</span>`}</span></div>
 </div></div>
-<div class="ftr"><div>Wikima Safari Expeditions<br/>info@wikimasafari.com · +254 141 519 367<br/>wikimasafari.com</div><div style="text-align:right">Generated ${today}<br/>Official booking confirmation.<br/>Rate: 1 USD = ${USD_TO_KSH} KSh</div></div>
+<div class="ftr"><div>Wikima Safari Expeditions<br/>info@wikimasafari.com · +254 141 519 367<br/>wikimasafari.com</div><div style="text-align:right">Generated ${today}<br/>Official booking confirmation.<br/>${p.isSgrBooking?"":`Rate: 1 USD = ${USD_TO_KSH} KSh`}</div></div>
 </body></html>`;
   const win = window.open("","_blank","width=820,height=950");
   if (!win) return;
@@ -485,6 +497,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const [referredBy, setReferredBy]     = useState<string | null>(null);
   const { visitorType, setVisitorType } = useVisitorType();
 
+  // SGR beach package details, when arriving from /sgr-packages via a "Book" link
+  const [sgrParams, setSgrParams] = useState<{
+    hotel: string; region: string; regionLabel: string;
+    mealPlan: string; validity: string; rateKES: number;
+  } | null>(null);
+
   const [form, setForm] = useState({
     tourTitle: propTourTitle,
     name: "", email: "", phoneLocal: "", mpesaNumber: "",
@@ -507,6 +525,25 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     const ref = params.get("ref");
     if (ref) setReferredBy(ref);
   }, []);
+
+  // Capture SGR beach package details if arriving from /sgr-packages
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hotel = params.get("sgrHotel");
+    const rateKES = params.get("sgrRateKES");
+    if (!hotel || !rateKES) return;
+
+    setSgrParams({
+      hotel,
+      region: params.get("sgrRegion") || "",
+      regionLabel: params.get("sgrRegionLabel") || "",
+      mealPlan: params.get("sgrMealPlan") || "",
+      validity: params.get("sgrValidity") || "",
+      rateKES: Number(rateKES) || 0,
+    });
+    setVisitorType("resident"); // SGR packages are resident-only
+    setForm(f => ({ ...f, tourTitle: `${hotel} — SGR Beach Package`, package: "SGR" as Package }));
+  }, [setVisitorType]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -533,6 +570,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const RESIDENT_DISCOUNT = 0.20; // Residents pay 20% less than non-residents
 
   const getPricePerPerson = (pkg: Package): number => {
+    if (pkg === "SGR") return sgrParams?.rateKES ?? 0; // already a resident-only KES rate — no further discount applied
     const match = apiTours.find(t => t.title === form.tourTitle);
     let base: number;
     if (match) {
@@ -546,6 +584,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
     return visitorType === "resident" ? Math.round(base * (1 - RESIDENT_DISCOUNT)) : base;
   };
 
+  const isSgrBooking    = !!sgrParams;
   const pricePerPerson  = getPricePerPerson(form.package);
   const adults          = Number(form.adults) || 1;
   const children        = Number(form.children) || 0;
@@ -556,7 +595,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const totalPrice      = (pricePerPerson * adults) + childrenTotal;
   const depositAmount   = Math.ceil(totalPrice * 0.6);
   const balanceAmount   = totalPrice - depositAmount;
-  const fmt             = (n: number) => `$${n.toLocaleString()}`;
+  // SGR bookings are already priced in KES — no $ prefix / no USD→KSh conversion needed
+  const fmt              = (n: number) => isSgrBooking ? `KES ${Math.round(n).toLocaleString("en-KE")}` : `$${n.toLocaleString()}`;
+  const fmtSecondary      = (n: number) => isSgrBooking ? "" : ` · ${fmtKsh(n)}`;
+  // SGR totals are already in KES — don't run them through the USD→KSh rate again
+  const kshAmount         = (n: number) => isSgrBooking ? Math.round(n) : toKsh(n);
+  const kshLabel          = (n: number) => isSgrBooking ? `KES ${Math.round(n).toLocaleString("en-KE")}` : fmtKsh(n);
   const fullPhone       = form.phoneLocal ? `${countryCode} ${form.phoneLocal}` : "";
   const selectedTourSlug = getTourSlug(form.tourTitle);
 
@@ -587,6 +631,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           // end-to-end (see admin panel + resident pricing).
           visitorType,               // "resident" | "non-resident"
           referredBy: referredBy || null, // referral code of whoever sent this visitor here
+          // SGR beach package details — only present when booking via /sgr-packages
+          sgrHotel: sgrParams?.hotel || null,
+          sgrRegion: sgrParams?.region || null,
+          sgrRateKES: sgrParams?.rateKES || null,
         }),
       });
       if (!bookingRes.ok) {
@@ -605,7 +653,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             phone,
-            amount: toKsh(depositAmount),
+            amount: kshAmount(depositAmount),
             bookingRef: booking.reference,
             bookingId: booking.id,
           }),
@@ -629,7 +677,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
         const paystackRes = await fetch(`${API}/api/payments/paystack/initialize`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount: toKsh(depositAmount),
+            amount: kshAmount(depositAmount),
             currency: "KES",
             bookingId: booking.id,
             bookingRef: booking.reference,
@@ -652,7 +700,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
   const resetForm = () => {
     setSubmitted(false); setStep(1); setCurrentBooking(null);
     setMpesaStatus("idle"); setApiError(""); setCountryCode("+254");
-    setPaystackRedirecting(false);
+    setPaystackRedirecting(false); setSgrParams(null);
     setForm({ tourTitle: propTourTitle, name: "", email: "", phoneLocal: "", mpesaNumber: "", date: "", adults: "1", children: "0", childAgeRange: "child", days: "1", package: "Standard", paymentMethod: "", message: "" });
   };
 
@@ -678,6 +726,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           phone: fullPhone, tourTitle: form.tourTitle, date: form.date,
           adults: form.adults, children: form.children, childAgeRange: form.childAgeRange,
           pkg: form.package, days: form.days, pricePerPerson, totalPrice, depositAmount,
+          isSgrBooking,
         })} style={S.pdfBtn} className="bf-pdf-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ flexShrink:0 }}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download PDF Invoice
@@ -714,7 +763,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           <p style={S.confirmedLabel}>Waiting for Payment</p>
           <h3 style={S.confirmedTitle}>Check your phone</h3>
           <p style={S.confirmedSub}>M-Pesa prompt sent to <strong style={{ color:"#4B5320" }}>{form.mpesaNumber}</strong>.<br/>Enter your PIN to complete.</p>
-          <div style={S.kshBadge}>{fmtKsh(depositAmount)}</div>
+          <div style={S.kshBadge}>{kshLabel(depositAmount)}</div>
           <p style={S.mpesaTimer}>Waiting up to 30 seconds…</p>
         </>)}
         {mpesaStatus === "failed" && (<>
@@ -757,12 +806,27 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       {/* ════ STEP 1 ════ */}
       {step === 1 && (
         <div className="bf-step">
-          <TourDropdown
-            value={form.tourTitle}
-            onChange={tour => setForm({ ...form, tourTitle: tour })}
-            apiTours={apiTours}
-            loading={toursLoading}
-          />
+          {isSgrBooking && sgrParams ? (
+            <div style={{
+              background:"#f0f4ea", border:"1px solid #c8d09e", borderRadius:"10px",
+              padding:"14px 16px", marginBottom:"18px",
+            }}>
+              <p style={{ fontSize:"10px", fontWeight:700, letterSpacing:"0.05em", color:"#4B5320", textTransform:"uppercase", margin:"0 0 4px" }}>
+                🇰🇪 SGR Beach Package — Resident Rate
+              </p>
+              <p style={{ fontSize:"15px", fontWeight:700, color:"#1a1a1a", margin:0 }}>{sgrParams.hotel}</p>
+              <p style={{ fontSize:"12px", color:"#5a5040", margin:"2px 0 0" }}>
+                {sgrParams.regionLabel} · {sgrParams.mealPlan} · {sgrParams.validity}
+              </p>
+            </div>
+          ) : (
+            <TourDropdown
+              value={form.tourTitle}
+              onChange={tour => setForm({ ...form, tourTitle: tour })}
+              apiTours={apiTours}
+              loading={toursLoading}
+            />
+          )}
 
           <div style={S.row}>
             <Field label="Full Name"><input name="name" value={form.name} onChange={handleChange} placeholder="Jane Doe" style={S.input} required/></Field>
@@ -805,11 +869,13 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           )}
 
           <div style={S.row}>
-            <Field label="Number of Days">
-              <select name="days" value={form.days} onChange={handleChange} style={S.select} className="bf-select">
-                {[1,2,3,4,5,6,7,8,9,10,14,21].map(n => <option key={n} value={n}>{n} {n===1?"Day":"Days"}</option>)}
-              </select>
-            </Field>
+            {!isSgrBooking && (
+              <Field label="Number of Days">
+                <select name="days" value={form.days} onChange={handleChange} style={S.select} className="bf-select">
+                  {[1,2,3,4,5,6,7,8,9,10,14,21].map(n => <option key={n} value={n}>{n} {n===1?"Day":"Days"}</option>)}
+                </select>
+              </Field>
+            )}
             <Field label="Travel Date"><input name="date" type="date" value={form.date} onChange={handleChange} style={S.input} required/></Field>
           </div>
 
@@ -822,70 +888,95 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
       {/* ════ STEP 2 ════ */}
       {step === 2 && (
         <div className="bf-step">
-          <p style={S.secLabel}>Travel Packages</p>
-          <p style={{ ...S.secHint, marginBottom:"14px" }}>Four distinct tiers of service — from essential comfort to bespoke romantic escapes.</p>
+          {!isSgrBooking && (
+            <>
+              <p style={S.secLabel}>Travel Packages</p>
+              <p style={{ ...S.secHint, marginBottom:"14px" }}>Four distinct tiers of service — from essential comfort to bespoke romantic escapes.</p>
 
-          {/* Resident / Non-Resident selector — controls pricing shown below */}
-          <div style={{
-            display:"flex", alignItems:"center", gap:"10px", marginBottom:"20px",
-            background:"#f0f4ea", border:"1px solid #c8d09e", borderRadius:"10px", padding:"10px 14px",
-          }}>
-            <span style={{ fontSize:"12px", fontWeight:700, color:"#4B5320", whiteSpace:"nowrap" }}>Booking as:</span>
-            <select
-              value={visitorType}
-              onChange={(e) => setVisitorType(e.target.value as VisitorType)}
-              style={{ ...S.select, flex:1, background:"#fff" }}
-              className="bf-select"
-            >
-              <option value="non-resident">🌍 Non-Resident (International)</option>
-              <option value="resident">🇰🇪 Resident (Kenyan / East African)</option>
-            </select>
-            {visitorType === "resident" && (
-              <span style={{ fontSize:"10px", fontWeight:700, color:"#fff", background:"#4B5320", padding:"4px 8px", borderRadius:"999px", whiteSpace:"nowrap" }}>
-                20% OFF
-              </span>
-            )}
-          </div>
+              {/* Resident / Non-Resident selector — controls pricing shown below */}
+              <div style={{
+                display:"flex", alignItems:"center", gap:"10px", marginBottom:"20px",
+                background:"#f0f4ea", border:"1px solid #c8d09e", borderRadius:"10px", padding:"10px 14px",
+              }}>
+                <span style={{ fontSize:"12px", fontWeight:700, color:"#4B5320", whiteSpace:"nowrap" }}>Booking as:</span>
+                <select
+                  value={visitorType}
+                  onChange={(e) => setVisitorType(e.target.value as VisitorType)}
+                  style={{ ...S.select, flex:1, background:"#fff" }}
+                  className="bf-select"
+                >
+                  <option value="non-resident">🌍 Non-Resident (International)</option>
+                  <option value="resident">🇰🇪 Resident (Kenyan / East African)</option>
+                </select>
+                {visitorType === "resident" && (
+                  <span style={{ fontSize:"10px", fontWeight:700, color:"#fff", background:"#4B5320", padding:"4px 8px", borderRadius:"999px", whiteSpace:"nowrap" }}>
+                    20% OFF
+                  </span>
+                )}
+              </div>
 
-          <div style={S.pkgGrid}>
-            {packages.map(pkg => {
-              const isActive = form.package === pkg;
-              const detail = PACKAGE_DETAILS[pkg];
-              const pkgPrice = getPricePerPerson(pkg);
-              return (
-                <button key={pkg} type="button" onClick={() => setForm({ ...form, package: pkg })} className="bf-pkg"
-                  style={{ display:"flex", flexDirection:"column", alignItems:"stretch", gap:"12px", padding:"16px", borderRadius:"12px", cursor:"pointer", outline:"none", transition:"all 0.2s",
-                    border: isActive?"2px solid #4B5320":"2px solid #e5e0d8", background: isActive?"#f0f4ea":"#faf9f7", boxShadow: isActive?"0 0 0 3px rgba(75,83,32,0.1)":"none" }}>
-                  <div style={{ display:"flex", gap:"10px", alignItems:"flex-start" }}>
-                    <span style={{ width:28, height:28, borderRadius:"6px", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, background: isActive?"#4B5320":"#f0ede8", color: isActive?"#fff":"#9a9590" }}>
-                      {PACKAGE_ICONS[pkg]}
-                    </span>
-                    <div style={{ flex:1, textAlign:"left" }}>
-                      <p style={{ fontSize:"14px", fontWeight:700, color:"#1a1a1a", margin:"0 0 3px 0" }}>{detail.title}{detail.popular ? " ⭐" : ""}</p>
-                      <p style={{ fontSize:"12px", color:"#5a5040", margin:0 }}>{detail.subtitle}</p>
-                    </div>
-                  </div>
-                  <div style={{ paddingTop:"8px", borderTop:"1px solid rgba(75,83,32,0.1)", textAlign:"left" }}>
-                    <p style={{ fontSize:"13px", fontWeight:700, color:"#4B5320", margin:"6px 0" }}>
-                      {fmt(pkgPrice)} / per person
-                      {visitorType === "resident" && (
-                        <span style={{ fontSize:"11px", fontWeight:600, color:"#9a9590", textDecoration:"line-through", marginLeft:"6px" }}>
-                          {fmt(Math.round(pkgPrice / (1 - RESIDENT_DISCOUNT)))}
+              <div style={S.pkgGrid}>
+                {packages.map(pkg => {
+                  const isActive = form.package === pkg;
+                  const detail = PACKAGE_DETAILS[pkg];
+                  const pkgPrice = getPricePerPerson(pkg);
+                  return (
+                    <button key={pkg} type="button" onClick={() => setForm({ ...form, package: pkg })} className="bf-pkg"
+                      style={{ display:"flex", flexDirection:"column", alignItems:"stretch", gap:"12px", padding:"16px", borderRadius:"12px", cursor:"pointer", outline:"none", transition:"all 0.2s",
+                        border: isActive?"2px solid #4B5320":"2px solid #e5e0d8", background: isActive?"#f0f4ea":"#faf9f7", boxShadow: isActive?"0 0 0 3px rgba(75,83,32,0.1)":"none" }}>
+                      <div style={{ display:"flex", gap:"10px", alignItems:"flex-start" }}>
+                        <span style={{ width:28, height:28, borderRadius:"6px", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, background: isActive?"#4B5320":"#f0ede8", color: isActive?"#fff":"#9a9590" }}>
+                          {PACKAGE_ICONS[pkg]}
                         </span>
-                      )}
-                    </p>
-                    <ul style={{ margin:"8px 0 0 0", paddingLeft:"18px", fontSize:"12px", color:"#3a3530", lineHeight:"1.5" }}>
-                      {detail.features.map((f, i) => <li key={i} style={{ marginBottom:"4px" }}>{f}</li>)}
-                    </ul>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                        <div style={{ flex:1, textAlign:"left" }}>
+                          <p style={{ fontSize:"14px", fontWeight:700, color:"#1a1a1a", margin:"0 0 3px 0" }}>{detail.title}{detail.popular ? " ⭐" : ""}</p>
+                          <p style={{ fontSize:"12px", color:"#5a5040", margin:0 }}>{detail.subtitle}</p>
+                        </div>
+                      </div>
+                      <div style={{ paddingTop:"8px", borderTop:"1px solid rgba(75,83,32,0.1)", textAlign:"left" }}>
+                        <p style={{ fontSize:"13px", fontWeight:700, color:"#4B5320", margin:"6px 0" }}>
+                          {fmt(pkgPrice)} / per person
+                          {visitorType === "resident" && (
+                            <span style={{ fontSize:"11px", fontWeight:600, color:"#9a9590", textDecoration:"line-through", marginLeft:"6px" }}>
+                              {fmt(Math.round(pkgPrice / (1 - RESIDENT_DISCOUNT)))}
+                            </span>
+                          )}
+                        </p>
+                        <ul style={{ margin:"8px 0 0 0", paddingLeft:"18px", fontSize:"12px", color:"#3a3530", lineHeight:"1.5" }}>
+                          {detail.features.map((f, i) => <li key={i} style={{ marginBottom:"4px" }}>{f}</li>)}
+                        </ul>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* Read-only SGR package summary — replaces the tier selector for SGR bookings */}
+          {isSgrBooking && sgrParams && (
+            <div style={{ marginBottom:"20px" }}>
+              <p style={S.secLabel}>Selected Package</p>
+              <div style={{
+                border:"2px solid #4B5320", background:"#f0f4ea", borderRadius:"12px", padding:"18px",
+              }}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:"10px", marginBottom:"10px" }}>
+                  <span style={{ fontSize:"10px", fontWeight:700, color:"#fff", background:"#4B5320", padding:"4px 10px", borderRadius:"999px", textTransform:"uppercase", letterSpacing:"0.05em" }}>
+                    🇰🇪 Resident Rate
+                  </span>
+                  <span style={{ fontSize:"18px", fontWeight:800, color:"#4B5320" }}>{fmt(sgrParams.rateKES)} <span style={{ fontSize:"11px", fontWeight:600, color:"#7a8560" }}>PPS</span></span>
+                </div>
+                <p style={{ fontSize:"16px", fontWeight:700, color:"#1a1a1a", margin:"0 0 2px" }}>{sgrParams.hotel}</p>
+                <p style={{ fontSize:"12px", color:"#5a5040", margin:0 }}>
+                  {sgrParams.regionLabel} · {sgrParams.mealPlan} · Validity: {sgrParams.validity}
+                </p>
+              </div>
+            </div>
+          )}
 
           <div style={S.priceBreakdown}>
             <div style={S.priceRowHdr}>Price Breakdown</div>
-            <div style={S.priceRow}><span style={S.priceLabel}>{PACKAGE_DETAILS[form.package].title} package</span><span style={S.priceVal}>{fmt(pricePerPerson)}/adult</span></div>
+            <div style={S.priceRow}><span style={S.priceLabel}>{isSgrBooking ? (sgrParams?.hotel ?? "SGR Package") : PACKAGE_DETAILS[form.package].title + " package"}</span><span style={S.priceVal}>{fmt(pricePerPerson)}/adult</span></div>
             <div style={S.priceRow}><span style={S.priceLabel}>× {adults} adult{adults>1?"s":""}</span><span style={S.priceVal}>{fmt(pricePerPerson * adults)}</span></div>
             {children > 0 && (<>
               <div style={S.priceRow}>
@@ -894,7 +985,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               </div>
               <div style={S.priceRow}><span style={S.priceLabel}>× {children} child{children>1?"ren":""}</span><span style={S.priceVal}>{ageRange.discount===1?"Free":fmt(childrenTotal)}</span></div>
             </>)}
-            <div style={S.priceRow}><span style={S.priceLabel}>Duration</span><span style={S.priceVal}>{form.days} day{Number(form.days)>1?"s":""}</span></div>
+            {isSgrBooking
+              ? <div style={S.priceRow}><span style={S.priceLabel}>Validity</span><span style={S.priceVal}>{sgrParams?.validity}</span></div>
+              : <div style={S.priceRow}><span style={S.priceLabel}>Duration</span><span style={S.priceVal}>{form.days} day{Number(form.days)>1?"s":""}</span></div>
+            }
             <div style={S.priceDivider}/>
             <div style={S.priceRow}>
               <span style={{ ...S.priceLabel, fontWeight:700, color:"#1a1a1a", fontSize:"13px" }}>Total Amount</span>
@@ -904,23 +998,29 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               <span style={{ ...S.priceLabel, color:"#4B5320" }}>Deposit now (60%)</span>
               <span style={{ ...S.priceVal, color:"#4B5320", fontWeight:600, textAlign:"right" }}>
                 {fmt(depositAmount)}
-                <span style={{ display:"block", fontSize:"11px", color:"#6a7a40", fontWeight:500, marginTop:"2px" }}>
-                  ≈ {fmtKsh(depositAmount)}
-                </span>
+                {!isSgrBooking && (
+                  <span style={{ display:"block", fontSize:"11px", color:"#6a7a40", fontWeight:500, marginTop:"2px" }}>
+                    ≈ {kshLabel(depositAmount)}
+                  </span>
+                )}
               </span>
             </div>
             <div style={S.priceRow}>
               <span style={{ ...S.priceLabel, color:"#7a7060" }}>Balance on arrival (40%)</span>
               <span style={{ ...S.priceVal, color:"#7a7060", textAlign:"right" }}>
                 {fmt(balanceAmount)}
-                <span style={{ display:"block", fontSize:"11px", color:"#9a9080", fontWeight:500, marginTop:"2px" }}>
-                  ≈ {fmtKsh(balanceAmount)}
-                </span>
+                {!isSgrBooking && (
+                  <span style={{ display:"block", fontSize:"11px", color:"#9a9080", fontWeight:500, marginTop:"2px" }}>
+                    ≈ {kshLabel(balanceAmount)}
+                  </span>
+                )}
               </span>
             </div>
-            <div style={{ marginTop:"8px", paddingTop:"8px", borderTop:"1px dashed #dde8c0", fontSize:"10px", color:"#9a9080", fontFamily:"'DM Sans',sans-serif" }}>
-              Rate: 1 USD = {USD_TO_KSH} KSh · KSh amount charged at payment
-            </div>
+            {!isSgrBooking && (
+              <div style={{ marginTop:"8px", paddingTop:"8px", borderTop:"1px dashed #dde8c0", fontSize:"10px", color:"#9a9080", fontFamily:"'DM Sans',sans-serif" }}>
+                Rate: 1 USD = {USD_TO_KSH} KSh · KSh amount charged at payment
+              </div>
+            )}
           </div>
 
           <p style={S.secLabel}>Payment Method</p>
@@ -946,14 +1046,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               <Field label="M-Pesa Number">
                 <input name="mpesaNumber" value={form.mpesaNumber} onChange={handleChange} placeholder="2547XXXXXXXX" style={S.input} required/>
               </Field>
-              <p style={S.mpesaHint}>Format: 2547XXXXXXXX (no + or spaces). You&apos;ll receive an STK push for <strong>{fmtKsh(depositAmount)}</strong>.</p>
+              <p style={S.mpesaHint}>Format: 2547XXXXXXXX (no + or spaces). You&apos;ll receive an STK push for <strong>{kshLabel(depositAmount)}</strong>.</p>
             </div>
           )}
 
           {form.paymentMethod === "card" && (
             <div style={{ background:"#f0f4ea", border:"1.5px solid #c8d09e", borderRadius:"10px", padding:"12px 14px", marginTop:"8px" }}>
               <p style={{ fontSize:"12px", color:"#4B5320", fontFamily:"'DM Sans',sans-serif", margin:0, lineHeight:1.6 }}>
-                <strong>Secure card payment via Paystack</strong> — you&apos;ll be redirected to Paystack&apos;s hosted checkout to pay <strong>{fmtKsh(depositAmount)}</strong> (KES), then returned here automatically.
+                <strong>Secure card payment via Paystack</strong> — you&apos;ll be redirected to Paystack&apos;s hosted checkout to pay <strong>{kshLabel(depositAmount)}</strong> (KES), then returned here automatically.
               </p>
             </div>
           )}
@@ -973,11 +1073,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
               { label:"Days",          val: `${form.days} day${Number(form.days)>1?"s":""}` },
               { label:"Adults",        val: `${form.adults} ${Number(form.adults)===1?"adult":"adults"}` },
               { label:"Children",      val: Number(form.children)>0 ? `${form.children} × ${ageRange.label}` : "None" },
-              { label:"Package",       val: form.package },
+              { label:"Package",       val: isSgrBooking ? (sgrParams?.hotel ?? "SGR Package") : form.package },
               { label:"Per Adult",     val: fmt(pricePerPerson) },
               { label:"Total Amount",  val: fmt(totalPrice),    bold: true },
-              { label:"Deposit (60%)", val: `${fmt(depositAmount)} · ${fmtKsh(depositAmount)}`, highlight: true },
-              { label:"Balance (40%)", val: `${fmt(balanceAmount)} · ${fmtKsh(balanceAmount)}` },
+              { label:"Deposit (60%)", val: `${fmt(depositAmount)}${fmtSecondary(depositAmount)}`, highlight: true },
+              { label:"Balance (40%)", val: `${fmt(balanceAmount)}${fmtSecondary(balanceAmount)}` },
               { label:"Payment",       val: form.paymentMethod==="mpesa"?`M-Pesa (${form.mpesaNumber})`:form.paymentMethod==="card"?"Card via Paystack":"—" },
             ].map(({ label, val, bold, highlight }, i, arr) => (
               <div key={label} style={{ ...S.reviewRow, ...(i===arr.length-1?{ borderBottom:"none", paddingBottom:0 }:{}) }}>
@@ -987,7 +1087,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
             ))}
           </div>
           <p style={S.terms}>
-            By confirming you agree to Wikima Safari&apos;s booking terms. A 60% deposit of <strong>{fmtKsh(depositAmount)}</strong> ({fmt(depositAmount)}) is charged upon confirmation. Balance of <strong>{fmtKsh(balanceAmount)}</strong> ({fmt(balanceAmount)}) is due on arrival.
+            By confirming you agree to Wikima Safari&apos;s booking terms. A 60% deposit of <strong>{isSgrBooking ? fmt(depositAmount) : kshLabel(depositAmount)}</strong>{isSgrBooking ? "" : <> ({fmt(depositAmount)})</>} is charged upon confirmation. Balance of <strong>{isSgrBooking ? fmt(balanceAmount) : kshLabel(balanceAmount)}</strong>{isSgrBooking ? "" : <> ({fmt(balanceAmount)})</>} is due on arrival.
             {form.paymentMethod === "card" && " You will be redirected to Paystack to complete card payment."}
           </p>
         </div>
@@ -1004,8 +1104,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ tourTitle: propTourTitle = ""
           {loading
             ? <span style={S.spinWrap}><span className="bf-spinner"/>{step===3?"Creating booking…":"Processing…"}</span>
             : step < 3 ? "Continue →"
-            : form.paymentMethod === "mpesa" ? `Send M-Pesa Push · ${fmtKsh(depositAmount)}`
-            : `Pay by Card · ${fmtKsh(depositAmount)}`}
+            : form.paymentMethod === "mpesa" ? `Send M-Pesa Push · ${kshLabel(depositAmount)}`
+            : `Pay by Card · ${kshLabel(depositAmount)}`}
         </button>
       </div>
     </form>

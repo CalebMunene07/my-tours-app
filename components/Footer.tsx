@@ -34,6 +34,88 @@ const XIcon = ({ size = 20 }: { size?: number }) => (
   </svg>
 );
 
+const REVIEW_LINKS = {
+  tripadvisor: "https://www.tripadvisor.com/Attraction_Review-g294207-d34481010-Reviews-Wikima_Safari_Expeditions-Nairobi.html",
+  google: "https://search.google.com/local/writereview?placeid=ChIJlejGB6bELyARcZyPoSnU9UE&source=g.page.m.ia._&laa=nmx-review-solicitation-ia2",
+};
+
+const StarIcon = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+  </svg>
+);
+
+const GoogleGIcon = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24">
+    <path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.47a5.54 5.54 0 0 1-2.4 3.63v3h3.88c2.27-2.09 3.57-5.17 3.57-8.82z"/>
+    <path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.95-2.9l-3.88-3.02c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.26v3.11A12 12 0 0 0 12 24z"/>
+    <path fill="#FBBC05" d="M5.27 14.27a7.2 7.2 0 0 1 0-4.54v-3.1H1.26a12 12 0 0 0 0 10.75l4.01-3.11z"/>
+    <path fill="#EA4335" d="M12 4.77c1.76 0 3.34.6 4.59 1.79l3.44-3.44C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.26 6.63l4.01 3.1C6.22 6.88 8.87 4.77 12 4.77z"/>
+  </svg>
+);
+
+const TripAdvisorIcon = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="#00AF87">
+    <circle cx="12" cy="12" r="11" fill="#00AF87"/>
+    <circle cx="7.5" cy="13" r="3.2" fill="#fff"/>
+    <circle cx="16.5" cy="13" r="3.2" fill="#fff"/>
+    <circle cx="7.5" cy="13" r="1.4" fill="#00AF87"/>
+    <circle cx="16.5" cy="13" r="1.4" fill="#00AF87"/>
+    <path fill="#fff" d="M12 6.2c-2.6 0-4.9.9-6.6 2.3.6-.15 1.3-.25 2-.25 1.7 0 3.2.6 4.4 1.6a6.6 6.6 0 0 1 4.4-1.6c.7 0 1.4.1 2 .25C16.9 7.1 14.6 6.2 12 6.2z"/>
+  </svg>
+);
+
+/* ── Floating "Leave a Review" button with a Google/TripAdvisor dropdown ── */
+const ReviewButton = () => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="fixed bottom-24 right-6 z-100">
+      {open && (
+        <div
+          className="absolute bottom-16 right-0 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-2"
+          role="menu"
+        >
+          <p className="px-4 pt-3 pb-2 text-[10px] font-bold tracking-widest uppercase text-gray-400">
+            Leave us a review
+          </p>
+          <a
+            href={REVIEW_LINKS.google}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
+            role="menuitem"
+          >
+            <GoogleGIcon /> Google Review
+          </a>
+          <a
+            href={REVIEW_LINKS.tripadvisor}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors border-t border-gray-50"
+            role="menuitem"
+          >
+            <TripAdvisorIcon /> TripAdvisor
+          </a>
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 bg-[#D4AF37] hover:bg-[#c19d2e] text-white pl-4 pr-5 py-3 rounded-full shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-amber-300/50"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Leave a review"
+      >
+        <StarIcon size={20} />
+        <span className="text-xs font-bold tracking-wide">Leave a Review</span>
+      </button>
+    </div>
+  );
+};
+
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const [email, setEmail] = useState("");
@@ -57,6 +139,9 @@ const Footer = () => {
         <WhatsAppIcon size={22} />
         <span className="text-xs font-bold tracking-wide">Chat with us</span>
       </a>
+
+      {/* ── Floating Review Button (Google / TripAdvisor) ── */}
+      <ReviewButton />
 
       <footer className="bg-white border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-6 py-12">
