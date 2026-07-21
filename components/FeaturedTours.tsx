@@ -56,11 +56,19 @@ interface Tour {
  * visitor type. Non-residents see the existing USD "From $X" price.
  * Residents see the KES rate from the tour's first pricing tier, when
  * available (falls back to the USD price if a tour has no KES rate yet).
+ *
+ * priceKES looks like "KSh 148,000 (2–3 pax) / 128,000 (4–5) / 120,000 (6)"
+ * (or a flat "KSh 58,500" for single-price tiers), so we split on " / "
+ * to isolate the first tier, then strip the trailing "(2–3 pax)" label.
+ * Splitting on a plain " " first (the previous approach) grabbed only
+ * "KSh" with no number attached, which is why residents were seeing
+ * "From KSh" with nothing after it.
  */
 function displayPrice(tour: Tour, visitorType: VisitorType): string {
   if (visitorType === "resident" && tour.pricing?.[0]?.priceKES) {
-    const kes = tour.pricing[0].priceKES.split(" ")[0].split("/")[0];
-    return `From ${kes.startsWith("KSh") ? kes : `KSh ${kes}`}`;
+    const firstSegment = tour.pricing[0].priceKES.split(" / ")[0].trim();
+    const cleaned = firstSegment.replace(/\s*\([^)]*\)\s*$/, "").trim();
+    return `From ${cleaned}`;
   }
   return tour.price;
 }
