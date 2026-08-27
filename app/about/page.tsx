@@ -284,9 +284,21 @@ export default function AboutPage() {
               <em>A passage into Africa.</em>
             </h2>
             <p className="section-body">
-              We believe a safari should change you. Slow down, look closely, breathe deep —
-              Wikima exists to make those unrepeatable moments possible for every guest who walks into the wild with us.
-            </p>
+  We believe a safari should change you. Slow down, look closely, breathe deep —
+  Wikima exists to make those unrepeatable moments possible for every guest who walks into the wild with us.
+</p>
+
+<p className="section-body" style={{ marginTop: "20px" }}>
+  We are represented on{" "}
+  <a
+    href="https://www.safaribookings.com/?utm_source=safaribookings&utm_medium=email"
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{ color: "#D4AF37", textDecoration: "underline" }}
+  >
+    SafariBookings.com
+  </a>.
+</p>
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
             <div className="vision-card">
