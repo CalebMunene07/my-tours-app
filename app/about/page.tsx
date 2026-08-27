@@ -288,17 +288,7 @@ export default function AboutPage() {
   Wikima exists to make those unrepeatable moments possible for every guest who walks into the wild with us.
 </p>
 
-<p className="section-body" style={{ marginTop: "20px" }}>
-  We are represented on{" "}
-  <a
-    href="https://www.safaribookings.com/?utm_source=safaribookings&utm_medium=email"
-    target="_blank"
-    rel="noopener noreferrer"
-    style={{ color: "#D4AF37", textDecoration: "underline" }}
-  >
-    SafariBookings.com
-  </a>.
-</p>
+
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
             <div className="vision-card">
@@ -332,14 +322,30 @@ export default function AboutPage() {
 
       {/* ── TEAM TAGLINE BAND ── */}
       <div className="team-band">
-        <p className="team-tagline">
-          "Born from the <strong>savanna.</strong> Built for the <strong>curious.</strong>"
-        </p>
-        <p className="team-sub">
-          Our guides have tracked leopards at dusk and read storm clouds over the Mara.
-          They don't just know the bush — they're part of it.
-        </p>
-      </div>
+  <p className="team-tagline">
+    "Born from the <strong>savanna.</strong> Built for the <strong>curious.</strong>"
+  </p>
+
+  <p className="team-sub">
+    Our guides have tracked leopards at dusk and read storm clouds over the Mara.
+    They don't just know the bush — they're part of it.
+  </p>
+
+  <p
+    className="team-sub"
+    style={{ marginTop: "24px" }}
+  >
+    We are represented on{" "}
+    <a
+      href="https://www.safaribookings.com/?utm_source=safaribookings&utm_medium=email"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ color: "#D4AF37", textDecoration: "underline" }}
+    >
+      SafariBookings.com
+    </a>.
+  </p>
+</div>
 
       {/* ── MEET THE TEAM ── */}
       <section className="team-section">
