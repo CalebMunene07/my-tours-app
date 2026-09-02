@@ -12,8 +12,8 @@ const TEAM = [
   {
     role: "Directors",
     members: [
-      { name: "David Mwangi", title: "Managing Director", img: "/team/director1.jpg" },
-      { name: "Grace Njeri", title: "Operations Director", img: "/team/director2.jpg" },
+      { name: "Emily Jepkosgei", title: "Managing Director", img: "/team/director1.jpg" },
+      { name: "Solomon Karani", title: "Operations Director", img: "/team/director2.jpg" },
     ],
   },
   {
