@@ -19,7 +19,7 @@ const TEAM = [
   {
     role: "Tour Experts",
     members: [
-      { name: "Samuel Otieno", title: "Senior Safari Planner", img: "/team/expert1.jpg" },
+      { name: "Timina Kinyua", title: "Senior Safari Planner", img: "/team/expert1.jpg" },
       { name: "Lydia Wanjiku", title: "Luxury Travel Specialist", img: "/team/expert2.jpg" },
     ],
   },
