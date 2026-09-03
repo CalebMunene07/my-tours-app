@@ -30,7 +30,7 @@ const TEAM = [
       { name: "Joseph Mutua", title: "Safari Consultant", img: "/team/consult3.jpg" },
       { name: "Beatrice Chemutai", title: "Destination Consultant", img: "/team/consult2.jpg" },
    
-    ],
+   ],
   },
   {
     role: "Guides",
